@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.4
+# Projeto Yuna · Base 0.4.1
 
 Assistente pessoal local para Windows. **Atualização 0.4: copie `yuna.py` e `computer.py` juntos para a pasta antiga e preserve `data/`.** Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
 
@@ -138,3 +138,12 @@ Yuna, abra o primeiro
 Esta etapa usa reconhecimento de pedidos e ferramentas locais, não consciência ou controle visual autônomo. Ainda não há microfone. APIs de referência: [tipos de unidade do Windows](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypew) e [abertura de arquivos no Python](https://docs.python.org/3/library/os.html#os.startfile).
 
 Os testes incluem busca em pastas temporárias, acentos, exclusões, limites, cancelamento, itens removidos e seleção de resultados. A abertura de aplicativos e descoberta de unidades no Windows ainda precisam de validação no notebook real.
+
+
+## Correção 0.4.1 — identidade e nome salvo
+
+Perguntas comuns como “Qual o meu nome?”, “Sabe meu nome?” e “Seu nome é Yuna?” agora são respondidas diretamente pelo programa, sem depender do modelo. Memórias antigas no formato “meu nome e Kaizen” são reconhecidas. “Meu nome é …” ou “Me chamo …”, como declaração simples, também salva o nome automaticamente. Uma nova declaração substitui memórias anteriores reconhecidas de nome; as demais memórias permanecem intactas.
+
+A identidade da assistente é sempre Yuna. O nome do usuário vem das suas próprias declarações, sem nome pessoal fixo no código. `/esquecer ID` e `/apagar CONFIRMAR` continuam removendo essas memórias. O modelo ainda pode errar em outras formulações e assuntos; essa correção resolve os casos de identidade descritos, não todos os erros de interpretação.
+
+Para quem já está na versão 0.4, basta substituir `yuna.py` com a Yuna fechada e preservar `data/` e `computer.py`. Teste `/lembrar meu nome e Kaizen`, depois “Qual o meu nome?” e “Seu nome é Yuna?”. Feche e reabra para verificar a persistência.

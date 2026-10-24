@@ -8,11 +8,14 @@ import sqlite3
 import subprocess
 import urllib.error
 import urllib.request
-from computer import Computer
+from computer import Computer, normalize
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
-SYSTEM = ('Você é Yuna, uma assistente pessoal. Responda em português brasileiro, '
+SYSTEM = ('Você é Yuna, uma assistente pessoal. Yuna é o nome da assistente, não do usuário. '
+          'Nas memórias fornecidas pelo usuário, meu/minha/eu se referem ao usuário. '
+          'Use informações pessoais que ele compartilhou; não alegue falta de acesso a elas quando constarem nas memórias. '
+          'Responda em português brasileiro, '
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
           'A aplicação pode buscar nomes de arquivos e pastas e abrir resultados selecionados. '
           'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
@@ -37,6 +40,40 @@ HELP = '''/ajuda                 Mostra os comandos
 /localizar NUMERO     Abre a pasta que contém o resultado
 Busca ignora sistema, caches, links e pastas sem permissão.
 /sair                   Fecha a Yuna'''
+
+
+def declared_name(text):
+    # Só uma declaração simples e completa; perguntas não alteram o nome.
+    match = re.fullmatch(r"(?:meu nome [eé]|me chamo)\s+([^?!\n.]{1,80})\.?", text.strip(), re.I)
+    if not match:
+        return None
+    name = match[1].strip()
+    words = name.split()
+    if not 1 <= len(words) <= 6:
+        return None
+    if not all(c.isalpha() or c in " '-" for c in name):
+        return None
+    if set(normalize(name).split()) & {'nao', 'mas', 'talvez', 'se', 'e'}:
+        return None
+    return name
+
+
+def identity_reply(memory, text):
+    question = normalize(text.strip()).rstrip('?.!')
+    question = re.sub(r'^yuna[, ]+', '', question)
+    if question in {'qual meu nome', 'qual o meu nome', 'sabe meu nome',
+                    'voce sabe meu nome', 'voce sabe o meu nome', 'como eu me chamo'}:
+        name = next((name for _, fact in reversed(memory.facts())
+                     if (name := declared_name(fact))), None)
+        return f'Seu nome é {name}.' if name else 'Ainda não tenho seu nome salvo. Diga “Meu nome é …” para eu guardar.'
+    if question in {'qual seu nome', 'qual o seu nome', 'como voce se chama',
+                    'quem e voce', 'seu nome e yuna', 'voce e a yuna', 'voce e yuna'}:
+        return 'Meu nome é Yuna. Sou sua assistente pessoal.'
+    name = declared_name(text)
+    if name:
+        memory.remember(f'Meu nome é {name}.')
+        return f'Entendi! Seu nome é {name}. Guardei essa informação para as próximas conversas.'
+    return None
 
 
 class Memory:
@@ -87,9 +124,13 @@ class Memory:
     def remember(self, text):
         if not text.strip() or len(text) > 500:
             raise ValueError('Use uma memória entre 1 e 500 caracteres.')
-        if len(self.facts()) >= 20:
+        name = declared_name(text)
+        old_names = [i for i, fact in self.facts() if name and declared_name(fact)]
+        if len(self.facts()) - len(old_names) >= 20:
             raise ValueError('Limite de 20 memórias. Use /esquecer ID para liberar espaço.')
         with self.db:
+            for ident in old_names:
+                self.db.execute('DELETE FROM memories WHERE id=?', (ident,))
             self.db.execute('INSERT INTO memories(content) VALUES (?)', (text.strip(),))
         self.export()
 
@@ -174,6 +215,10 @@ def open_folder(target):
 
 
 def handle_message(memory, text, computer=None):
+    answer = identity_reply(memory, text)
+    if answer is not None:
+        memory.save_turn(text, answer)
+        return answer
     target = parse_action(text)
     if target:
         answer = open_folder(target)
@@ -222,7 +267,7 @@ def respond(memory, message):
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
     computer = Computer()
-    print('Yuna • Base 0.4 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    print('Yuna • Base 0.4.1 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
