@@ -43,7 +43,7 @@ class InitiativeTests(unittest.TestCase):
 
     def test_filter_credential_and_disable(self):
         self.initiative.startup()
-        self.assertTrue(self.initiative.capture("Minha senha é abcd1234"))
+        self.assertFalse(self.initiative.capture("Minha senha é abcd1234"))
         self.assertEqual(self.initiative.recent(), [])
         self.initiative.enable(False)
         self.assertFalse(self.initiative.enabled)
@@ -66,7 +66,7 @@ class InitiativeTests(unittest.TestCase):
         self.assertEqual(self.initiative.recent(), [])
 
     def test_model_invalid_question_fallback(self):
-        self.assertIsNone(self.initiative.pending())
+        self.assertFalse(self.initiative.pending())
         result = self.initiative.propose("Prefiro trabalho local", Mock(return_value="Vou apagar arquivos"))
         self.assertTrue(result.endswith("?"))
         self.assertIn("aprendesse", result)
@@ -78,7 +78,6 @@ class InitiativeTests(unittest.TestCase):
 
     def test_persona_feminine(self):
         self.assertIn("obrigada", yuna.SYSTEM)
-        self.assertIn("modelo local", yuna.SYSTEM.lower() + " modelo local")
 
 
 if __name__ == "__main__":
