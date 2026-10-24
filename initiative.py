@@ -90,20 +90,21 @@ class Initiative:
         if not text:
             return False
         # Consumir a pergunta, mesmo quando a pessoa não quis compartilhar.
+        refused = text.casefold() in {"prefiro nao responder", "prefiro não responder",
+                                      "não quero responder", "nao quero responder", "pular", "passo"}
+        private = bool(SENSITIVE.search(text))
         with self.db:
             self.db.execute(
                 "INSERT INTO yuna_settings(key,value) VALUES ('pending','') "
                 "ON CONFLICT(key) DO UPDATE SET value=''")
-            if (text.casefold() not in {"prefiro nao responder", "não quero responder",
-                                        "nao quero responder", "pular", "passo"}
-                    and not SENSITIVE.search(text)):
+            if not refused and not private:
                 self.db.execute(
                     "INSERT INTO yuna_questions(question,answer) VALUES (?,?)",
                     (pending[:200], text[:1200]))
                 self.db.execute(
                     "DELETE FROM yuna_questions WHERE id NOT IN "
                     "(SELECT id FROM yuna_questions ORDER BY id DESC LIMIT 150)")
-        return True
+        return not (refused or private)
 
     def propose(self, answer, ask):
         """Pergunta gerada localmente e somente exibida; nunca executada como ação."""
