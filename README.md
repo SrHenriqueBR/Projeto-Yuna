@@ -1,6 +1,6 @@
-# Projeto Yuna · Base 0.3
+# Projeto Yuna · Base 0.4
 
-Assistente pessoal local para Windows. Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
+Assistente pessoal local para Windows. **Atualização 0.4: copie `yuna.py` e `computer.py` juntos para a pasta antiga e preserve `data/`.** Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
 
 ## Começar no Windows
 
@@ -101,8 +101,40 @@ Yuna, abra meus documentos
 
 Também há atalhos exatos: `/abrir downloads`, `/abrir explorador` e `/abrir documentos`. Os pedidos reconhecidos funcionam sem precisar do modelo carregado. O Windows resolve as pastas especiais, inclusive quando redirecionadas. A aplicação solicita a abertura e você confere a janela; ela ainda não observa a tela nem confirma visualmente que abriu. Não depende de cliques em coordenadas ou da posição da aba.
 
-A interpretação dessas ações usa frases predefinidas, não raciocínio autônomo. Outras formas de pedir podem cair no chat: nesse caso use `/abrir downloads`. Nenhum texto gerado pela IA vira comando do sistema. Não há permissão administrativa necessária, execução de comandos livres, leitura ou alteração dos seus arquivos nesta etapa.
+A interpretação dessas ações usa frases predefinidas, não raciocínio autônomo. Outras formas de pedir podem cair no chat: nesse caso use `/abrir downloads`. Nenhum texto gerado pela IA vira comando do sistema. Não há permissão administrativa necessária nem execução de comandos livres. Na versão 0.4 há busca por nomes e abertura de documentos selecionados; a busca não lê o conteúdo dos arquivos.
 
-**Atualizar:** feche a Yuna e substitua `yuna.py` na pasta antiga pela versão nova. Preserve `data/`. Abra `iniciar_yuna.bat` normalmente. Não precisa baixar o modelo novamente nem instalar pacotes adicionais.
+**Atualizar:** feche a Yuna e substitua `yuna.py` e `computer.py` na pasta antiga pelas versões novas. Preserve `data/`. Abra `iniciar_yuna.bat` normalmente. Não precisa baixar o modelo novamente nem instalar pacotes adicionais.
 
 O chamado pelo microfone e a resposta com voz feminina ainda não estão implementados. Digitar “Yuna” é opcional. Os testes automatizados simulam a abertura do Explorador: a integração real precisa ser validada no seu Windows.
+
+
+## Versão 0.4 — busca no computador
+
+**Para instalar esta atualização, copie os dois arquivos `yuna.py` e `computer.py` para a mesma pasta antiga. Preserve `data/`.** Não há novos pacotes para instalar.
+
+Exemplos digitados:
+
+```text
+Yuna, procure meu currículo
+Yuna, procure Kaizen em todo o computador
+Yuna, abra meu currículo
+Yuna, abra o resultado 2
+Yuna, abra o primeiro
+/buscar relatório
+/buscar tudo Kaizen
+/abrir 1
+/localizar 1
+```
+
+- A busca compara palavras com **nomes**, ignorando maiúsculas e acentos. Não lê conteúdo de PDFs, documentos ou imagens, nem entende descrições sem palavras presentes no nome.
+- A busca padrão cobre a pasta do usuário e suas subpastas. `tudo` ou `em todo o computador` amplia para as unidades que o Windows identifica como discos fixos, priorizando a pasta do usuário. Unidades de rede e removíveis não entram nessa opção.
+- Uma solicitação para abrir um nome desconhecido primeiro apresenta uma busca; você escolhe o resultado pelo número. Resultados ficam em memória apenas até a próxima busca ou até fechar a Yuna. `/nova` também limpa essa seleção.
+- `/abrir NUMERO` abre pastas ou documentos, imagens e mídias de extensões permitidas no aplicativo padrão do Windows. Arquivos executáveis, scripts, atalhos e outros tipos não são executados. `/localizar NUMERO` abre a pasta que contém qualquer resultado.
+- A busca percorre até 100 mil entradas, 50 resultados ou aproximadamente 20 segundos (uma chamada de disco lenta pode demorar mais). Ela informa quando o resultado é parcial. Ctrl+C interrompe a busca e preserva os resultados já encontrados. Não há índice nem retomada automática; a próxima busca inicia de novo.
+- Pastas de sistema (`Windows`, `Program Files`, `Program Files (x86)`, `ProgramData`, lixeira, `System Volume Information`), `AppData`, caches (`.cache`) e dependências (`node_modules`, `.git`, `.venv`, `venv`, `__pycache__`) são ignoradas. Links e pontos de redirecionamento também são ignorados, inclusive alguns itens do OneDrive. Locais sem permissão são pulados. Portanto a busca ampla **não garante cobrir todos os arquivos**.
+- Esta busca é feita localmente pelo código. As listas de caminhos não são enviadas ao modelo nem armazenadas nas memórias. O programa não apaga, move ou edita resultados.
+- Ctrl+C durante uma resposta agora retorna ao prompt, sem fechar a Yuna. O Ollama pode continuar a geração em segundo plano; para interrompê-lo, use `ollama stop qwen2.5:3b` em outra janela. `/sair` fecha o aplicativo.
+
+Esta etapa usa reconhecimento de pedidos e ferramentas locais, não consciência ou controle visual autônomo. Ainda não há microfone. APIs de referência: [tipos de unidade do Windows](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypew) e [abertura de arquivos no Python](https://docs.python.org/3/library/os.html#os.startfile).
+
+Os testes incluem busca em pastas temporárias, acentos, exclusões, limites, cancelamento, itens removidos e seleção de resultados. A abertura de aplicativos e descoberta de unidades no Windows ainda precisam de validação no notebook real.

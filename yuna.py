@@ -8,12 +8,14 @@ import sqlite3
 import subprocess
 import urllib.error
 import urllib.request
+from computer import Computer
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
 SYSTEM = ('Você é Yuna, uma assistente pessoal. Responda em português brasileiro, '
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
-          'A aplicação pode abrir Explorador, Downloads e Documentos por comandos locais reconhecidos. '
+          'A aplicação pode buscar nomes de arquivos e pastas e abrir resultados selecionados. '
+          'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
           'Você não vê a tela, não lê arquivos, não acessa internet e não fala em voz alta. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz planejada é feminina, em português brasileiro. '
@@ -29,6 +31,11 @@ HELP = '''/ajuda                 Mostra os comandos
 /abrir downloads       Abre Downloads no Windows
 /abrir explorador      Abre o Explorador de Arquivos
 /abrir documentos      Abre Documentos
+/buscar NOME          Busca nomes dentro do seu perfil
+/buscar tudo NOME     Busca nos discos locais fixos
+/abrir NUMERO         Abre um resultado da última busca
+/localizar NUMERO     Abre a pasta que contém o resultado
+Busca ignora sistema, caches, links e pastas sem permissão.
 /sair                   Fecha a Yuna'''
 
 
@@ -166,12 +173,16 @@ def open_folder(target):
     return f'Solicitei ao Windows a abertura de {label}. Confira a janela do Explorador.'
 
 
-def handle_message(memory, text):
+def handle_message(memory, text, computer=None):
     target = parse_action(text)
     if target:
         answer = open_folder(target)
         memory.save_turn(text, answer)
         return answer
+    if computer is not None:
+        result = computer.handle(text)
+        if result is not None:
+            return result
     if text.startswith('/abrir'):
         return 'Use /abrir downloads, /abrir documentos ou /abrir explorador.'
     return respond(memory, text)
@@ -210,7 +221,8 @@ def respond(memory, message):
 
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
-    print('Yuna • Base 0.3 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    computer = Computer()
+    print('Yuna • Base 0.4 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
@@ -234,22 +246,26 @@ def main():
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
                 elif command == '/nova':
                     memory.clear()
+                    computer.results = []
                     print('Nova conversa iniciada. Memórias preservadas.')
                 elif command == '/apagar':
                     if argument == 'CONFIRMAR':
                         memory.clear(all_data=True)
+                        computer.results = []
                         print('Histórico e memórias apagados.')
                     else:
                         print('Para apagar histórico e memórias, digite /apagar CONFIRMAR.')
-                elif command == '/abrir':
-                    print('Yuna:', handle_message(memory, text))
+                elif command in ('/abrir', '/buscar', '/localizar'):
+                    print('Yuna:', handle_message(memory, text, computer))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
                 elif len(text) > 4000:
                     print('Envie até 4000 caracteres por mensagem.')
                 else:
                     print('Yuna está pensando…')
-                    print('\nYuna:', handle_message(memory, text))
+                    print('\nYuna:', handle_message(memory, text, computer))
+            except KeyboardInterrupt:
+                print('\nOperação interrompida. Você pode fazer outro pedido ou digitar /sair.')
             except (ValueError, RuntimeError) as exc:
                 print('Aviso:', exc)
     except (KeyboardInterrupt, EOFError):
