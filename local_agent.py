@@ -3,7 +3,7 @@ import json
 import re
 from computer import normalize
 
-ACTIONS = ['chat', 'unsupported', 'list_apps', 'open_app', 'search_files', 'system_info', 'processes']
+ACTIONS = ['chat', 'unsupported', 'list_apps', 'open_app', 'search_files', 'system_info', 'processes', 'environment']
 SCHEMA = {
     'type': 'object', 'additionalProperties': False,
     'properties': {'action': {'type': 'string', 'enum': ACTIONS},
@@ -17,7 +17,7 @@ list_apps: listar aplicativos instalados, query é filtro opcional.
 open_app: abrir aplicativo explicitamente pedido; query é só o nome mencionado.
 search_files: procurar arquivos/pastas pelo nome; query é só o termo procurado.
 system_info: consultar hardware, RAM disponível ou espaço livre dos discos.
-processes: ver programas/processos em execução ou consumo de RAM.
+processes: ver programas/processos em execução ou consumo de RAM.\nenvironment: observar quais janelas estão abertas no Windows, quando pedido explicitamente.
 unsupported: pedido de ação sem ferramenta (excluir, instalar, editar, clicar, web, controlar jogos, etc.).
 chat: conversa, explicação, hipótese ou pedido negado; não executar nada.
 everywhere só é true se o usuário pediu busca em todos os discos/computador inteiro.
@@ -78,4 +78,6 @@ def interpret(request, ask, computer):
         return computer.desktop.system_info()
     if action == 'processes':
         return computer.desktop.processes()
+    if action == 'environment':
+        return computer.desktop.environment()
     raise ValueError('Ação não implementada.')
