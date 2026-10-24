@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.2
+# Projeto Yuna · Base 0.3
 
 Assistente pessoal local para Windows. Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
 
@@ -63,7 +63,7 @@ Fechar o terminal encerra a Yuna. Ela não instala inicialização automática n
 - [ ] Pesquisa na internet e integração com projetos.
 - [ ] Monitoramento de hardware e ações autorizadas no computador.
 
-Nesta base não há reconhecimento de locutor, navegação, execução de comandos, edição automática de arquivos ou integração com GitHub. Respostas que sugiram ações são apenas texto.
+Nesta base não há reconhecimento de locutor, navegação web, edição automática de arquivos ou integração com GitHub. Há ações locais limitadas para abrir pastas; respostas do modelo são apenas texto e nunca são executadas.
 
 ## Desenvolvimento e validação
 
@@ -85,3 +85,24 @@ Além das últimas seis trocas, a Yuna agora busca até quatro falas antigas do 
 **Para atualizar sem perder memória:** feche a Yuna, faça backup privado da pasta `data`, baixe e extraia o ZIP novo em outra pasta e copie os arquivos de código para a pasta antiga da Yuna, substituindo-os. Preserve a pasta `data` antiga. Abra `iniciar_yuna.bat` na mesma pasta de sempre. O JSON será gerado com o banco existente. Abrir uma cópia nova sem a pasta `data` cria uma memória vazia.
 
 O arquivo contém suas conversas: não publique `data` no GitHub. `/nova` apaga histórico e as falas recuperáveis, preservando memórias explícitas; `/apagar CONFIRMAR` remove ambos também da cópia JSON. Mensagens interrompidas antes de uma resposta concluída não são salvas nesta versão.
+
+
+## Versão 0.3 — primeiras ações no notebook
+
+Digite na janela da Yuna:
+
+```text
+Yuna, abra o explorador
+Yuna, abra meus downloads
+Yuna, abra o explorador e vá até a pasta downloads
+Yuna, verifica o explorador abra ele e va ate a aba download
+Yuna, abra meus documentos
+```
+
+Também há atalhos exatos: `/abrir downloads`, `/abrir explorador` e `/abrir documentos`. Os pedidos reconhecidos funcionam sem precisar do modelo carregado. O Windows resolve as pastas especiais, inclusive quando redirecionadas. A aplicação solicita a abertura e você confere a janela; ela ainda não observa a tela nem confirma visualmente que abriu. Não depende de cliques em coordenadas ou da posição da aba.
+
+A interpretação dessas ações usa frases predefinidas, não raciocínio autônomo. Outras formas de pedir podem cair no chat: nesse caso use `/abrir downloads`. Nenhum texto gerado pela IA vira comando do sistema. Não há permissão administrativa necessária, execução de comandos livres, leitura ou alteração dos seus arquivos nesta etapa.
+
+**Atualizar:** feche a Yuna e substitua `yuna.py` na pasta antiga pela versão nova. Preserve `data/`. Abra `iniciar_yuna.bat` normalmente. Não precisa baixar o modelo novamente nem instalar pacotes adicionais.
+
+O chamado pelo microfone e a resposta com voz feminina ainda não estão implementados. Digitar “Yuna” é opcional. Os testes automatizados simulam a abertura do Explorador: a integração real precisa ser validada no seu Windows.

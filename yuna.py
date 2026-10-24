@@ -5,6 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 import sqlite3
+import subprocess
 import urllib.error
 import urllib.request
 
@@ -12,7 +13,9 @@ ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
 SYSTEM = ('Você é Yuna, uma assistente pessoal. Responda em português brasileiro, '
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
-          'não acessa internet, arquivos ou hardware, não executa comandos e não fala em voz alta. '
+          'A aplicação pode abrir Explorador, Downloads e Documentos por comandos locais reconhecidos. '
+          'Você não vê a tela, não lê arquivos, não acessa internet e não fala em voz alta. '
+          'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz planejada é feminina, em português brasileiro. '
           'Use as memórias confirmadas e as falas antigas relevantes para manter continuidade. '
           'Falas antigas podem estar desatualizadas: priorize correções recentes e não invente lembranças. '
@@ -23,6 +26,9 @@ HELP = '''/ajuda                 Mostra os comandos
 /esquecer ID            Apaga uma memória pelo número
 /nova                   Inicia conversa nova, preservando as memórias
 /apagar CONFIRMAR       Apaga todo histórico e todas as memórias
+/abrir downloads       Abre Downloads no Windows
+/abrir explorador      Abre o Explorador de Arquivos
+/abrir documentos      Abre Documentos
 /sair                   Fecha a Yuna'''
 
 
@@ -110,6 +116,67 @@ class Memory:
         self.db.close()
 
 
+# Somente os pedidos atuais do usuário passam por este roteador.
+# Respostas do modelo, histórico e memórias nunca são executados.
+FOLDERS = {
+    'downloads': ('shell:Downloads', 'Downloads'),
+    'documentos': ('shell:Personal', 'Documentos'),
+    'explorador': (None, 'Explorador de Arquivos'),
+}
+
+
+def parse_action(text):
+    value = unicodedata.normalize('NFKD', text.lower())
+    value = ''.join(c for c in value if not unicodedata.combining(c))
+    value = re.sub(r'\s+', ' ', value).strip().rstrip('.!?')
+    value = re.sub(r'^yuna[, ]+', '', value)
+    value = re.sub(r'^por favor[, ]+', '', value)
+    value = re.sub(r'[, ]+por favor$', '', value)
+    value = re.sub(r'^(pode|consegue) ', '', value)
+    # Exige correspondência integral: perguntas, negações e ações extras não executam.
+    pattern = (r'(?:/abrir|abrir|abra|abre|va|vai)(?: ate)? '
+               r'(?:(?:o|a|os|as|meu|minha|meus|minhas|na|no|para|pasta|aba|de) )*'
+               r'(downloads?|documentos|explorador(?: de arquivos)?|explorer)')
+    match = re.fullmatch(pattern, value)
+    if not match:
+        compound = (r'(?:verifica o explorador abra ele e|abra o explorador e|abre o explorador e) '
+                    r'(?:va|vai)(?: ate)? (?:a |na )?(?:pasta |aba )?(?:de )?downloads?')
+        return 'downloads' if re.fullmatch(compound, value) else None
+    target = match.group(1)
+    if target in ('download', 'downloads'):
+        return 'downloads'
+    if target.startswith('explor'):
+        return 'explorador'
+    return target
+
+
+def open_folder(target):
+    if target not in FOLDERS:
+        raise ValueError('Destino não permitido.')
+    if os.name != 'nt':
+        return 'Estas ações estão disponíveis somente no Windows.'
+    location, label = FOLDERS[target]
+    # Caminho absoluto do Windows, sem shell nem texto livre como argumento.
+    explorer = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'explorer.exe'
+    args = [str(explorer)] + ([location] if location else [])
+    try:
+        subprocess.Popen(args, shell=False)
+    except OSError as exc:
+        return f'Não consegui solicitar a abertura de {label}: {exc}'
+    return f'Solicitei ao Windows a abertura de {label}. Confira a janela do Explorador.'
+
+
+def handle_message(memory, text):
+    target = parse_action(text)
+    if target:
+        answer = open_folder(target)
+        memory.save_turn(text, answer)
+        return answer
+    if text.startswith('/abrir'):
+        return 'Use /abrir downloads, /abrir documentos ou /abrir explorador.'
+    return respond(memory, text)
+
+
 def respond(memory, message):
     facts = json.dumps({'memorias_confirmadas': [text for _, text in memory.facts()],
                         'falas_antigas_relevantes_do_usuario': memory.recall(message)}, ensure_ascii=False)
@@ -143,7 +210,7 @@ def respond(memory, message):
 
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
-    print('Yuna • Base 0.2 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    print('Yuna • Base 0.3 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
@@ -174,13 +241,15 @@ def main():
                         print('Histórico e memórias apagados.')
                     else:
                         print('Para apagar histórico e memórias, digite /apagar CONFIRMAR.')
+                elif command == '/abrir':
+                    print('Yuna:', handle_message(memory, text))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
                 elif len(text) > 4000:
                     print('Envie até 4000 caracteres por mensagem.')
                 else:
                     print('Yuna está pensando…')
-                    print('\nYuna:', respond(memory, text))
+                    print('\nYuna:', handle_message(memory, text))
             except (ValueError, RuntimeError) as exc:
                 print('Aviso:', exc)
     except (KeyboardInterrupt, EOFError):
