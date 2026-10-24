@@ -1,12 +1,12 @@
-# Projeto Yuna · Base 0.5
+# Projeto Yuna · Base 0.6
 
-Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A voz feminina e o microfone ainda estão pendentes.**
+Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A linguagem feminina está ativa; voz falada e microfone continuam pendentes.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
 ## Atualizar uma instalação existente
 
 1. Feche a Yuna e faça uma cópia privada de `data/`.
 2. Baixe o ZIP novo e extraia em outra pasta.
-3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py` e `local_agent.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
 4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
 
 Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
@@ -112,7 +112,7 @@ A pasta `data/` é local, sem criptografia, e está no `.gitignore`. Não publiq
 
 Ctrl+C retorna ao prompt; `/sair` fecha a Yuna. O Ollama pode continuar uma geração em segundo plano. Para interrompê-lo, use `ollama stop qwen2.5:3b` em outro PowerShell. Não instalamos tarefa agendada nem inicialização automática; o aplicativo Ollama tem funcionamento separado.
 
-Ainda não há microfone, voz feminina, leitura do conteúdo de documentos, controle visual de janelas, edição/exclusão de arquivos, instalação de programas ou automação de jogos. Nenhuma configuração de administrador é necessária. Ter ferramentas locais não garante entender qualquer frase ou operar qualquer aplicativo internamente.
+Ainda não há microfone, voz falada, leitura do conteúdo de documentos, controle visual de janelas, edição/exclusão de arquivos, instalação de programas ou automação de jogos. Nenhuma configuração de administrador é necessária. Ter ferramentas locais não garante entender qualquer frase ou operar qualquer aplicativo internamente.
 
 ## Desenvolvimento e testes
 
@@ -123,3 +123,40 @@ py -3 -m unittest discover -s tests -v
 Testes automatizados cobrem persistência, identidade, busca em pastas temporárias, seleção de aplicativos, validação das decisões, falhas e consultas com respostas simuladas. Foram executados no ambiente de desenvolvimento; as APIs do Windows e as decisões reais do modelo precisam ser testadas no notebook. O número de testes não mede inteligência ou confiabilidade geral do modelo.
 
 Referências: [Get-StartApps](https://learn.microsoft.com/en-us/powershell/module/startlayout/get-startapps), [saídas estruturadas do Ollama](https://docs.ollama.com/capabilities/structured-outputs), [modelo inicial](https://ollama.com/library/qwen2.5:3b).
+
+## Iniciativa, personalidade e aprendizado
+
+Ao iniciar, a Yuna diz "Olá, Kaizen! O que vamos fazer hoje?". Se você já salvou seu nome ("Meu nome é ..."), ela usa o nome salvo. Após uma resposta à pergunta pendente, a Yuna pode criar outra pergunta curta com o modelo **local**. A linguagem da personagem foi ajustada para usar termos femininos (ex.: "obrigada", "prontinha"), sem simular consciência real.
+
+As perguntas feitas pela Yuna e as respostas **digitadas por você** são armazenadas localmente na tabela `yuna_questions` de `data/yuna.db` (até 150 pares recentes; respostas até 1200 caracteres). O sistema recupera os 12 pares recentes para contextualizar conversas. Não é fine-tuning nem alteração automática do código-fonte; o modelo continua sendo o instalado no Ollama.
+
+Perguntas pendentes não devem tratar ordens explícitas ao Windows como respostas; comandos não viram memórias. Respostas com termos de credenciais reconhecidos são descartadas pelo filtro local. Evite digitar senhas e dados privados. A memória local não tem criptografia. Para inspecionar o que foi guardado:
+
+```text
+/aprendizados
+/esquecer_aprendizado 3
+/curiosidade desligar
+/curiosidade ligar
+```
+
+`/curiosidade desligar` silencia as perguntas e continua valendo nas próximas execuções. `/nova` limpa a conversa mas preserva os aprendizados; `/apagar CONFIRMAR` apaga histórico, memórias explícitas **e** pares de perguntas/respostas. O arquivo JSON exportado em `data/conhecimentos.json` também mostra os aprendizados (cópia, não a fonte principal).
+
+## Observar o computador, sem acesso à web
+
+- `/ambiente`: lê nomes de processos com janelas abertas e títulos públicos dessas janelas, diretamente do Windows. Não lê teclas ou documentos e não envia esses dados ao modelo; o resultado aparece somente no terminal local. Também é possível pedir ao agente que liste as janelas abertas.
+- `/tela`: captura **somente quando você solicita** a tela principal para um modelo visual instalado no **Ollama local** e retorna uma descrição. A captura é temporária, sem salvar imagem no disco. Não clica, não modifica programas e não lê nada sem seu pedido.
+
+Visão é **opcional** e exige Pillow e um modelo de visão local; exemplo, no PowerShell:
+
+```powershell
+py -3 -m pip install Pillow
+ollama pull llava:7b
+$env:YUNA_VISION_MODEL="llava:7b"
+py -3 yuna.py
+```
+
+Se for usar o arquivo BAT, defina `YUNA_VISION_MODEL` como variável de ambiente do Windows ou adicione a linha `set YUNA_VISION_MODEL=llava:7b` **antes** de `py -3 yuna.py` no BAT. O modelo de texto `qwen2.5:3b` sozinho não interpreta imagens. Esses recursos não significam monitoramento contínuo nem controle visual autônomo; para operar aplicativos continuam disponíveis apenas as ferramentas limitadas do projeto.
+
+## Segurança das iniciativas
+
+Perguntas produzidas pelo Ollama são **apenas texto**; a Yuna não executa código, comandos de terminal ou ações sugeridas pelas próprias perguntas. As ferramentas locais respondem apenas a instruções do usuário atual, com seus controles e limites. O banco e as capturas permanecem locais; aplicativos que você decidir abrir têm suas próprias conexões de rede.
