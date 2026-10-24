@@ -38,7 +38,7 @@ class DesktopTests(unittest.TestCase):
             win.name = 'nt'
             win.environ = {'SystemRoot': '/Windows'}
             self.assertIn('Solicitei', pc.open_app('Discord'))
-            popen.assert_called_once_with(['/Windows/explorer.exe', 'shell:AppsFolder\\Discord.App'], shell=False)
+            popen.assert_called_once_with([str(Path('/Windows') / 'explorer.exe'), 'shell:AppsFolder\\Discord.App'], shell=False)
             with self.assertRaises(ValueError):
                 pc.launch({'name': 'Fake', 'id': 'C:\\fake.exe'})
 
