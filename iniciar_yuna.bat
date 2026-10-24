@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-for %%F in (yuna.py computer.py desktop.py local_agent.py initiative.py vision.py) do (
+for %%F in (yuna.py computer.py desktop.py local_agent.py initiative.py affect.py vision.py) do (
     if not exist "%%F" (
         echo Falta %%F. Copie todos os arquivos .py da pasta nova para esta pasta.
         echo Preserve a pasta data com suas memorias.
