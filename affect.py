@@ -5,9 +5,7 @@ Só registra preferências escritas explicitamente pelo usuário; jamais executa
 """
 import json
 import re
-import sqlite3
 import unicodedata
-from datetime import datetime, timezone
 
 BASE = {"energia": 62, "curiosidade": 58, "acolhimento": 70, "serenidade": 63}
 SIGNALS = {
@@ -218,6 +216,11 @@ class AffectiveCore:
         return self.db.execute(
             "SELECT id,text FROM yuna_reflections ORDER BY id DESC LIMIT ?",
             (max(1, min(int(limit), 30)),)).fetchall()
+
+    def forget_reflection(self, ident):
+        with self.db:
+            return self.db.execute(
+                "DELETE FROM yuna_reflections WHERE id=?", (ident,)).rowcount
 
     def clear(self, all_data=False):
         if all_data:
