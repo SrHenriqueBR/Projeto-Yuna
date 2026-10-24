@@ -79,7 +79,7 @@ def interpret(request, ask, computer):
     if action == 'processes':
         return computer.desktop.processes()
     if action == 'environment':
-        if not re.search(r'\\b(janela|janelas|aberto|aberta|abertos|abertas|ambiente)\\b', value):
+        if not re.search(r'\b(janela|janelas|aberto|aberta|abertos|abertas|ambiente)\b', value):
             return None
         return computer.desktop.environment()
     raise ValueError('Ação não implementada.')
