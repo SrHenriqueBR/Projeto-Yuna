@@ -10,18 +10,24 @@ import urllib.error
 import urllib.request
 from computer import Computer, normalize, command_text
 from local_agent import interpret
+from initiative import Initiative, looks_like_command
+from vision import describe_screen
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
-SYSTEM = ('Você é Yuna, uma assistente pessoal. Yuna é o nome da assistente, não do usuário. '
+SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o nome da assistente, não do usuário. '
+          'Ao falar de si mesma, use flexão feminina (obrigada, pronta, animada), naturalmente, sem caricaturas. '
+          'Seja curiosa e parceira: faça perguntas relevantes, mas respeite quando o usuário não quiser responder. '
+          'Não alegue ter consciência, desejos próprios ou capacidade de se reprogramar automaticamente. '
           'Nas memórias fornecidas pelo usuário, meu/minha/eu se referem ao usuário. '
           'Use informações pessoais que ele compartilhou; não alegue falta de acesso a elas quando constarem nas memórias. '
           'Responda em português brasileiro, '
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
           'A aplicação pode buscar nomes de arquivos e pastas, abrir resultados selecionados e abrir a Steam instalada. '
           'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
-          'A aplicação também lista aplicativos do menu Iniciar, processos e informações de hardware/espaço livre. '
-          'Você não vê a tela, não lê conteúdos dos arquivos, não acessa internet e não fala em voz alta. '
+          'A aplicação também lista aplicativos do menu Iniciar, processos, janelas e informações de hardware/espaço livre. '
+          'Você só vê uma captura de tela se o usuário usar /tela com um modelo de visão local instalado. '
+          'Você não lê conteúdo de documentos, não acessa a web e não fala em voz alta nesta versão. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz planejada é feminina, em português brasileiro. '
           'Use as memórias confirmadas e as falas antigas relevantes para manter continuidade. '
@@ -47,6 +53,12 @@ Busca ignora sistema, caches, links e pastas sem permissão.
 /app NUMERO           Abre um aplicativo da lista /apps
 /sistema              Consulta hardware, RAM e discos
 /processos            Lista processos com maior uso de RAM
+/ambiente             Observa títulos de janelas ativas no Windows
+/tela                 Descreve a captura da tela com modelo de visão opcional
+/curiosidade ligar    Ativa perguntas automáticas (padrão)
+/curiosidade desligar Desativa perguntas automáticas
+/aprendizados         Mostra perguntas e respostas que Yuna guardou
+/esquecer_aprendizado ID   Apaga uma resposta da memória
 /fazer PEDIDO         Interpreta um pedido com o modelo local
 /sair                   Fecha a Yuna'''
 
@@ -98,6 +110,7 @@ class Memory:
                 id INTEGER PRIMARY KEY, content TEXT NOT NULL);
         ''')
 
+        self.initiative = Initiative(self.db)
         self.export()
 
     def export(self):
@@ -105,6 +118,8 @@ class Memory:
         payload = {
             'versao': 1,
             'memorias': [{'id': i, 'texto': t} for i, t in self.facts()],
+            'aprendizados': [{'id': i, 'pergunta': q, 'resposta': a}
+                             for i, q, a in self.initiative.recent(100)],
             'conversas': [{'id': i, 'autor': r, 'texto': t} for i, r, t in
                          self.db.execute('SELECT id, role, content FROM messages ORDER BY id')],
         }
@@ -167,6 +182,7 @@ class Memory:
             self.db.execute('DELETE FROM messages')
             if all_data:
                 self.db.execute('DELETE FROM memories')
+        self.initiative.clear(all_data=all_data)
         self.export()
 
     def close(self):
@@ -243,7 +259,10 @@ def handle_message(memory, text, computer=None):
 
 def respond(memory, message):
     facts = json.dumps({'memorias_confirmadas': [text for _, text in memory.facts()],
-                        'falas_antigas_relevantes_do_usuario': memory.recall(message)}, ensure_ascii=False)
+                        'falas_antigas_relevantes_do_usuario': memory.recall(message),
+                        'respostas_do_usuario_a_perguntas_da_yuna': [
+                            {'pergunta': q, 'resposta': a}
+                            for _, q, a in memory.initiative.recent(12)]}, ensure_ascii=False)
     messages = [{'role': 'system', 'content': SYSTEM + facts}]
     messages += memory.history() + [{'role': 'user', 'content': message}]
     answer = ask_model(messages)
@@ -285,10 +304,15 @@ def ask_model(messages, schema=None):
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
     computer = Computer()
-    print('Yuna • Base 0.5 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    print('Yuna • Base 0.6 • conversa local e curiosidade ativa\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
+    greeting_name = next((name for _, fact in reversed(memory.facts())
+                          if (name := declared_name(fact))), 'Kaizen')
+    greeting = memory.initiative.startup(greeting_name)
+    if greeting:
+        print('\nYuna:', greeting)
     try:
         while True:
             try:
@@ -307,6 +331,27 @@ def main():
                     print('\n'.join(f'{i}: {t}' for i, t in memory.facts()) or 'Nenhuma memória salva.')
                 elif command == '/esquecer':
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
+                elif command == '/curiosidade':
+                    if argument in ('ligar', 'on'):
+                        memory.initiative.enable(True)
+                        print('Yuna: Prontinha! Vou voltar a fazer perguntas.')
+                    elif argument in ('desligar', 'off'):
+                        memory.initiative.enable(False)
+                        print('Yuna: Tudo bem! Vou esperar você iniciar as conversas.')
+                    else:
+                        print('Use /curiosidade ligar ou /curiosidade desligar.')
+                elif command == '/aprendizados':
+                    records = memory.initiative.recent(100)
+                    print('\n'.join(f'{i}. Yuna: {q} | Você: {a}' for i, q, a in records)
+                          or 'Ainda não tenho respostas aprendidas.')
+                elif command == '/esquecer_aprendizado':
+                    removed = memory.initiative.forget(int(argument))
+                    memory.export()
+                    print('Aprendizado apagado.' if removed else 'Aprendizado não encontrado.')
+                elif command == '/ambiente':
+                    print('Yuna:', computer.desktop.environment())
+                elif command == '/tela':
+                    print('Yuna:', describe_screen())
                 elif command == '/nova':
                     memory.clear()
                     computer.results = []
@@ -328,7 +373,15 @@ def main():
                     print('Envie até 4000 caracteres por mensagem.')
                 else:
                     print('Yuna está pensando…')
-                    print('\nYuna:', handle_message(memory, text, computer))
+                    reply = handle_message(memory, text, computer)
+                    print('\nYuna:', reply)
+                    if memory.initiative.enabled and not looks_like_command(text):
+                        answered = memory.initiative.capture(text)
+                        if answered:
+                            memory.export()
+                            question = memory.initiative.propose(text, ask_model)
+                            if question:
+                                print('\nYuna:', question)
             except KeyboardInterrupt:
                 print('\nOperação interrompida. Você pode fazer outro pedido ou digitar /sair.')
             except (ValueError, RuntimeError) as exc:

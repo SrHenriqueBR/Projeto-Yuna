@@ -37,7 +37,7 @@ class ActionTests(unittest.TestCase):
             os_mock.name = 'nt'
             os_mock.environ = {'SystemRoot': '/Windows'}
             self.assertIn('Solicitei', yuna.open_folder('downloads'))
-            popen.assert_called_once_with(['/Windows/explorer.exe', 'shell:Downloads'], shell=False)
+            popen.assert_called_once_with([str(Path('/Windows') / 'explorer.exe'), 'shell:Downloads'], shell=False)
             popen.side_effect = OSError('indisponível')
             self.assertIn('Não consegui', yuna.open_folder('downloads'))
         with self.assertRaises(ValueError):

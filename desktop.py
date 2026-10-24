@@ -8,6 +8,7 @@ from computer import normalize
 SCRIPTS = {
     'apps': 'Get-StartApps | Select-Object Name,AppID | ConvertTo-Json -Compress',
     'processes': '''Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 20 ProcessName,Id,@{Name='RAM_MB';Expression={[math]::Round($_.WorkingSet64/1MB,1)}} | ConvertTo-Json -Compress''',
+    'windows': '''Get-Process | Where-Object {$_.MainWindowTitle -ne ''} | Select-Object -First 20 ProcessName,MainWindowTitle | ConvertTo-Json -Compress''',
     'system': '''$osInfo=Get-CimInstance Win32_OperatingSystem; $cpuInfo=Get-CimInstance Win32_Processor | Select-Object -First 1; $gpuInfo=@(Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name); $diskInfo=@(Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | Select-Object DeviceID,@{Name='Livre_GB';Expression={[math]::Round($_.FreeSpace/1GB,1)}},@{Name='Total_GB';Expression={[math]::Round($_.Size/1GB,1)}}); [pscustomobject]@{Windows=$osInfo.Caption;CPU=$cpuInfo.Name;RAM_total_GB=[math]::Round($osInfo.TotalVisibleMemorySize/1MB,1);RAM_livre_GB=[math]::Round($osInfo.FreePhysicalMemory/1MB,1);GPU=$gpuInfo;Discos=$diskInfo} | ConvertTo-Json -Depth 4 -Compress''',
 }
 
@@ -102,3 +103,9 @@ class Desktop:
 
     def processes(self):
         return 'Até 20 processos com maior memória RAM (MB), sem encerrar nenhum:\n' + json.dumps(query_windows('processes'), ensure_ascii=False, indent=2)
+
+
+    def environment(self):
+        """Janelas visíveis em execução; somente leitura, sem capturar teclas ou arquivos."""
+        return ('Janelas com título no Windows (não significa que eu tenha visto a imagem da tela):\n'
+                + json.dumps(query_windows('windows'), ensure_ascii=False, indent=2))
