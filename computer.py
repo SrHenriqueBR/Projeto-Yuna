@@ -124,6 +124,8 @@ def search_names(query, roots, max_results=50, max_entries=100000, seconds=20):
 
 class Computer:
     def __init__(self):
+        from desktop import Desktop
+        self.desktop = Desktop()
         self.results = []
 
     def search(self, query, everywhere=False):
@@ -171,6 +173,18 @@ class Computer:
     def handle(self, text):
         """Return None for ordinary conversation; never run text supplied by the model."""
         value = command_text(text)
+        if value == '/apps atualizar':
+            self.desktop.refresh()
+            return self.desktop.list_apps()
+        if value == '/apps' or value.startswith('/apps '):
+            return self.desktop.list_apps(value[5:].strip())
+        if value in ('/sistema', 'mostre as informacoes do computador'):
+            return self.desktop.system_info()
+        if value in ('/processos', 'mostre os processos'):
+            return self.desktop.processes()
+        choice = re.fullmatch(r'/app (\d+)', value)
+        if choice:
+            return self.desktop.open_choice(int(choice[1]))
         if re.fullmatch(r'(?:/abrir|abra|abre|abrir|inicie|iniciar|execute|executar) (?:a |o )?(?:(?:aplicativo|programa) )?steam', value):
             return open_steam()
         match = re.fullmatch(r'(?:/abrir|abra|abre|abrir) (?:o )?(?:resultado |item )?(\d+)[.!?]?', value)
@@ -193,10 +207,15 @@ class Computer:
             query = re.sub(r'^(?:(?:o|a|meu|minha|um|uma) )?(?:arquivo|pasta) (?:chamad[oa] )?', '', query)
             query = re.sub(r'^(?:meu|minha) ', '', query)
             return self.search(query.strip(' "'), everywhere)
-        match = re.fullmatch(r'(?:abra|abre|abrir) (.+)', value)
+        match = re.fullmatch(r'(?:/abrir|abra|abre|abrir|inicie|iniciar|execute|executar) (.+)', value)
         if match:
             query = re.sub(r'^(?:o |a )?(?:meu |minha )?(?:arquivo |pasta )?', '', match[1])
-            return 'Vou procurar esse nome; escolha o resultado para abrir.\n' + self.search(query)
+            explicit_file = bool(re.search(r'\b(arquivo|pasta)\b', match[1]))
+            query = re.sub(r'^(?:aplicativo|programa) ', '', query)
+            if not explicit_file and os.name == 'nt':
+                if self.desktop.matches(query):
+                    return self.desktop.open_app(query)
+            return 'Não identifiquei um aplicativo com esse nome. Vou buscar arquivos e pastas.\n' + self.search(query)
         if value in ('/buscar', 'procure', 'busque'):
             return 'Exemplo: /buscar currículo ou /buscar tudo currículo'
         return None

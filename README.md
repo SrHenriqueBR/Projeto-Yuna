@@ -1,158 +1,125 @@
-# Projeto Yuna · Base 0.4.2
+# Projeto Yuna · Base 0.5
 
-Assistente pessoal local para Windows. **Atualização 0.4: copie `yuna.py` e `computer.py` juntos para a pasta antiga e preserve `data/`.** Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
+Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A voz feminina e o microfone ainda estão pendentes.**
 
-## Começar no Windows
+## Atualizar uma instalação existente
 
-1. Instale [Python 3.10 ou superior](https://www.python.org/downloads/windows/) com o Python Launcher (`py`).
+1. Feche a Yuna e faça uma cópia privada de `data/`.
+2. Baixe o ZIP novo e extraia em outra pasta.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py` e `local_agent.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
+
+Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
+
+## Instalar do zero
+
+1. Instale [Python 3.10+ com Python Launcher](https://www.python.org/downloads/windows/).
 2. Instale e abra o [Ollama](https://ollama.com/download/windows).
-3. Abra o PowerShell e baixe o modelo local:
+3. No PowerShell, baixe o modelo:
 
    ```powershell
    ollama pull qwen2.5:3b
    ```
 
-4. Baixe este repositório em **Code → Download ZIP** e extraia a pasta (ou use `git clone`).
-5. Abra `iniciar_yuna.bat`. Alternativamente, no PowerShell dentro da pasta:
+4. Baixe o repositório em **Code → Download ZIP** e extraia.
+5. Abra `iniciar_yuna.bat` ou execute `py -3 yuna.py` na pasta extraída.
 
-   ```powershell
-   py -3 yuna.py
-   ```
+Se aparecer conexão recusada, execute `ollama serve` em outra janela e mantenha-a aberta. O download do modelo é de aproximadamente 1,9 GB. A primeira resposta pode demorar enquanto ele carrega. Não há pacotes pip adicionais.
 
-Não é necessário instalar pacotes com pip. O modelo inicial tem download de aproximadamente 1,9 GB e suporte a português. Foi escolhido como ponto de partida leve; desempenho e qualidade ainda precisam ser avaliados no Alienware. A licença do modelo é a Qwen Research License, independente do código deste projeto.
+O modelo Qwen2.5 3B é um ponto de partida leve e multilíngue, sujeito à Qwen Research License. Qualidade e desempenho precisam ser avaliados no notebook; ele não tem as mesmas capacidades ou memórias do ChatGPT.
 
-O aplicativo usa exclusivamente o Ollama em `127.0.0.1:11434`, sem chave de API. A instalação e o download precisam de internet; depois, o modelo local permite conversar offline. O modelo não tem as mesmas capacidades ou memórias do ChatGPT.
-
-## Usar a memória
+## Aplicativos e informações do computador
 
 ```text
-/lembrar Meu nome é Henrique.
-/lembrar Prefiro respostas em português brasileiro.
-/memorias
-/esquecer 1
-/nova
-/ajuda
-/sair
+Yuna, abra o Discord
+Yuna, abra o Chrome
+Yuna, abra a Steam
+Yuna, abra pra mim a pasta documentos
+Quero ver os programas instalados
+Veja quanto espaço livre tem no meu disco
+Quais processos estão consumindo mais RAM?
+/fazer coloca o Discord pra rodar
 ```
 
-- Conversas completas ficam em `data/yuna.db`; os últimos seis pares de mensagens entram no contexto de cada resposta, inclusive após reabrir o programa.
-- Fatos importantes devem ser salvos com `/lembrar TEXTO`. Até 20 memórias de 500 caracteres são incluídas nas respostas. Isso é memória de contexto, não treinamento do modelo.
-- `/nova` apaga o histórico de conversa, mas preserva as memórias explícitas.
-- `/apagar CONFIRMAR` apaga histórico e memórias do banco. Não é apagamento forense do disco ou de backups.
-- O banco é local, sem criptografia, e a pasta `data/` está no `.gitignore`. Não publique esse arquivo. Para backup, feche a Yuna e copie a pasta `data/` para um local privado.
+- O catálogo vem de `Get-StartApps`, do Windows. Programas que aparecem no menu Iniciar podem ser encontrados pelo nome completo ou por parte dele. Não garante descobrir todos os programas portáteis ou sem registro no menu Iniciar.
+- “Abra NOME” tenta um aplicativo antes da busca de arquivos. Para procurar um arquivo com o mesmo nome de um programa, diga “abra o arquivo NOME” ou use `/buscar NOME`.
+- Se houver mais de um aplicativo correspondente, a Yuna mostra as opções. Use `/app NUMERO` para selecionar. Ela não escolhe arbitrariamente entre nomes ambíguos.
+- Abertura usa o identificador retornado pelo Windows; a Steam continua tendo um atalho próprio. O programa informa que solicitou a abertura, sem afirmar que observou a janela.
+- `/apps atualizar` atualiza o catálogo após instalar/remover aplicativos. `/apps NOME` filtra a lista.
+- `/sistema` consulta Windows, CPU, nomes das GPUs, RAM total/livre e espaço dos discos fixos. `/processos` mostra até 20 processos com maior uso de RAM. Não mede temperaturas nem consumo instantâneo de CPU e não encerra processos.
 
-## Configuração
+## Como o modelo participa
 
-Modelo padrão: `qwen2.5:3b`. Para experimentar outro modelo local já baixado, na mesma janela do PowerShell:
+Comandos conhecidos continuam funcionando diretamente, sem depender da interpretação do modelo. Pedidos não reconhecidos passam pelo Ollama local, que retorna uma ação em JSON validada pelo código. Ele pode escolher listar/abrir aplicativos, buscar arquivos, consultar o sistema, listar processos, conversar ou informar que a ação não está disponível.
 
-```powershell
-$env:YUNA_MODEL = "nome-do-modelo-local"
-py -3 yuna.py
+`/fazer PEDIDO` acessa explicitamente essa interpretação. A implementação executa **uma ação por pedido**. Não é um agente visual que clica em qualquer janela nem um sistema com consciência. O modelo pequeno pode interpretar mal: os comandos explícitos abaixo são alternativas previsíveis. Nenhum código ou script gerado pelo modelo é executado. As consultas de PowerShell são scripts fixos do projeto, sem interpolar frases do usuário.
+
+As respostas das ferramentas são mostradas diretamente. Elas não são transformadas em afirmações de sucesso pelo modelo. Listas de arquivos, aplicativos e diagnósticos não são enviadas ao modelo nem adicionadas às memórias nesta versão. O interpretador recebe apenas o pedido atual; ele não resolve referências como “aquele programa de ontem”. Conversas comuns podem exigir duas chamadas locais (classificação e resposta).
+
+A Yuna não tem ferramenta de navegação web. Ela chama apenas o Ollama em `127.0.0.1:11434`. O modelo padrão funciona localmente após o download; nomes de modelo contendo `cloud` são recusados. Use modelos locais, inclusive ao mudar `YUNA_MODEL`. Aplicativos abertos, como Steam ou Discord, continuam tendo seu próprio comportamento de rede.
+
+## Comandos
+
+| Comando | Função |
+| --- | --- |
+| `/ajuda` | Mostra os comandos |
+| `/apps` ou `/apps NOME` | Lista ou filtra aplicativos (até 100 opções) |
+| `/apps atualizar` | Atualiza o catálogo do menu Iniciar |
+| `/app 2` | Abre o aplicativo 2 da última lista de aplicativos |
+| `/abrir steam` | Solicita abertura da Steam instalada |
+| `/abrir downloads` | Abre Downloads; também aceita documentos e explorador |
+| `/buscar NOME` | Busca nomes dentro da pasta do usuário |
+| `/buscar tudo NOME` | Amplia para os discos fixos locais |
+| `/abrir 2` | Abre o arquivo/pasta 2 da última busca de arquivos |
+| `/localizar 2` | Abre a pasta que contém esse resultado |
+| `/sistema` | Hardware, memória e espaço livre |
+| `/processos` | Processos com maior uso de RAM |
+| `/fazer PEDIDO` | Interpreta um pedido com o modelo local |
+| `/lembrar TEXTO` | Guarda uma memória explicitamente |
+| `/memorias` | Lista memórias explícitas |
+| `/esquecer ID` | Apaga uma memória |
+| `/nova` | Apaga histórico da conversa e seleções; mantém memórias explícitas |
+| `/apagar CONFIRMAR` | Apaga histórico e memórias |
+| `/sair` | Encerra a Yuna |
+
+## Busca e abertura de arquivos
+
+```text
+Yuna, procure meu currículo
+Yuna, procure Kaizen em todo o computador
+Yuna, abra o resultado 2
 ```
 
-Use modelos locais, não variantes cloud, para manter a conversa no computador. A primeira resposta pode demorar ao carregar o modelo. Em caso de erro de conexão, abra o Ollama; se necessário, execute `ollama serve`. Se o modelo não existir, execute o comando `ollama pull` indicado pelo programa.
+A busca usa palavras no **nome** dos arquivos/pastas, ignorando maiúsculas e acentos. Não lê conteúdo de PDFs, documentos ou imagens. O escopo padrão é a pasta do usuário; a opção ampla percorre unidades que o Windows identifica como discos fixos, sem incluir unidades de rede ou removíveis.
 
-Fechar o terminal encerra a Yuna. Ela não instala inicialização automática nem tarefa agendada. O aplicativo Ollama pode continuar aberto; o modelo recebe um tempo de permanência de dois minutos após cada solicitação. Para interrompê-lo imediatamente: `ollama stop qwen2.5:3b`.
+Limites por busca: 100 mil entradas, 50 resultados ou aproximadamente 20 segundos. Uma operação de disco lenta pode ultrapassar esse tempo. Resultados parciais são identificados; não há índice nem retomada automática. Ctrl+C interrompe e mantém os resultados encontrados. Resultados ficam apenas na sessão atual.
 
-## Etapas
+São ignorados links e pontos de redirecionamento (inclusive alguns itens do OneDrive), locais sem permissão, Windows, Program Files, Program Files (x86), ProgramData, AppData, lixeira, System Volume Information, node_modules, .git, .venv, venv, __pycache__ e .cache. Portanto, uma busca ampla não cobre necessariamente todos os arquivos.
 
-- [x] Conversa local por texto e tratamento de erros.
-- [x] Histórico persistente e memórias explícitas com exclusão.
-- [ ] Voz feminina em português brasileiro: escolher timbre e motor de síntese.
-- [ ] Entrada por microfone e ativação por voz.
-- [ ] Pesquisa na internet e integração com projetos.
-- [ ] Monitoramento de hardware e ações autorizadas no computador.
+A abertura de resultados aceita pastas e documentos/imagens/mídias de extensões permitidas. Scripts, atalhos e executáveis encontrados na busca não são executados; use `/localizar` para ver a pasta. A abertura de aplicativos usa o catálogo próprio `/apps`.
 
-Nesta base não há reconhecimento de locutor, navegação web, edição automática de arquivos ou integração com GitHub. Há ações locais limitadas para abrir pastas; respostas do modelo são apenas texto e nunca são executadas.
+## Memória e identidade
 
-## Desenvolvimento e validação
+`data/yuna.db` é a fonte principal da memória SQLite. `data/conhecimentos.json` é uma cópia legível, gerada automaticamente após cada conversa concluída ou alteração de memória. Pode ser aberta no Bloco de Notas, mas editar o JSON não muda o banco: use os comandos da Yuna.
+
+O histórico completo é salvo; as seis últimas trocas e até quatro falas antigas com palavras em comum entram no contexto. Até 20 memórias explícitas de 500 caracteres são incluídas em todas as respostas de conversa. É recuperação de informações, não treinamento do modelo. Perguntas sem palavras em comum podem não recuperar um assunto antigo.
+
+Declarações simples “Meu nome é …” e “Me chamo …” salvam o nome. Perguntas comuns sobre o seu nome consultam diretamente essa memória. A identidade da assistente é Yuna. Uma nova declaração de nome substitui memórias reconhecidas anteriores de nome, preservando os demais fatos. Isso não elimina possíveis erros do modelo em outras perguntas.
+
+A pasta `data/` é local, sem criptografia, e está no `.gitignore`. Não publique suas conversas. Para backup, feche a Yuna e copie `data/` para um local privado. Apagar pelo programa não elimina backups ou vestígios forenses no disco. Respostas interrompidas antes da conclusão não são salvas.
+
+## Encerramento e limitações
+
+Ctrl+C retorna ao prompt; `/sair` fecha a Yuna. O Ollama pode continuar uma geração em segundo plano. Para interrompê-lo, use `ollama stop qwen2.5:3b` em outro PowerShell. Não instalamos tarefa agendada nem inicialização automática; o aplicativo Ollama tem funcionamento separado.
+
+Ainda não há microfone, voz feminina, leitura do conteúdo de documentos, controle visual de janelas, edição/exclusão de arquivos, instalação de programas ou automação de jogos. Nenhuma configuração de administrador é necessária. Ter ferramentas locais não garante entender qualquer frase ou operar qualquer aplicativo internamente.
+
+## Desenvolvimento e testes
 
 ```powershell
 py -3 -m unittest discover -s tests -v
 ```
 
-Os testes usam respostas HTTP simuladas e banco temporário: verificam persistência, contexto, exclusão e erros sem baixar um modelo. Não substituem teste real do modelo ou teste no Windows.
+Testes automatizados cobrem persistência, identidade, busca em pastas temporárias, seleção de aplicativos, validação das decisões, falhas e consultas com respostas simuladas. Foram executados no ambiente de desenvolvimento; as APIs do Windows e as decisões reais do modelo precisam ser testadas no notebook. O número de testes não mede inteligência ou confiabilidade geral do modelo.
 
-Referências: [API de chat](https://docs.ollama.com/api/chat), [modelo inicial](https://ollama.com/library/qwen2.5:3b).
-
-
-## Atualização 0.2 — conhecimentos em arquivo
-
-`data/conhecimentos.json` é criado automaticamente e atualizado após cada conversa concluída ou mudança de memória. É uma cópia legível das memórias explícitas e do histórico completo; pode ser aberto no Bloco de Notas. O banco `data/yuna.db` continua sendo a fonte principal, carregada ao iniciar. Não edite o JSON para alterar memórias: use `/lembrar` e `/esquecer`. A cópia é regenerada a partir do banco.
-
-Além das últimas seis trocas, a Yuna agora busca até quatro falas antigas do usuário com palavras em comum com a pergunta. Isso funciona após reiniciar e ajuda a recuperar assuntos antigos, mas é uma busca simples: paráfrases sem palavras em comum podem não ser encontradas. Use `/lembrar` para fatos que devem sempre entrar no contexto. Respostas do modelo ficam no histórico, sem virarem fatos confirmados automaticamente. Não há treinamento automático do modelo.
-
-**Para atualizar sem perder memória:** feche a Yuna, faça backup privado da pasta `data`, baixe e extraia o ZIP novo em outra pasta e copie os arquivos de código para a pasta antiga da Yuna, substituindo-os. Preserve a pasta `data` antiga. Abra `iniciar_yuna.bat` na mesma pasta de sempre. O JSON será gerado com o banco existente. Abrir uma cópia nova sem a pasta `data` cria uma memória vazia.
-
-O arquivo contém suas conversas: não publique `data` no GitHub. `/nova` apaga histórico e as falas recuperáveis, preservando memórias explícitas; `/apagar CONFIRMAR` remove ambos também da cópia JSON. Mensagens interrompidas antes de uma resposta concluída não são salvas nesta versão.
-
-
-## Versão 0.3 — primeiras ações no notebook
-
-Digite na janela da Yuna:
-
-```text
-Yuna, abra o explorador
-Yuna, abra meus downloads
-Yuna, abra o explorador e vá até a pasta downloads
-Yuna, verifica o explorador abra ele e va ate a aba download
-Yuna, abra meus documentos
-```
-
-Também há atalhos exatos: `/abrir downloads`, `/abrir explorador` e `/abrir documentos`. Os pedidos reconhecidos funcionam sem precisar do modelo carregado. O Windows resolve as pastas especiais, inclusive quando redirecionadas. A aplicação solicita a abertura e você confere a janela; ela ainda não observa a tela nem confirma visualmente que abriu. Não depende de cliques em coordenadas ou da posição da aba.
-
-A interpretação dessas ações usa frases predefinidas, não raciocínio autônomo. Outras formas de pedir podem cair no chat: nesse caso use `/abrir downloads`. Nenhum texto gerado pela IA vira comando do sistema. Não há permissão administrativa necessária nem execução de comandos livres. Na versão 0.4 há busca por nomes e abertura de documentos selecionados; a busca não lê o conteúdo dos arquivos.
-
-**Atualizar:** feche a Yuna e substitua `yuna.py` e `computer.py` na pasta antiga pelas versões novas. Preserve `data/`. Abra `iniciar_yuna.bat` normalmente. Não precisa baixar o modelo novamente nem instalar pacotes adicionais.
-
-O chamado pelo microfone e a resposta com voz feminina ainda não estão implementados. Digitar “Yuna” é opcional. Os testes automatizados simulam a abertura do Explorador: a integração real precisa ser validada no seu Windows.
-
-
-## Versão 0.4 — busca no computador
-
-**Para instalar esta atualização, copie os dois arquivos `yuna.py` e `computer.py` para a mesma pasta antiga. Preserve `data/`.** Não há novos pacotes para instalar.
-
-Exemplos digitados:
-
-```text
-Yuna, procure meu currículo
-Yuna, procure Kaizen em todo o computador
-Yuna, abra meu currículo
-Yuna, abra o resultado 2
-Yuna, abra o primeiro
-/buscar relatório
-/buscar tudo Kaizen
-/abrir 1
-/localizar 1
-```
-
-- A busca compara palavras com **nomes**, ignorando maiúsculas e acentos. Não lê conteúdo de PDFs, documentos ou imagens, nem entende descrições sem palavras presentes no nome.
-- A busca padrão cobre a pasta do usuário e suas subpastas. `tudo` ou `em todo o computador` amplia para as unidades que o Windows identifica como discos fixos, priorizando a pasta do usuário. Unidades de rede e removíveis não entram nessa opção.
-- Uma solicitação para abrir um nome desconhecido primeiro apresenta uma busca; você escolhe o resultado pelo número. Resultados ficam em memória apenas até a próxima busca ou até fechar a Yuna. `/nova` também limpa essa seleção.
-- `/abrir NUMERO` abre pastas ou documentos, imagens e mídias de extensões permitidas no aplicativo padrão do Windows. Arquivos executáveis, scripts, atalhos e outros tipos não são executados. `/localizar NUMERO` abre a pasta que contém qualquer resultado.
-- A busca percorre até 100 mil entradas, 50 resultados ou aproximadamente 20 segundos (uma chamada de disco lenta pode demorar mais). Ela informa quando o resultado é parcial. Ctrl+C interrompe a busca e preserva os resultados já encontrados. Não há índice nem retomada automática; a próxima busca inicia de novo.
-- Pastas de sistema (`Windows`, `Program Files`, `Program Files (x86)`, `ProgramData`, lixeira, `System Volume Information`), `AppData`, caches (`.cache`) e dependências (`node_modules`, `.git`, `.venv`, `venv`, `__pycache__`) são ignoradas. Links e pontos de redirecionamento também são ignorados, inclusive alguns itens do OneDrive. Locais sem permissão são pulados. Portanto a busca ampla **não garante cobrir todos os arquivos**.
-- Esta busca é feita localmente pelo código. As listas de caminhos não são enviadas ao modelo nem armazenadas nas memórias. O programa não apaga, move ou edita resultados.
-- Ctrl+C durante uma resposta agora retorna ao prompt, sem fechar a Yuna. O Ollama pode continuar a geração em segundo plano; para interrompê-lo, use `ollama stop qwen2.5:3b` em outra janela. `/sair` fecha o aplicativo.
-
-Esta etapa usa reconhecimento de pedidos e ferramentas locais, não consciência ou controle visual autônomo. Ainda não há microfone. APIs de referência: [tipos de unidade do Windows](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getdrivetypew) e [abertura de arquivos no Python](https://docs.python.org/3/library/os.html#os.startfile).
-
-Os testes incluem busca em pastas temporárias, acentos, exclusões, limites, cancelamento, itens removidos e seleção de resultados. A abertura de aplicativos e descoberta de unidades no Windows ainda precisam de validação no notebook real.
-
-
-## Correção 0.4.1 — identidade e nome salvo
-
-Perguntas comuns como “Qual o meu nome?”, “Sabe meu nome?” e “Seu nome é Yuna?” agora são respondidas diretamente pelo programa, sem depender do modelo. Memórias antigas no formato “meu nome e Kaizen” são reconhecidas. “Meu nome é …” ou “Me chamo …”, como declaração simples, também salva o nome automaticamente. Uma nova declaração substitui memórias anteriores reconhecidas de nome; as demais memórias permanecem intactas.
-
-A identidade da assistente é sempre Yuna. O nome do usuário vem das suas próprias declarações, sem nome pessoal fixo no código. `/esquecer ID` e `/apagar CONFIRMAR` continuam removendo essas memórias. O modelo ainda pode errar em outras formulações e assuntos; essa correção resolve os casos de identidade descritos, não todos os erros de interpretação.
-
-Para quem já está na versão 0.4, basta substituir `yuna.py` com a Yuna fechada e preservar `data/` e `computer.py`. Teste `/lembrar meu nome e Kaizen`, depois “Qual o meu nome?” e “Seu nome é Yuna?”. Feche e reabra para verificar a persistência.
-
-
-## Correção 0.4.2 — abrir Steam e reconhecer pedidos coloquiais
-
-Atualize **`yuna.py` e `computer.py` juntos**, com a Yuna fechada. Preserve `data/`.
-
-Agora “Yuna abra a Steam”, “abre pra mim a Steam” e `/abrir steam` solicitam a abertura do aplicativo pelo protocolo registrado da Steam no Windows (`steam://open/main`). Isso não faz busca de documentos, não abre PDFs com “Steam” no nome e não inicia um jogo. A Steam precisa estar instalada com seu protocolo registrado. Se houver erro, a Yuna informa em vez de dizer que abriu.
-
-Também foram corrigidos “Yuna abra pra min a pasta documentos”, “abra para mim os downloads” e “pode abrir a Steam?”. As negações permanecem intactas e não acionam essas aberturas. A solicitação de abertura não comprova visualmente que a janela apareceu; confira no Windows. Ainda não há um lançador universal para qualquer aplicativo.
+Referências: [Get-StartApps](https://learn.microsoft.com/en-us/powershell/module/startlayout/get-startapps), [saídas estruturadas do Ollama](https://docs.ollama.com/capabilities/structured-outputs), [modelo inicial](https://ollama.com/library/qwen2.5:3b).

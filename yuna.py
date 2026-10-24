@@ -9,6 +9,7 @@ import subprocess
 import urllib.error
 import urllib.request
 from computer import Computer, normalize, command_text
+from local_agent import interpret
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
@@ -19,7 +20,8 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal. Yuna é o nome da assistente, 
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
           'A aplicação pode buscar nomes de arquivos e pastas, abrir resultados selecionados e abrir a Steam instalada. '
           'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
-          'Você não vê a tela, não lê arquivos, não acessa internet e não fala em voz alta. '
+          'A aplicação também lista aplicativos do menu Iniciar, processos e informações de hardware/espaço livre. '
+          'Você não vê a tela, não lê conteúdos dos arquivos, não acessa internet e não fala em voz alta. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz planejada é feminina, em português brasileiro. '
           'Use as memórias confirmadas e as falas antigas relevantes para manter continuidade. '
@@ -40,6 +42,12 @@ HELP = '''/ajuda                 Mostra os comandos
 /abrir NUMERO         Abre um resultado da última busca
 /localizar NUMERO     Abre a pasta que contém o resultado
 Busca ignora sistema, caches, links e pastas sem permissão.
+/apps [NOME]          Lista aplicativos do menu Iniciar
+/apps atualizar       Atualiza o catálogo de aplicativos
+/app NUMERO           Abre um aplicativo da lista /apps
+/sistema              Consulta hardware, RAM e discos
+/processos            Lista processos com maior uso de RAM
+/fazer PEDIDO         Interpreta um pedido com o modelo local
 /sair                   Fecha a Yuna'''
 
 
@@ -223,8 +231,13 @@ def handle_message(memory, text, computer=None):
         result = computer.handle(text)
         if result is not None:
             return result
-    if text.startswith('/abrir'):
-        return 'Use /abrir downloads, /abrir documentos ou /abrir explorador.'
+    if computer is not None:
+        request = text.removeprefix('/fazer ').strip()
+        if not request or request == '/fazer':
+            return 'Exemplo: /fazer veja quanto espaço livre tem no disco'
+        result = interpret(request, ask_model, computer)
+        if result is not None:
+            return result
     return respond(memory, text)
 
 
@@ -233,9 +246,20 @@ def respond(memory, message):
                         'falas_antigas_relevantes_do_usuario': memory.recall(message)}, ensure_ascii=False)
     messages = [{'role': 'system', 'content': SYSTEM + facts}]
     messages += memory.history() + [{'role': 'user', 'content': message}]
-    body = json.dumps({'model': MODEL, 'messages': messages, 'stream': False,
-                       'keep_alive': '2m',
-                       'options': {'num_ctx': 8192, 'num_predict': 768}}).encode('utf-8')
+    answer = ask_model(messages)
+    memory.save_turn(message, answer)
+    return answer
+
+
+def ask_model(messages, schema=None):
+    if 'cloud' in MODEL.lower():
+        raise RuntimeError('Use um modelo local em YUNA_MODEL; esta versão não aceita modelos cloud.')
+    payload = {'model': MODEL, 'messages': messages, 'stream': False, 'keep_alive': '2m',
+               'options': {'num_ctx': 8192, 'num_predict': 768}}
+    if schema is not None:
+        payload['format'] = schema
+        payload['options']['temperature'] = 0
+    body = json.dumps(payload).encode('utf-8')
     request = urllib.request.Request('http://127.0.0.1:11434/api/chat', data=body,
                                      headers={'Content-Type': 'application/json'})
     try:
@@ -255,14 +279,13 @@ def respond(memory, message):
                            'o carregamento inicial pode demorar.') from exc
     except (ValueError, KeyError, TypeError) as exc:
         raise RuntimeError('Ollama retornou uma resposta inválida. Tente novamente.') from exc
-    memory.save_turn(message, answer)
     return answer
 
 
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
     computer = Computer()
-    print('Yuna • Base 0.4.2 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    print('Yuna • Base 0.5 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
@@ -287,15 +310,17 @@ def main():
                 elif command == '/nova':
                     memory.clear()
                     computer.results = []
+                    computer.desktop.choices = []
                     print('Nova conversa iniciada. Memórias preservadas.')
                 elif command == '/apagar':
                     if argument == 'CONFIRMAR':
                         memory.clear(all_data=True)
                         computer.results = []
+                        computer.desktop.choices = []
                         print('Histórico e memórias apagados.')
                     else:
                         print('Para apagar histórico e memórias, digite /apagar CONFIRMAR.')
-                elif command in ('/abrir', '/buscar', '/localizar'):
+                elif command in ('/abrir', '/buscar', '/localizar', '/apps', '/app', '/sistema', '/processos', '/fazer'):
                     print('Yuna:', handle_message(memory, text, computer))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
