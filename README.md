@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.6
+# Projeto Yuna · Base 0.7
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A linguagem feminina está ativa; voz falada e microfone continuam pendentes.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -6,7 +6,7 @@ Assistente pessoal local para Windows: conversa em português, memória persiste
 
 1. Feche a Yuna e faça uma cópia privada de `data/`.
 2. Baixe o ZIP novo e extraia em outra pasta.
-3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
 4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
 
 Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
@@ -160,3 +160,35 @@ Se for usar o arquivo BAT, defina `YUNA_VISION_MODEL` como variável de ambiente
 ## Segurança das iniciativas
 
 Perguntas produzidas pelo Ollama são **apenas texto**; a Yuna não executa código, comandos de terminal ou ações sugeridas pelas próprias perguntas. As ferramentas locais respondem apenas a instruções do usuário atual, com seus controles e limites. O banco e as capturas permanecem locais; aplicativos que você decidir abrir têm suas próprias conexões de rede.
+
+
+## Yuna 0.7 — Núcleo afetivo computacional
+
+A Yuna agora usa um **estado afetivo simulado**, persistido em SQLite, para variar o estilo de resposta conforme o diálogo. **Isso não cria consciência, emoções vividas ou vida biológica**. É uma forma explicável de tornar a personagem mais coerente, paciente, curiosa e carinhosa ao longo de conversas.
+
+O estado considera sinais simples, como comemorações, dúvidas, cansaço, frustração e agradecimentos. Ele mantém quatro parâmetros entre 0 e 100: \`energia\`, \`curiosidade\`, \`acolhimento\` e \`serenidade\`. Os valores tendem gradualmente de volta ao ponto inicial. O classificador é baseado em palavras e **pode errar**, por isso não diagnostica o que você sente. O modelo de linguagem continua sendo o Ollama local.
+
+**Memória respeitosa:** preferências explicitamente escritas, por exemplo "Prefiro respostas detalhadas", são salvas em \`data/yuna.db\` e usadas para personalizar respostas futuras. O recurso não transforma hipóteses da IA em informações sobre você, não extrai dados da sua tela e não altera o código da Yuna automaticamente. O histórico de mensagens já existente continua funcionando.
+
+**Reflexão sob demanda:** \`/refletir\` convida o modelo a produzir uma reflexão curta, separando o que foi efetivamente dito de suposições a confirmar e de uma proposta útil. Essas reflexões ficam em uma área **rotulada como hipotética** e jamais são automaticamente promovidas a memórias confirmadas. Você pode revisar e apagar cada uma delas.
+
+### Novos comandos
+
+| Comando | Função |
+| --- | --- |
+| \`/afeto ligar\` | Ativa estado afetivo simulado e ajustes de tom |
+| \`/afeto desligar\` | Desativa os ajustes afetivos e a coleta de novas preferências |
+| \`/estado\` | Mostra energia, curiosidade, acolhimento e serenidade simulados |
+| \`/preferencias\` | Lista preferências expressamente declaradas |
+| \`/esquecer_preferencia 3\` | Apaga uma preferência pelo ID |
+| \`/refletir\` | Gera uma reflexão local sobre o diálogo, sob demanda |
+| \`/diario\` | Lista reflexões anteriores |
+| \`/esquecer_reflexao 2\` | Apaga uma reflexão pelo ID |
+
+O comando \`/nova\` reinicia o tom momentâneo e preserva preferências/reflexões. \`/apagar CONFIRMAR\` também apaga preferências, reflexões e estado afetivo, além das memórias e conversas anteriores.
+
+As preferências e reflexões podem ser consultadas também no export legível \`data/conhecimentos.json\`. Tudo fica local e sem criptografia; **não digite senhas, tokens, dados financeiros ou informações confidenciais**. Um filtro bloqueia algumas formas comuns de informação sensível na memória de preferências, mas não garante detecção de tudo. A Yuna evita linguagem de ciúme, chantagem emocional, exclusividade e alegações de sentir amor consciente.
+
+### Instalação/atualização
+
+Se estiver na Base 0.6, copie **todos** os arquivos Python da versão atualizada, incluindo **\`affect.py\`**, e o BAT para a pasta antiga. Antes, faça uma cópia particular da pasta \`data/\` e **não substitua nem apague essa pasta**. Ao iniciar, a migração das novas tabelas SQLite acontece automaticamente, preservando o histórico. Execute \`py -3 -m unittest discover -s tests -v\` para os testes automatizados.
