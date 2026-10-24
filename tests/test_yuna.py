@@ -45,6 +45,30 @@ class BaseTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.memory.remember(' ')
 
+    def test_export_and_old_knowledge_survive_restart(self):
+        self.memory.remember('Prefiro voz feminina.')
+        self.memory.save_turn('Meu notebook é Alienware.', 'Entendi.')
+        for i in range(8):
+            self.memory.save_turn(f'Outra conversa {i}', 'Certo.')
+        self.memory.close()
+        self.memory = yuna.Memory(self.path)
+        self.assertIn('Meu notebook é Alienware.', self.memory.recall('Qual meu notebook?'))
+        data = json.loads((self.path.parent / 'conhecimentos.json').read_text(encoding='utf-8'))
+        self.assertEqual(len(data['conversas']), 18)
+        self.assertEqual(data['memorias'][0]['texto'], 'Prefiro voz feminina.')
+        self.memory.clear(all_data=True)
+        data = json.loads((self.path.parent / 'conhecimentos.json').read_text(encoding='utf-8'))
+        self.assertEqual(data['conversas'], [])
+        self.assertEqual(data['memorias'], [])
+        self.assertEqual(self.memory.recall('notebook'), [])
+
+    def test_export_failure_keeps_database(self):
+        with patch('yuna.Path.write_text', side_effect=OSError('disco indisponível')):
+            self.memory.save_turn('Meu notebook é Alienware.', 'Certo.')
+        self.assertEqual(len(self.memory.history()), 2)
+        self.memory.export()
+        self.assertTrue((self.path.parent / 'conhecimentos.json').exists())
+
     @patch('yuna.urllib.request.build_opener')
     def test_request_and_atomic_persistence(self, build):
         self.memory.remember('Prefiro português.')
