@@ -14,6 +14,31 @@ def normalize(text):
     return ''.join(c for c in text if not unicodedata.combining(c))
 
 
+
+def command_text(text):
+    value = re.sub(r'\s+', ' ', normalize(text)).strip().rstrip('.!?')
+    value = re.sub(r'^yuna[, ]+', '', value)
+    value = re.sub(r'^por favor[, ]+', '', value)
+    value = re.sub(r'[, ]+por favor$', '', value)
+    value = re.sub(r'^(?:voce )?(?:pode|consegue) ', '', value)
+    # Variações coloquiais somente após o verbo, sem remover negações.
+    value = re.sub(r'^(abra|abre|abrir|inicie|iniciar|execute|executar) (?:pra|para) (?:mim|min) ',
+                   r'\1 ', value)
+    return value
+
+
+def open_steam():
+    if os.name != 'nt':
+        return 'A abertura da Steam está disponível somente no Windows.'
+    try:
+        # Destino fixo; nenhum argumento do usuário vira comando ou URL.
+        os.startfile('steam://open/main', 'open')
+    except OSError as exc:
+        return ('Não consegui solicitar a abertura da Steam. Verifique se o aplicativo está instalado '
+                f'e se abre pelo menu Iniciar. Detalhe: {exc}')
+    return 'Solicitei ao Windows a abertura da Steam. Confira a janela do aplicativo.'
+
+
 def fixed_drives():
     if os.name != 'nt':
         return [Path.home()]
@@ -145,10 +170,9 @@ class Computer:
 
     def handle(self, text):
         """Return None for ordinary conversation; never run text supplied by the model."""
-        value = normalize(text.strip())
-        value = re.sub(r'^yuna[, ]+', '', value)
-        value = re.sub(r'^por favor[, ]+', '', value)
-        value = re.sub(r'[, ]+por favor[.!?]*$', '', value)
+        value = command_text(text)
+        if re.fullmatch(r'(?:/abrir|abra|abre|abrir|inicie|iniciar|execute|executar) (?:a |o )?(?:(?:aplicativo|programa) )?steam', value):
+            return open_steam()
         match = re.fullmatch(r'(?:/abrir|abra|abre|abrir) (?:o )?(?:resultado |item )?(\d+)[.!?]?', value)
         if match:
             return self.open_result(int(match[1]))

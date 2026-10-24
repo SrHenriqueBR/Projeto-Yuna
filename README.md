@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.4.1
+# Projeto Yuna · Base 0.4.2
 
 Assistente pessoal local para Windows. **Atualização 0.4: copie `yuna.py` e `computer.py` juntos para a pasta antiga e preserve `data/`.** Esta primeira etapa oferece conversa por texto no terminal e memória persistente em SQLite. **A voz será feminina, em português brasileiro, na próxima etapa. Ainda não há áudio nem microfone.**
 
@@ -147,3 +147,12 @@ Perguntas comuns como “Qual o meu nome?”, “Sabe meu nome?” e “Seu nome
 A identidade da assistente é sempre Yuna. O nome do usuário vem das suas próprias declarações, sem nome pessoal fixo no código. `/esquecer ID` e `/apagar CONFIRMAR` continuam removendo essas memórias. O modelo ainda pode errar em outras formulações e assuntos; essa correção resolve os casos de identidade descritos, não todos os erros de interpretação.
 
 Para quem já está na versão 0.4, basta substituir `yuna.py` com a Yuna fechada e preservar `data/` e `computer.py`. Teste `/lembrar meu nome e Kaizen`, depois “Qual o meu nome?” e “Seu nome é Yuna?”. Feche e reabra para verificar a persistência.
+
+
+## Correção 0.4.2 — abrir Steam e reconhecer pedidos coloquiais
+
+Atualize **`yuna.py` e `computer.py` juntos**, com a Yuna fechada. Preserve `data/`.
+
+Agora “Yuna abra a Steam”, “abre pra mim a Steam” e `/abrir steam` solicitam a abertura do aplicativo pelo protocolo registrado da Steam no Windows (`steam://open/main`). Isso não faz busca de documentos, não abre PDFs com “Steam” no nome e não inicia um jogo. A Steam precisa estar instalada com seu protocolo registrado. Se houver erro, a Yuna informa em vez de dizer que abriu.
+
+Também foram corrigidos “Yuna abra pra min a pasta documentos”, “abra para mim os downloads” e “pode abrir a Steam?”. As negações permanecem intactas e não acionam essas aberturas. A solicitação de abertura não comprova visualmente que a janela apareceu; confira no Windows. Ainda não há um lançador universal para qualquer aplicativo.

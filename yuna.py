@@ -8,7 +8,7 @@ import sqlite3
 import subprocess
 import urllib.error
 import urllib.request
-from computer import Computer, normalize
+from computer import Computer, normalize, command_text
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
@@ -17,7 +17,7 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal. Yuna é o nome da assistente, 
           'Use informações pessoais que ele compartilhou; não alegue falta de acesso a elas quando constarem nas memórias. '
           'Responda em português brasileiro, '
           'com clareza e simpatia. Admita dúvidas. Nesta versão você só conversa por texto: '
-          'A aplicação pode buscar nomes de arquivos e pastas e abrir resultados selecionados. '
+          'A aplicação pode buscar nomes de arquivos e pastas, abrir resultados selecionados e abrir a Steam instalada. '
           'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
           'Você não vê a tela, não lê arquivos, não acessa internet e não fala em voz alta. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
@@ -34,6 +34,7 @@ HELP = '''/ajuda                 Mostra os comandos
 /abrir downloads       Abre Downloads no Windows
 /abrir explorador      Abre o Explorador de Arquivos
 /abrir documentos      Abre Documentos
+/abrir steam           Abre o aplicativo Steam instalado
 /buscar NOME          Busca nomes dentro do seu perfil
 /buscar tudo NOME     Busca nos discos locais fixos
 /abrir NUMERO         Abre um resultado da última busca
@@ -174,13 +175,7 @@ FOLDERS = {
 
 
 def parse_action(text):
-    value = unicodedata.normalize('NFKD', text.lower())
-    value = ''.join(c for c in value if not unicodedata.combining(c))
-    value = re.sub(r'\s+', ' ', value).strip().rstrip('.!?')
-    value = re.sub(r'^yuna[, ]+', '', value)
-    value = re.sub(r'^por favor[, ]+', '', value)
-    value = re.sub(r'[, ]+por favor$', '', value)
-    value = re.sub(r'^(pode|consegue) ', '', value)
+    value = command_text(text)
     # Exige correspondência integral: perguntas, negações e ações extras não executam.
     pattern = (r'(?:/abrir|abrir|abra|abre|va|vai)(?: ate)? '
                r'(?:(?:o|a|os|as|meu|minha|meus|minhas|na|no|para|pasta|aba|de) )*'
@@ -267,7 +262,7 @@ def respond(memory, message):
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
     computer = Computer()
-    print('Yuna • Base 0.4.1 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
+    print('Yuna • Base 0.4.2 • conversa por texto\nVoz feminina prevista para a próxima etapa.\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
