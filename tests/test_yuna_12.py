@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 import unittest
 
-from web_actions import handle_web_command, wikipedia_lookup, open_allowed_url
+from web_actions import handle_web_command, wikipedia_lookup, open_allowed_url, public_question_to_query
 from screen_consent import ScreenConsent
 from yuna import startup_greeting, identity_reply
 from datetime import datetime, timezone
@@ -20,6 +20,21 @@ class BrowserTests(unittest.TestCase):
         with patch("web_actions.open_allowed_url", return_value="Pesquisei") as opener:
             self.assertEqual(handle_web_command("Pesquise música clássica no YouTube"), "Pesquisei")
             self.assertIn("search_query=musica%20classica", opener.call_args.args[0])
+
+    def test_reuse_chrome_for_next_youtube_search(self):
+        class Session:
+            prefer_chrome = False
+        session = Session()
+        with patch("web_actions.open_allowed_url", return_value="Ok") as opened:
+            handle_web_command("Abra Chrome e abre YouTube", session)
+            handle_web_command("Pesquisa astronomia no YouTube", session)
+            self.assertTrue(session.prefer_chrome)
+            self.assertTrue(opened.call_args.kwargs["chrome"])
+
+    def test_auto_lookup_only_public_general_questions(self):
+        self.assertEqual(public_question_to_query("O que é energia escura?"), "energia escura")
+        self.assertIsNone(public_question_to_query("Quem é meu pai?"))
+        self.assertIsNone(public_question_to_query("Como está minha conta?"))
 
     def test_no_actions_for_questions_or_negations(self):
         with patch("web_actions.open_allowed_url") as opener:
