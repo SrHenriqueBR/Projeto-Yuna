@@ -1,4 +1,4 @@
-"""Yuna 0.9: identidade fiel e planejamento apenas consultivo."""
+"""Yuna 0.10: identidade fiel e planejamento apenas consultivo."""
 import json
 from pathlib import Path
 import tempfile
@@ -31,7 +31,7 @@ class SelfModelTests(unittest.TestCase):
     def test_about_is_verified_without_model_or_actions(self):
         with patch("yuna.ask_model", side_effect=AssertionError("Não deve usar modelo")):
             result = yuna.handle_message(self.memory, "como esta seu codigo", Mock())
-        self.assertIn("Yuna 0.9", result)
+        self.assertIn("Yuna 0.10", result)
         self.assertIn("Ollama", result)
         self.assertIn("não", result.lower())
         self.assertIn("memória", result.lower())

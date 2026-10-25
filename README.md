@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.9
+# Projeto Yuna · Base 0.10
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -6,7 +6,7 @@ Assistente pessoal local para Windows: conversa em português, memória persiste
 
 1. Feche a Yuna e faça uma cópia privada de `data/`.
 2. Baixe o ZIP novo e extraia em outra pasta.
-3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py`, `self_model.py`, `vision.py`, `voice.py` e `yuna_overlay.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py`, `self_model.py`, `vision.py`, `voice.py`, `diary.py` e `yuna_overlay.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
 4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
 
 Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
@@ -315,3 +315,17 @@ Se a mascote mostra `🔊 Jovem` mas não fala, feche-a, copie a versão atualiz
 A voz **Jovem** utiliza o `edge-tts`, que não exige chave de API mas depende de conexão com internet e de um serviço não oficial sujeito a mudanças. Ative-a somente quando aceitar que as frases sintetizadas sejam enviadas para fora do computador. As opções **Offline** e **Muda** continuam disponíveis gratuitamente.
 
 Caso apareça `'lazy_import' object is not callable` mesmo com o áudio agora conectado ao reprodutor, isso **é outro erro**, relacionado ao ambiente Python/bibliotecas: siga a seção anterior sobre usar Python 3.13 para síntese. Se o status indicar `Falha ao tocar MP3`, teste o arquivo MP3 fora da Yuna e confira as saídas de áudio do Windows.
+
+## Yuna 0.10 — Diário da Escuridão escrito aos poucos
+
+A mascote agora possui o botão **📖 Diário**, que abre uma segunda janela com as páginas da personagem Yuna/Escuridão. Ao clicar em **✍ Escrever agora**, o **Ollama local** gera um parágrafo de reflexão fictícia sobre a evolução da assistente. A Yuna mostra e salva o texto gradualmente, em pequenos trechos, no arquivo **`data/diario_yuna.md`**.
+
+Se você escolher **▶ Ativar automático**, a Yuna gera uma nova página a cada **15 minutos**, **somente enquanto a mascote estiver aberta**. A opção começa desligada e pode ser desativada na própria janela. É guardada em **`data/diario_yuna_config.json`** para as próximas sessões. O diário não roda com o computador desligado nem faz gravações pela câmera ou microfone.
+
+O arquivo é **Markdown**, que pode ser aberto no Bloco de Notas, VS Code ou convertido mais tarde em documento Word/PDF. O limite de tamanho é 1 MB para evitar crescimento descontrolado. O botão **✍ Escrever agora** funciona mesmo com a escrita automática desligada. Entradas antigas são preservadas, inclusive após fechar e abrir a Yuna. Faça backup da pasta `data/` antes de atualizar.
+
+**Privacidade e limites:** o diário usa o mesmo modelo Ollama já instalado e não envia dados a APIs de voz ou outros serviços. O prompt de geração **não contém conversas, arquivos, memórias ou dados pessoais** do usuário; ele escreve ideias gerais sobre aprender a ajudar melhor. São reflexões **literárias simuladas**, não um registro de sentimentos conscientes. A Yuna só pode criar/modificar esse arquivo na pasta `data` e não altera outros documentos por conta própria.
+
+**Instalação:** feche a Yuna, copie `diary.py`, `yuna_overlay.py`, `self_model.py`, `yuna.py` e `iniciar_yuna_mascote.bat` atualizados para a pasta antiga, sem apagar `assets/` nem `data/`. Se preferir, atualize todos os arquivos `.py` a partir do ZIP. Não precisa instalar bibliotecas adicionais. Abra `iniciar_yuna_mascote.bat` e clique no botão **📖**.
+
+**Desempenho:** uma reflexão demanda uma chamada ao Ollama, então pode demorar alguns segundos dependendo do modelo. Se estiver conversando com a Yuna, a escrita aguarda sua vez e não executa comandos do computador.
