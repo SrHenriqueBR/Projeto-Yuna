@@ -1,6 +1,11 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+if not exist "agent_brain.py" (
+    echo Falta agent_brain.py. Atualize os arquivos do projeto para Yuna 0.13.
+    pause
+    exit /b 1
+)
 if not exist "file_diagnostics.py" (
     echo Falta file_diagnostics.py. Atualize todos os arquivos Python da Yuna.
     pause
