@@ -36,6 +36,9 @@ class SelfModelTests(unittest.TestCase):
         self.assertIn("não", result.lower())
         self.assertIn("memória", result.lower())
         self.assertTrue(self_model.is_self_question("Yuna, como está seu código?"))
+        self.assertTrue(self_model.is_self_question(
+            "Bom, primeiro quero saber como está o seu código"))
+        self.assertFalse(self_model.is_self_question("Não quero saber como está seu código"))
         self.assertEqual(self.memory.history()[-1]["role"], "assistant")
 
     def test_natural_conversation_not_routed_to_actions(self):
