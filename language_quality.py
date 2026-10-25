@@ -37,7 +37,7 @@ def identity_conversation_reply(text, history=None):
             prior = " ".join(row.get("content", "") for row in turns)
             if not re.search(r"\b(?:nome|me chamo|chama)\b", normalized(prior)):
                 return None
-        return "O meu nome é Yuna, Kaizen. Sou sua assistente pessoal. ✨"
+        return "Meu nome é Yuna, Kaizen. Sou sua assistente pessoal. ✨"
     if "minha criacao" in value and (
             re.search(r"\b(?:voce e|tu es|te criei|eu criei|criei voce)\b", value)):
         return "Isso mesmo, Kaizen. Você criou a Yuna! Obrigada por cuidar do projeto. 🖤"
@@ -53,7 +53,7 @@ BAD_PATTERNS = (
     r"\b(?:eu\s+)?vou\s+(?:poder|precisar)\s+de\s+abrir\b",
     r"\bseu\s+nome\s+(?:e|é)\s+yuna\b",
     r"\b(?:eu )?sou (?:o )?kaizen\b",
-    r"\b(?:nao|não)\s+tenho\s+(?:um\s+)?nome\s+proprio\b",
+    r"\b(?:nao|não)\s+tenho\s+(?:um\s+)?nome\s+pr[oó]prio\b",
     r"\b(?:eu )?(?:estou|fiquei|sou|me sinto)\s+(?:muito\s+)?"
     r"(?:pronto|animado|grato|cansado|confuso|empolgado)\b",
     r"(?m)^\s*obrigado(?:[,!. ]|$)",
