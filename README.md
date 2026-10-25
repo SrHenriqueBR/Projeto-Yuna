@@ -304,3 +304,14 @@ A chave fica somente no ambiente da sessão do PowerShell; não é guardada na m
 **Atenção à privacidade:** ao confirmar a voz Amanda, o texto falado será enviado para a ElevenLabs, inclusive qualquer resposta da Yuna que possa conter fatos pessoais, e pode ser armazenado pelo provedor conforme o plano. Não use para conversas privadas. É possível desligar a voz a qualquer momento. A Yuna não envia áudios ou memórias completas à ElevenLabs: envia somente o texto que seria falado, limitado a 520 caracteres.
 
 A reprodução pelo Windows/Qt e o acesso à voz Amanda precisam ser validados no seu computador. Os testes automatizados apenas simulam a resposta da API; não consomem créditos nem garantem que sua chave tenha acesso à voz.
+
+
+## Correção da mascote muda (Yuna 0.9)
+
+Identificamos um erro de **fluxo da interface**, independente do provedor de voz: o MP3 era gerado mas não era encaminhado ao `QMediaPlayer`. O método `say()` foi corrigido para emitir `edge_ready` depois de sintetizar o arquivo; também foram adicionadas indicações de **Preparando voz…**, **Reproduzindo voz…** e mensagens separadas para erros de síntese e reprodução.
+
+Se a mascote mostra `🔊 Jovem` mas não fala, feche-a, copie a versão atualizada de `yuna_overlay.py` para sua pasta instalada e reabra `iniciar_yuna_mascote.bat`. **Preserve `assets/` e `data/`**; não é necessário reinstalar o Ollama, o PySide6 ou o Edge TTS para corrigir este defeito.
+
+A voz **Jovem** utiliza o `edge-tts`, que não exige chave de API mas depende de conexão com internet e de um serviço não oficial sujeito a mudanças. Ative-a somente quando aceitar que as frases sintetizadas sejam enviadas para fora do computador. As opções **Offline** e **Muda** continuam disponíveis gratuitamente.
+
+Caso apareça `'lazy_import' object is not callable` mesmo com o áudio agora conectado ao reprodutor, isso **é outro erro**, relacionado ao ambiente Python/bibliotecas: siga a seção anterior sobre usar Python 3.13 para síntese. Se o status indicar `Falha ao tocar MP3`, teste o arquivo MP3 fora da Yuna e confira as saídas de áudio do Windows.
