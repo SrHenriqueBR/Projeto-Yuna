@@ -39,16 +39,27 @@ def folded(text):
 
 
 def file_intent(message):
+    """Só cria após pedido operacional, não quando a pessoa menciona criar algo."""
     clean = folded(message.strip())
-    if re.search(r"\b(?:nao|nunca)\s+" + VERBS + r"\b", clean):
-        return False
-    if re.match(r"^(?:como|por que|porque|e se|se eu|o que e)\b", clean):
-        return False
+    clean = re.sub(r"^yuna[, ]+", "", clean)
     if clean.startswith("/criar "):
         return True
-    return bool(re.search(r"\b" + VERBS + r"\b", clean)
-                and re.search(r"\b(?:word|docx|documento|planilha|excel|powerpoint|pptx|"
-                              r"apresentacao|slides|pdf|arquivo|texto|txt|markdown)\b", clean))
+    if re.match(r"^(?:como|por que|porque|e se|se eu|o que e|nao|nunca)\b", clean):
+        return False
+    request = re.match(
+        r"^(?:(?:por favor|ei yuna)[, ]+)?"
+        r"(?:(?:voce|vc)\s+)?"
+        r"(?:(?:pode|consegue|poderia)\s+)?"
+        r"(?:crie|cria|faca|monte|gere|produza)\b",
+        clean
+    ) or re.match(
+        r"^(?:quero|preciso)\s+que\s+(?:voce|a yuna)?\s*"
+        r"(?:crie|cria|faca|monte|gere)\b", clean
+    )
+    return bool(request and re.search(
+        r"\b(?:word|docx|documento|planilha|excel|powerpoint|pptx|"
+        r"apresentacao|slides|pdf|arquivo|texto|txt|markdown)\b", clean
+    ))
 
 
 def parse_request(message, home=None):
