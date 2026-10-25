@@ -1,6 +1,11 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+if not exist "document_writer.py" (
+    echo Falta document_writer.py. Copie todos os arquivos atualizados da Yuna.
+    pause
+    exit /b 1
+)
 if not exist "diary.py" (
     echo Falta diary.py. Atualize os arquivos do projeto antes de abrir a mascote.
     pause
