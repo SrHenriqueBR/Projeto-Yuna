@@ -11,6 +11,11 @@ if not exist "file_diagnostics.py" (
     pause
     exit /b 1
 )
+if not exist "own_initiative.py" (
+    echo Falta own_initiative.py. Atualize todos os arquivos da Yuna.
+    pause
+    exit /b 1
+)
 if not exist "language_quality.py" (
     echo Falta language_quality.py. Atualize todos os arquivos da Yuna.
     pause
