@@ -68,3 +68,65 @@ def plan_request(message, home=None):
         kind, validate_title(name), known_folder(folder, home),
         "Síntese da pesquisa pública sobre " + topic + ", com referências verificáveis."
     ))
+
+
+def describe_plan(plan):
+    return ("Plano da Yuna (não executado ainda):\n"
+            f"1. Consultar Wikipédia sobre {plan.topic}.\n"
+            "2. Organizar dados da pesquisa com o Ollama local.\n"
+            f"3. Criar {plan.output.kind} em {plan.output.directory}.\n"
+            "4. Conferir o documento salvo no disco.\n"
+            "Não vou substituir arquivos existentes.")
+
+
+def verify_file(path, request):
+    path = Path(path)
+    if (path.parent.resolve() != Path(request.directory).resolve()
+            or path.suffix.lower() != {
+                "powerpoint": ".pptx", "excel": ".xlsx", "pdf": ".pdf",
+                "word": ".docx", "texto": ".txt", "markdown": ".md"
+            }[request.kind]
+            or not path.is_file() or path.stat().st_size < 10):
+        raise RuntimeError("Não consegui comprovar que o documento foi salvo corretamente.")
+    if request.kind in ("word", "excel", "powerpoint") and not zipfile.is_zipfile(path):
+        raise RuntimeError("O documento Office não passou na verificação.")
+    if request.kind == "pdf" and path.read_bytes()[:4] != b"%PDF":
+        raise RuntimeError("O PDF não passou na verificação.")
+    return path
+
+
+def source_links(research):
+    # Wikipédia retornou explicitamente URLs de fonte; não inventar URLs.
+    return list(dict.fromkeys(re.findall(
+        r"(?m)^Fonte:\s*(https://pt\.wikipedia\.org/wiki/\S+)", research
+    )))[:3]
+
+
+def append_sources(path, kind, urls):
+    """Acrescenta referências ao arquivo recém-criado, sem consultar o modelo."""
+    if kind == "word":
+        from docx import Document
+        doc = Document(path)
+        doc.add_heading("Fontes consultadas", level=2)
+        for url in urls:
+            doc.add_paragraph(url)
+        doc.save(path)
+    elif kind == "powerpoint":
+        from pptx import Presentation
+        presentation = Presentation(path)
+        slide = presentation.slides.add_slide(presentation.slide_layouts[1])
+        slide.shapes.title.text = "Fontes consultadas"
+        slide.placeholders[1].text = "\n".join(urls)
+        presentation.save(path)
+    elif kind == "excel":
+        from openpyxl import load_workbook
+        book = load_workbook(path)
+        sheet = book.create_sheet("Fontes")
+        sheet.append(["Fontes consultadas"])
+        for url in urls:
+            sheet.append([url])
+        sheet.column_dimensions["A"].width = 72
+        book.save(path)
+    elif kind in ("texto", "markdown"):
+        with Path(path).open("a", encoding="utf-8") as file:
+            file.write("\n\nFontes consultadas:\n" + "\n".join(urls) + "\n")
