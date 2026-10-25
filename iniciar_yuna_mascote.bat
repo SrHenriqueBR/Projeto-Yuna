@@ -1,6 +1,11 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+if not exist "diary.py" (
+    echo Falta diary.py. Atualize os arquivos do projeto antes de abrir a mascote.
+    pause
+    exit /b 1
+)
 if not exist "yuna_overlay.py" (
     echo Falta yuna_overlay.py. Atualize todos os arquivos da Yuna.
     pause
