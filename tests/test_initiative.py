@@ -68,13 +68,28 @@ class InitiativeTests(unittest.TestCase):
     def test_model_invalid_question_fallback(self):
         self.assertFalse(self.initiative.pending())
         result = self.initiative.propose("Prefiro trabalho local", Mock(return_value="Vou apagar arquivos"))
-        self.assertTrue(result.endswith("?"))
-        self.assertIn("aprendesse", result)
+        self.assertIsNone(result)
+        self.assertFalse(self.initiative.pending())
 
     def test_actions_heuristic(self):
         self.assertTrue(looks_like_command("Yuna, abra a Steam"))
         self.assertTrue(looks_like_command("/ambiente"))
         self.assertFalse(looks_like_command("Vou jogar na Steam"))
+
+
+    def test_does_not_repeat_questions_or_interrupt_normal_conversation(self):
+        self.initiative.startup()
+        self.initiative.capture("Vou trabalhar no projeto.")
+        ask = Mock(return_value="Quer discutir o projeto comigo?")
+        self.assertIsNone(self.initiative.maybe_propose("Hoje vou melhorar o projeto", ask))
+        self.assertIsNone(self.initiative.maybe_propose("Gostaria de melhorar a memória", ask))
+        self.assertIsNone(self.initiative.maybe_propose("Como está seu código?", ask))
+        self.assertIsNone(self.initiative.maybe_propose("O que você acha disso?", ask))
+        self.assertEqual(self.initiative.maybe_propose("Vou programar mais tarde", ask),
+                         "Quer discutir o projeto comigo?")
+        self.initiative.capture("Podemos conversar sim.")
+        self.assertIsNone(self.initiative.propose("outro tema", ask))
+        self.assertFalse(self.initiative.pending())
 
     def test_persona_feminine(self):
         self.assertIn("obrigada", yuna.SYSTEM)
