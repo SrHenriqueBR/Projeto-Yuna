@@ -17,7 +17,7 @@ from self_model import Thinking, VERSION, about_text, is_self_question
 from document_writer import looks_like_file_request, parse_file_request, generate_contents, create_file
 from vision import describe_screen
 from office_agent import file_intent, parse_request as parse_office_request, create_requested
-from web_actions import handle_web_command
+from web_actions import handle_web_command, public_question_to_query, wikipedia_lookup
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
@@ -336,7 +336,7 @@ def handle_message(memory, text, computer=None):
         answer = f"Criei o arquivo {target.name} e salvei em: {target}"
         memory.save_turn(text, answer)
         return answer
-    web_reply = handle_web_command(text)
+    web_reply = handle_web_command(text, computer)
     if web_reply is not None:
         memory.save_turn(text, web_reply)
         return web_reply
@@ -390,6 +390,11 @@ def respond(memory, message):
         for _, obs, sug, doubt in memory.thinking.recent(3)]
     notes += '\nNotas de planejamento: sugestões e hipóteses, NÃO ações realizadas: ' + json.dumps(
         thoughts, ensure_ascii=False)
+    query = public_question_to_query(message) if os.environ.get('YUNA_AUTO_RESEARCH', '1') == '1' else None
+    if query:
+        public_refs = wikipedia_lookup(query)
+        if 'Fonte:' in public_refs:
+            notes += '\nFontes públicas da Wikipédia para esta pergunta: ' + public_refs[:1800]
     messages = [{'role': 'system',
                  'content': SYSTEM + '\n' + memory.affect.style_instructions() + '\n'
                             + facts + notes}]
