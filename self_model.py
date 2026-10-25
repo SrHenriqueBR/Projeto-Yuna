@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.8"
+VERSION = "0.9"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -58,11 +58,12 @@ def about(memory, model):
             "buscar nomes de arquivos e mostrar hardware/processos/janelas por pedido",
             "descrever a tela apenas com /tela e modelo de visão local opcional",
         ],
+        "mascote": "janelinha animada opcional com PySide6 e voz feminina (Windows offline ou Edge online opt-in)",
         "ainda_nao": [
             "consciência ou sentimentos humanos demonstráveis",
             "programação e instalação automática de código",
             "controle irrestrito do computador sem uma ferramenta autorizada",
-            "microfone e voz falada nesta versão",
+            "microfone e escuta contínua (a mascote tem voz falada opcional)",
             "leitura direta do próprio código-fonte ou de documentos",
             "pesquisa na internet ou raciocínio em execução com a Yuna fechada",
         ],
@@ -79,7 +80,8 @@ def about_text(memory, model):
         f"e um módulo de planejamento {'ligado' if data['pensamento_periodico'] else 'desligado'}.\n"
         "Consigo conversar, analisar objetivos, recuperar lembranças e usar algumas ferramentas do "
         "Windows quando você pede. Não leio meus arquivos-fonte automaticamente nem mexo "
-        "no sistema por conta própria. Ainda não tenho voz e avatar executáveis.\n"
+        "no sistema por conta própria. Agora também tenho uma mascote flutuante e voz feminina opcional "
+        "no Windows (o terminal segue só por texto).\n"
         "Minha prioridade de melhoria é conversar naturalmente, evitar perguntas repetidas "
         "e reconhecer meus limites sem respostas defensivas desnecessárias."
     )

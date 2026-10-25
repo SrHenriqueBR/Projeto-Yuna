@@ -1,12 +1,12 @@
-# Projeto Yuna · Base 0.8
+# Projeto Yuna · Base 0.9
 
-Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A linguagem feminina está ativa; voz falada e microfone continuam pendentes.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
+Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
 ## Atualizar uma instalação existente
 
 1. Feche a Yuna e faça uma cópia privada de `data/`.
 2. Baixe o ZIP novo e extraia em outra pasta.
-3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py`, `self_model.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py`, `self_model.py`, `vision.py`, `voice.py` e `yuna_overlay.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
 4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
 
 Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
@@ -24,7 +24,7 @@ Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para 
 4. Baixe o repositório em **Code → Download ZIP** e extraia.
 5. Abra `iniciar_yuna.bat` ou execute `py -3 yuna.py` na pasta extraída.
 
-Se aparecer conexão recusada, execute `ollama serve` em outra janela e mantenha-a aberta. O download do modelo é de aproximadamente 1,9 GB. A primeira resposta pode demorar enquanto ele carrega. Não há pacotes pip adicionais.
+Se aparecer conexão recusada, execute `ollama serve` em outra janela e mantenha-a aberta. O download do modelo é de aproximadamente 1,9 GB. A primeira resposta pode demorar enquanto ele carrega. A versão pelo terminal não requer pacotes pip adicionais; a mascote opcional precisa do PySide6.
 
 O modelo Qwen2.5 3B é um ponto de partida leve e multilíngue, sujeito à Qwen Research License. Qualidade e desempenho precisam ser avaliados no notebook; ele não tem as mesmas capacidades ou memórias do ChatGPT.
 
@@ -211,3 +211,46 @@ A Yuna agora sabe **explicar sua arquitetura documentada** e responder diretamen
 ### Atualizando da 0.7
 
 Feche a Yuna, guarde uma cópia da pasta **\`data/\`**, copie **todos os \`.py\` da raiz** da versão 0.8 (incluindo \`self_model.py\`) e \`iniciar_yuna.bat\` para a instalação antiga. Preserve sua pasta \`data/\`; a Yuna acrescenta automaticamente a tabela das notas sem apagar a memória atual. Execute \`py -3 -m unittest discover -s tests -v\` para testar.
+
+
+## Yuna 0.9 — Escuridão flutuante e voz jovem/atrevida
+
+Este é um **modo gráfico opcional**. O terminal tradicional em \`iniciar_yuna.bat\` continua funcionando sem PySide6. A mascote usa o mesmo \`data/yuna.db\`, mas **não abra terminal e mascote simultaneamente na mesma instalação** para evitar inconsistências ou conflitos no banco.
+
+### Instalação da mascote no Windows
+
+1. Feche a Yuna antiga. **Copie sua pasta \`data/\` para backup e não a substitua.**
+2. Baixe o ZIP mais recente do GitHub. Copie **todos os arquivos Python** e os dois arquivos BAT para sua pasta antiga.
+3. Instale a interface pelo PowerShell (uma única vez):
+
+   \`\`\`powershell
+   py -3 -m pip install -r requirements-mascote.txt
+   \`\`\`
+
+4. Coloque os sprites \`yuna_idle.png\`, \`yuna_wave.png\`, \`yuna_happy.png\`, \`yuna_thinking.png\`, \`yuna_speaking.png\` e \`yuna_sleepy.png\` na pasta \`assets/\` da Yuna. Se não tiver sprites, a janela funciona com um símbolo visual temporário, sem personagem.
+5. Deixe o Ollama aberto e inicie \`iniciar_yuna_mascote.bat\` (ou \`py -3 yuna_overlay.py\`).
+
+A Escuridão aparece como uma janela **sem borda, flutuante e arrastável**; movimenta-se alternando poses, mostra balão de texto, permite digitar e usa a conversa e memória que você já tinha.
+
+### Como funciona a voz
+
+**Padrão — voz feminina local (Windows):** usa \`System.Speech\`, sem enviar o texto pela internet. O Windows precisa ter uma voz feminina **pt-BR** instalada. As vozes instaladas variam de máquina para máquina; se não houver uma, a Yuna continua funcionando em texto e informa o erro.
+
+**Opcional — voz mais jovem pelo Edge TTS:** toque no botão **Voz: Offline**, confirme o aviso de privacidade e instale \`edge-tts\`:
+
+\`\`\`powershell
+py -3 -m pip install edge-tts
+\`\`\`
+
+A síntese utiliza \`pt-BR-FranciscaNeural\`, velocidade \`+13%\` e altura \`+8Hz\`, com leve estilo adolescente/atrevido **na fala escrita**, sem imitar pessoa real. Os parâmetros podem ser ajustados em \`voice.py\`. O Edge TTS usa um serviço remoto, não requer chave API por padrão, e **envia o texto falado para fora do computador**; sua disponibilidade pode mudar sem aviso. Não o utilize para senhas, conversas confidenciais ou assuntos privados. O áudio gerado é um MP3 temporário e apagado após a reprodução.
+
+O botão alterna entre **Offline → Jovem (online) → Muda**. O modo online exige consentimento em cada sessão, mesmo se a variável \`YUNA_VOICE_ENGINE=edge\` estiver configurada.
+
+A fala offline depende da voz pt-BR instalada; por isso não é possível garantir uma timbragem adolescente idêntica em todas as máquinas. A animação facial nesta versão alterna sprites conforme o estado **falando, pensando ou descansando** — ainda não é sincronização labial por fonema ou Live2D. Não há microfone, câmera, gravação contínua nem controle do computador sem pedido explícito.
+
+### Como atualizar a versão com segurança
+
+- Atualize todos os arquivos \`.py\` (especialmente \`voice.py\` e \`yuna_overlay.py\`), o launcher \`iniciar_yuna_mascote.bat\` e \`requirements-mascote.txt\`.
+- Guarde os seis PNGs em \`assets/\` e **preserve \`data/\`**.
+- Se não quiser a mascote, pode continuar usando \`iniciar_yuna.bat\` normalmente.
+- Para testar o código sem abrir a interface: \`py -3 -m unittest discover -s tests -v\`. O áudio final e a interface Windows devem ser verificados no seu notebook.
