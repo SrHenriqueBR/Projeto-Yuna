@@ -431,3 +431,19 @@ A mascote mostra **YUNA 0.12.1** no título. Se ainda aparecer apenas `YUNA` ou 
 **Instalação rápida:** feche a Yuna, preserve **`data/` e `assets/`**. Atualize **todos os `.py` do GitHub** na mesma pasta de `iniciar_yuna_mascote.bat`; especialmente `office_agent.py`, `document_writer.py`, `yuna.py`, `yuna_overlay.py`, `initiative.py`, `self_model.py`. Reabra a mascote e confira `YUNA 0.12.1`. Não precisa instalar pacotes adicionais se a versão 0.12 já tem os geradores Office.
 
 **Teste sem ambiguidade**: `Yuna, cria um documento Word chamado Diário da Yuna na minha Área de Trabalho`. Se o Ollama estiver ativo e `python-docx` disponível no Python da mascote, ela deverá gerar o arquivo de verdade. Se não conseguir, a mensagem indicará o motivo e não alegará conclusão.
+
+## Yuna 0.12.2 — diagnóstico definitivo de arquivos que não aparecem
+
+Se, ao pedir um Word, a Yuna ainda responder que você deve abrir o Word e usar `/abrir 1`, **isso não é criação de arquivo**: ou o executável está carregando outra cópia do projeto ou a interpretação do pedido não acionou o gerador.
+
+Atualize **todos os arquivos `.py` juntos** na pasta de onde abre `iniciar_yuna_mascote.bat`. Não apague `data/` e `assets/`. A mascote deve mostrar `YUNA 0.12.2` no cabeçalho. Se mostra apenas YUNA ou uma versão antiga, você está executando uma pasta antiga. Esta versão adiciona:
+
+- **`/versao`** — mostra qual `yuna.py` foi carregado, a versão da Yuna, o executável Python, os módulos responsáveis por arquivos e se python-docx está instalado.
+- **`/teste_arquivo`** — cria **um TXT de verdade** diretamente na Área de Trabalho real, sem usar Ollama nem Microsoft Word. Confirma o caminho gravado ou exibe o erro concreto.
+- **`Crie um Word chamado Diário da Yuna na Área de Trabalho`** — depois de o teste TXT passar, usa Ollama para escrever o conteúdo e python-docx para criar o DOCX.
+
+O gerador também rejeita respostas do Ollama que só orientam a abrir o Word. Tenta escrever o conteúdo uma segunda vez; se ainda falhar, exibe o erro em vez de fingir que criou o documento.
+
+**Sequência para investigar no PC:** (1) digite `/versao` na mascote; (2) digite `/teste_arquivo`; (3) confira o TXT e só então peça um Word. Se o teste funcionar mas o Word falhar, a mensagem identifica o problema no Ollama/gerador de arquivos. O comando `/teste_arquivo` nunca sobrescreve arquivo: cria `Yuna_Teste_Arquivo.txt` ou `Yuna_Teste_Arquivo (2).txt`.
+
+Se o comando `/versao` for respondido pelo modelo como se fosse uma conversa, a Yuna ainda está rodando código antigo ou de outra pasta — não adianta repetir o pedido de Word até atualizar a instalação correta.
