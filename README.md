@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.7
+# Projeto Yuna · Base 0.8
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A linguagem feminina está ativa; voz falada e microfone continuam pendentes.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -6,7 +6,7 @@ Assistente pessoal local para Windows: conversa em português, memória persiste
 
 1. Feche a Yuna e faça uma cópia privada de `data/`.
 2. Baixe o ZIP novo e extraia em outra pasta.
-3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
+3. Copie **todos os arquivos `.py` da raiz** (`yuna.py`, `computer.py`, `desktop.py`, `local_agent.py`, `initiative.py`, `affect.py`, `self_model.py` e `vision.py`) e `iniciar_yuna.bat` para a pasta antiga, substituindo os arquivos existentes.
 4. Preserve `data/` e abra `iniciar_yuna.bat` na pasta antiga.
 
 Não precisa baixar o modelo novamente. A pasta `tests` só é necessária para desenvolvimento. Abrir uma nova cópia do projeto sem sua pasta `data/` inicia uma memória vazia.
@@ -192,3 +192,22 @@ As preferências e reflexões podem ser consultadas também no export legível \
 ### Instalação/atualização
 
 Se estiver na Base 0.6, copie **todos** os arquivos Python da versão atualizada, incluindo **\`affect.py\`**, e o BAT para a pasta antiga. Antes, faça uma cópia particular da pasta \`data/\` e **não substitua nem apague essa pasta**. Ao iniciar, a migração das novas tabelas SQLite acontece automaticamente, preservando o histórico. Execute \`py -3 -m unittest discover -s tests -v\` para os testes automatizados.
+
+
+## Yuna 0.8 — autoimagem, planejamento e iniciativa controlada
+
+A Yuna agora sabe **explicar sua arquitetura documentada** e responder diretamente "como está seu código?" sem alegar que não pode conversar sobre seus próprios módulos. Isso NÃO quer dizer que o modelo abriu, leu ou alterou os arquivos de código. A descrição é um inventário do que foi implementado, atualizado pelos desenvolvedores.
+
+- **/sobre**: versão, modelo de texto, memória, planos registrados e capacidades e limites reais.
+- **/pensar TEMA**: solicita ao Ollama uma **síntese de planejamento em JSON validado**, com observação, próximo passo sugerido e dúvida. Salva até 30 notas em SQLite. Nenhuma dessas notas é executada como comando.
+- **/pensamentos**: lista as notas auditáveis. **/esquecer_pensamento ID** apaga uma.
+- **/autonomia ligar|desligar**: controla a geração de uma nota de planejamento a cada seis turnos elegíveis, **somente quando a Yuna estiver aberta**. As notas automáticas não controlam o Windows, não enviam dados à web e não mudam o código.
+- Perguntas automáticas com intervalo de pelo menos três contribuições elegíveis, sem interromper perguntas dirigidas à assistente e com filtro de similaridade para evitar repetições.
+- Respostas no modelo têm contexto de ideias anteriores rotuladas como **sugestões e hipóteses**, não fatos verificados.
+- O modelo-base \`qwen2.5:3b\` pode cometer erros e retornar uma estrutura inválida: a aplicação rejeita o planejamento, sem executar qualquer ação.
+
+**Importante:** isto aproxima a Yuna de um agente capaz de planejar e se autoavaliar, mas não cria consciência demonstrada, sentimentos humanos, autonomia irrestrita ou raciocínio fora do processo quando ela está fechada. O planejamento periódico consome uma consulta Ollama a cada seis interações elegíveis. Para evitar consumo extra, use \`/autonomia desligar\`.
+
+### Atualizando da 0.7
+
+Feche a Yuna, guarde uma cópia da pasta **\`data/\`**, copie **todos os \`.py\` da raiz** da versão 0.8 (incluindo \`self_model.py\`) e \`iniciar_yuna.bat\` para a instalação antiga. Preserve sua pasta \`data/\`; a Yuna acrescenta automaticamente a tabela das notas sem apagar a memória atual. Execute \`py -3 -m unittest discover -s tests -v\` para testar.
