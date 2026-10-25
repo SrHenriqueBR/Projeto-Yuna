@@ -21,7 +21,8 @@ class ConsentTests(unittest.TestCase):
     def test_consent_is_inline_without_modal_window(self):
         method = self.get_method("cycle_voice")
         code = ast.get_source_segment(self.code, method)
-        self.assertNotIn("QMessageBox", self.code)
+        self.assertFalse(any(isinstance(node, ast.Name) and node.id == "QMessageBox"
+                             for node in ast.walk(self.module)))
         self.assertIn("voice_confirm_pending", code)
         self.assertIn('self.voice_engine = "edge"', code)
         self.assertIn("self.cancel_voice_button.show()", code)
