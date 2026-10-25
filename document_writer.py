@@ -50,19 +50,59 @@ def validate_title(title):
     return name[:90].rstrip(" .")
 
 
+def _windows_known_folder(key):
+    """Lê o local que o Explorador usa, inclusive Desktop redirecionado ao OneDrive."""
+    import winreg
+    registry_names = {
+        "Desktop": "Desktop",
+        "Documents": "Personal",
+        "Downloads": "{374DE290-123F-4565-9164-39C4925E467B}",
+    }
+    regpath = r"Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, regpath) as reg:
+            value, _ = winreg.QueryValueEx(reg, registry_names[key])
+        if isinstance(value, str) and value:
+            # O Windows pode guardar %USERPROFILE% e %OneDrive% aqui.
+            import ctypes
+            chars = ctypes.create_unicode_buffer(32768)
+            expanded = ctypes.windll.kernel32.ExpandEnvironmentStringsW(value, chars, len(chars))
+            if 0 < expanded <= len(chars):
+                return Path(chars.value)
+    except (OSError, KeyError, ValueError):
+        pass
+    return None
+
+
 def known_folder(label, home=None):
     key = folded(label).strip()
     if key not in FOLDER_NAMES:
         raise ValueError("Use Documentos, Downloads ou Área de Trabalho, "
                          "ou escolha a pasta pelo botão 📄.")
-    home = Path(home) if home else Path.home()
-    folder = home / FOLDER_NAMES[key]
-    if not folder.is_dir():
-        raise ValueError(
-            f"A pasta {label} não existe neste perfil do Windows. "
-            "Clique em 📄 para escolher uma pasta existente."
-        )
-    return folder
+    name = FOLDER_NAMES[key]
+    # 'home' explícito isola os testes; no Windows, o Registro indica o caminho real.
+    if home is None and os.name == "nt":
+        found = _windows_known_folder(name)
+        if found is not None and found.is_dir():
+            return found
+    root = Path(home) if home is not None else Path.home()
+    options = [root / name]
+    if home is None and os.name == "nt":
+        # Fallback para perfis em que o Registro não está disponível.
+        for one in ("OneDrive", "OneDrive - Personal"):
+            options.append(root / one / name)
+            if name == "Desktop":
+                options.append(root / one / "Área de Trabalho")
+            elif name == "Documents":
+                options.append(root / one / "Documentos")
+    for folder in options:
+        if folder.is_dir():
+            return folder
+    raise ValueError(
+        f"Não encontrei a pasta real '{label}' deste perfil. "
+        "O local pode estar redirecionado para OneDrive. "
+        "Use o seletor 📄 e escolha uma pasta existente."
+    )
 
 
 def normalize_kind(kind):

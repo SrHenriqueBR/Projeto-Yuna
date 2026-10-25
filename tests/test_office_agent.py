@@ -51,6 +51,49 @@ class OfficeAgentTests(unittest.TestCase):
         self.assertFalse(file_intent("Quero aprender como criar um Excel"))
         self.assertTrue(file_intent("Faça um PDF para mim"))
 
+    def test_user_real_phrasings_go_to_file_tool_not_chat(self):
+        for command, expected in [
+            ("Yuna, faz um Word e salva na minha Área de Trabalho", "word"),
+            ("Yuna, pode criar um documento Word na Área de Trabalho?", "word"),
+            ("Crie um arquivo Word chamado Diário da Yuna na minha Área de Trabalho", "word"),
+            ("Yuna, faz um arquivo chamado Minha nota na pasta Documentos", "texto"),
+            ("Yuna, cria um documento PDF sobre TI na Área de Trabalho", "pdf"),
+            ("Quero que você crie um arquivo do Excel na Área de Trabalho", "excel"),
+            ("Pode fazer uma apresentação do PowerPoint em Documentos?", "powerpoint"),
+            ("Yuna, escreva seu diário num documento Word na Área de Trabalho", "word"),
+        ]:
+            with self.subTest(command):
+                self.assertTrue(file_intent(command), command)
+                request = parse_request(command, self.home)
+                self.assertEqual(request.kind, expected)
+                if "Área de Trabalho" in command:
+                    self.assertEqual(request.directory, self.home / "Desktop")
+        request = parse_request(
+            "Crie um Word chamado 'Diário da Yuna' na minha Área de Trabalho",
+            self.home
+        )
+        self.assertEqual(request.title, "Diário da Yuna")
+
+    def test_non_actions_never_trigger_document_creation(self):
+        for sentence in [
+            "Eu vou criar um Word mais tarde",
+            "Não crie um documento Word",
+            "Como criar um arquivo Word na Área de Trabalho?",
+            "Talvez eu crie um PDF amanhã",
+            "Depois eu faço uma planilha Excel",
+        ]:
+            self.assertFalse(file_intent(sentence), sentence)
+
+    def test_explicit_format_wins_over_generic_word(self):
+        self.assertEqual(
+            parse_request("Crie um documento PDF na Área de Trabalho", self.home).kind,
+            "pdf"
+        )
+        self.assertEqual(
+            parse_request("Crie um documento Excel em Documentos", self.home).kind,
+            "excel"
+        )
+
     def test_creates_all_supported_office_formats(self):
         from docx import Document
         from openpyxl import load_workbook

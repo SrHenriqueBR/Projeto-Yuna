@@ -419,3 +419,15 @@ O Python usado para iniciar a Yuna deve ser o **mesmo** no qual as dependências
 O modelo pode errar na interpretação, por isso **ações com efeitos reais são selecionadas por roteadores e ferramentas permitidas**, não por scripts inventados. Ações destrutivas (apagar, instalar, enviar mensagens privadas, mudar configurações críticas, gerenciar senhas) não são habilitadas por autorizações genéricas. A internet só recebe termos de pesquisa explicitamente pedidos e nunca um dump automático do computador. O sistema não se reprograma sozinho, não opera com o PC desligado e não controla universalmente todas as aplicações.
 
 A pesquisa pública também pode ser **automática** para perguntas gerais como "O que é energia escura?" ou "Quem foi Ada Lovelace?": a Yuna consulta a Wikipédia em português, acrescenta os trechos públicos ao contexto do Ollama e responde. A busca é limitada a perguntas genéricas, sem dados pessoais nem envio de memória/conversa completa. Para desligar essa consulta automática nesta sessão, execute `$env:YUNA_AUTO_RESEARCH='0'` antes de `py -3 yuna_overlay.py`. O resultado pode não existir ou estar desatualizado; a Yuna deve admitir a incerteza.
+
+## Correção 0.12.1 — quando a Yuna explica como criar Word, mas não cria
+
+O modelo Ollama estava respondendo com sugestões como `/abrir 1`, em vez de encaminhar algumas formas de pedir a criação de um documento para a ferramenta local. `/abrir 1` **não cria arquivos**, só abre resultados de busca. Esta atualização amplia o reconhecimento de pedidos naturais, incluindo `Yuna, faz um Word e salva na minha Área de Trabalho`, `pode criar um documento PDF`, `quero que você crie um arquivo` e `Crie um Word chamado Diário da Yuna em Documentos`.
+
+A Yuna também detecta pastas conhecidas pelo **Registro do Windows**, de acordo com o Explorador, inclusive quando a Área de Trabalho ou Documentos são redirecionados para **OneDrive**. Ela não cria pastas ocultas alternativas nem grava um documento em outro local sem informar o caminho.
+
+A mascote mostra **YUNA 0.12.1** no título. Se ainda aparecer apenas `YUNA` ou um número anterior, a atualização não foi aplicada na pasta da qual você está executando `iniciar_yuna_mascote.bat`. Ao concluir, o balão deve dizer `Criei o arquivo ... e salvei em: C:\...`, exibindo o destino real. Erros aparecem inteiros no balão, sem fingir sucesso. O nome do arquivo recebe `(2)` etc. caso já exista.
+
+**Instalação rápida:** feche a Yuna, preserve **`data/` e `assets/`**. Atualize **todos os `.py` do GitHub** na mesma pasta de `iniciar_yuna_mascote.bat`; especialmente `office_agent.py`, `document_writer.py`, `yuna.py`, `yuna_overlay.py`, `initiative.py`, `self_model.py`. Reabra a mascote e confira `YUNA 0.12.1`. Não precisa instalar pacotes adicionais se a versão 0.12 já tem os geradores Office.
+
+**Teste sem ambiguidade**: `Yuna, cria um documento Word chamado Diário da Yuna na minha Área de Trabalho`. Se o Ollama estiver ativo e `python-docx` disponível no Python da mascote, ela deverá gerar o arquivo de verdade. Se não conseguir, a mensagem indicará o motivo e não alegará conclusão.
