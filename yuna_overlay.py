@@ -436,6 +436,7 @@ class YunaOverlay(QWidget):
             return
         self.voice_busy = True
         mode = self.voice_engine
+        self.status.setText("Preparando voz...")
 
         def worker():
             try:
@@ -448,19 +449,28 @@ class YunaOverlay(QWidget):
                 elif mode == "amanda":
                     audio = synthesize_amanda(text)
                 else:
+                    self.signals.voice_finished.emit("Motor de voz desconhecido.")
                     return
-                    if audio is not None:
-                        self.signals.edge_ready.emit(str(audio))
-                    else:
-                        self.signals.voice_finished.emit("")
+                # IMPORTANTE: fora do 'else'. Nas versões anteriores, este
+                # bloco era inalcançável e nenhum MP3 chegava ao QMediaPlayer.
+                if audio is not None:
+                    self.signals.edge_ready.emit(str(audio))
+                else:
+                    self.signals.voice_finished.emit("")
             except Exception as exc:
                 self.signals.voice_finished.emit(str(exc))
 
         Thread(target=worker, daemon=True).start()
 
     def play_edge(self, path):
-        self.temp_mp3 = Path(path)
-        self.player.setSource(QUrl.fromLocalFile(str(self.temp_mp3)))
+        """Recebe o MP3 na thread de UI, reproduz e informa o que está acontecendo."""
+        audio = Path(path)
+        if not audio.is_file() or audio.stat().st_size == 0:
+            self.voice_done("Áudio não foi gerado. Verifique o motor de voz.")
+            return
+        self.temp_mp3 = audio
+        self.status.setText("Reproduzindo voz...")
+        self.player.setSource(QUrl.fromLocalFile(str(audio)))
         self.player.play()
 
     def media_status(self, status):
@@ -469,19 +479,30 @@ class YunaOverlay(QWidget):
             self.player.setSource(QUrl())
             self.cleanup_audio()
             self.voice_busy = False
+            self.status.setText("Voz reproduzida · escreva para conversar")
 
     def media_error(self, error, message):
-        self.voice_done(f"Reprodução de áudio: {message}")
+        self.player.stop()
+        self.player.setSource(QUrl())
+        self.voice_done(
+            f"Falha ao tocar MP3: {message or 'verifique a saída de áudio do Windows.'}"
+        )
 
     def cleanup_audio(self):
         if self.temp_mp3 is not None:
-            self.temp_mp3.unlink(missing_ok=True)
+            try:
+                self.temp_mp3.unlink(missing_ok=True)
+            except OSError:
+                pass  # O player pode estar finalizando acesso ao arquivo no Windows.
             self.temp_mp3 = None
 
     def voice_done(self, error):
         self.voice_busy = False
         if error:
-            self.status.setText(f"Voz: {error[:115]}")
+            self.status.setText(f"Erro na voz: {error[:170]}")
+            self.bubble.setToolTip(f"Erro na voz: {error}")
+        else:
+            self.status.setText("Voz offline concluída")
         self.cleanup_audio()
 
     def show_warning(self, error):
