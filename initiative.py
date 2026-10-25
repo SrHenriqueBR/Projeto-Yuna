@@ -27,7 +27,9 @@ def looks_like_command(text):
         r"instale\b|feche\b|rode\b|coloca\b|crie\b|cria\b|criar\b|"
         r"pesquise\b|pesquisa\b|investigue\b|"
         r"faca\b|faz\b|fazer\b|monte\b|gere\b|produza\b|escreva\b|"
-        r"quero que voce\b|preciso que voce\b)", value))
+        r"quero que voce\b|preciso que voce\b|pode fazer\b|"
+        r"pode comecar\b|pode escrever\b|sim pode\b|vai em frente\b|"
+        r"manda ver\b|faz isso\b|faca isso\b|bora\b)", value))
 
 
 class Initiative:
