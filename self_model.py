@@ -99,14 +99,14 @@ def is_self_question(text):
     from computer import normalize
     clean = normalize(text.strip()).strip("?!., ")
     clean = re.sub(r"^yuna[, ]+", "", clean)
-    if re.search(r"\\b(nao|nunca)\\b", clean):
+    if re.search(r"\b(nao|nunca)\b", clean):
         return False
     if clean in {normalize(value) for value in SELF_QUESTIONS}:
         return True
     # Frases espontâneas como "bom, primeiro quero saber como está o seu código".
     return bool(re.search(
-        r"\\b(?:como (?:esta|ta)|quero saber|gostaria de saber|"
-        r"me explique|me conta|me fale)\\b.{0,65}\\b(?:o )?seu codigo\\b",
+        r"\b(?:como (?:esta|ta)|quero saber|gostaria de saber|"
+        r"me explique|me conta|me fale)\b.{0,65}\b(?:o )?seu codigo\b",
         clean))
 
 
