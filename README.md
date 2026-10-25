@@ -254,3 +254,26 @@ A fala offline depende da voz pt-BR instalada; por isso não é possível garant
 - Guarde os seis PNGs em `assets/` e **preserve `data/`**.
 - Se não quiser a mascote, pode continuar usando `iniciar_yuna.bat` normalmente.
 - Para testar o código sem abrir a interface: `py -3 -m unittest discover -s tests -v`. O áudio final e a interface Windows devem ser verificados no seu notebook.
+
+
+### Se a voz Jovem mostrar `'lazy_import' object is not callable`
+
+A interface está funcionando, mas a biblioteca de síntese falhou no Python 3.15. A correção atual tenta importar diretamente a classe de voz; se a incompatibilidade persistir, **usa automaticamente o Python 3.13 somente para gerar o áudio**, mantendo a janela da Yuna no Python atual.
+
+1. Instale o **Python 3.13 (64 bits)** pelo instalador oficial [Python para Windows](https://www.python.org/downloads/windows/), selecionando o Python Launcher. Não remova o Python 3.15 nem apague a pasta `data/`.
+2. No PowerShell, instale apenas a voz para o interpretador 3.13:
+
+   ```powershell
+   py -3.13 -m pip install edge-tts
+   ```
+
+3. Reabra `iniciar_yuna_mascote.bat` e ative a voz Jovem novamente. A Yuna detecta o erro de importação e tenta reproduzir a fala usando o Python 3.13, sem precisar reinstalar PySide6.
+
+Para conferir a geração sem abrir a Yuna:
+
+```powershell
+py -3.13 -m edge_tts --voice pt-BR-FranciscaNeural --text "Oi, Kaizen!" --write-media teste_yuna.mp3
+```
+
+Abra `teste_yuna.mp3` no Windows. Se o áudio funcionar, a geração está correta; se a mascote ainda estiver muda, verifique o volume/dispositivo de saída e a reprodução Qt. Mantenha o texto privado fora da voz online.
+
