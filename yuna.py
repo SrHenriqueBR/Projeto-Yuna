@@ -18,6 +18,7 @@ from vision import describe_screen
 from office_agent import file_intent, parse_request as parse_office_request, create_requested
 from web_actions import handle_web_command, public_question_to_query, wikipedia_lookup
 from file_diagnostics import runtime_report, create_test_file
+from agent_brain import plan_request, describe_plan, execute_plan
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
@@ -66,6 +67,7 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o n
 HELP = '''/ajuda                 Mostra os comandos
 /versao                Mostra versão, pasta ativa e geradores instalados
 /teste_arquivo         Cria um TXT de teste na Área de Trabalho, sem Ollama
+/plano PEDIDO          Mostra o plano de pesquisa e documento sem executar
 /lembrar TEXTO          Guarda uma memória explicitamente
 /memorias               Lista as memórias salvas
 /esquecer ID            Apaga uma memória pelo número
@@ -329,8 +331,22 @@ def action_intent(text):
         r'preciso que liste)\b', value))
 
 
-def handle_message(memory, text, computer=None):
+def handle_message(memory, text, computer=None, progress=None):
     requested = text.strip().casefold()
+    if requested.startswith("/plano "):
+        plan = plan_request(text.strip()[7:])
+        if plan is None:
+            return ("Exemplo: /plano pesquise sobre inteligência artificial, "
+                    "crie um PowerPoint e salve nos Documentos")
+        return describe_plan(plan)
+    # A sequência permitida é construída a partir do pedido atual,
+    # antes de qualquer interpretador conversacional do Ollama.
+    plan = plan_request(text)
+    if plan is not None:
+        answer = execute_plan(plan, ask_model, progress=progress)
+        if memory is not None:
+            memory.save_turn(text, answer)
+        return answer
     if requested in ("/versao", "/diagnostico"):
         return runtime_report(VERSION, ROOT)
     if requested == "/teste_arquivo":
@@ -492,6 +508,8 @@ def main():
                     print('\n'.join(f'{i}: {t}' for i, t in memory.facts()) or 'Nenhuma memória salva.')
                 elif command == '/esquecer':
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
+                elif command == '/plano':
+                    print('Yuna:', handle_message(memory, text, computer))
                 elif command == '/sobre':
                     print('Yuna:', about_text(memory, MODEL))
                 elif command == '/pensar':
@@ -594,7 +612,10 @@ def main():
                     # Isso não é consciência nem observação contínua do computador.
                     memory.affect.observe(text)
                     memory.export()
-                    reply = handle_message(memory, text, computer)
+                    reply = handle_message(
+                        memory, text, computer,
+                        progress=lambda stage: print('Yuna ·', stage, flush=True)
+                    )
                     print('\nYuna:', reply)
                     # Perguntas do usuário e comandos não viram respostas a uma pergunta da Yuna.
                     conversational = not looks_like_command(text) and '?' not in text and not is_self_question(text)
