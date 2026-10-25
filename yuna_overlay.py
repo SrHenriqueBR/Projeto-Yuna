@@ -26,7 +26,7 @@ from document_writer import (
     FileRequest, create_file, generate_contents, parse_file_request,
     looks_like_file_request, validate_title
 )
-from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message
+from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message, startup_greeting
 
 ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
@@ -76,10 +76,10 @@ class DialogueThread(Thread):
         try:
             name = next((n for _, fact in reversed(memory.facts())
                          if (n := declared_name(fact))), "Kaizen")
-            greeting = memory.initiative.startup(name)
-            if greeting:
-                self.output.message.emit(greeting)
-                self.output.speech.emit(greeting)
+            # A saudação usa o horário do Windows, não um clima inventado.
+            greeting = startup_greeting()
+            self.output.message.emit(greeting)
+            self.output.speech.emit(greeting)
             while True:
                 message = self.inputs.get()
                 if message is None:
@@ -106,20 +106,6 @@ class DialogueThread(Thread):
                 self.output.listening.emit(True)
                 try:
                     # Usa a lógica do terminal, no mesmo banco e mesma thread.
-                    if looks_like_file_request(message):
-                        try:
-                            request = parse_file_request(message)
-                            if request is None:
-                                raise ValueError("Use /criar word NOME | Documentos ou o botão 📄.")
-                            body = generate_contents(request, ask_model)
-                            saved = create_file(request, body)
-                            answer = f"Documento criado e salvo em: {saved}"
-                            self.output.speech.emit("Prontinho! O documento já está salvo.")
-                        except Exception as exc:
-                            answer = f"Não consegui criar o arquivo: {exc}"
-                        self.output.message.emit(answer)
-                        self.output.listening.emit(False)
-                        continue
                     if message == "/sobre":
                         answer = about_text(memory, MODEL)
                     elif message == "/estado":
@@ -375,6 +361,11 @@ class YunaOverlay(QWidget):
         )
         top.addWidget(title)
         top.addStretch()
+        self.copy_button = QPushButton("📋")
+        self.copy_button.setToolTip("Copiar o texto completo da resposta")
+        self.copy_button.setFixedWidth(35)
+        self.copy_button.clicked.connect(self.copy_answer)
+        top.addWidget(self.copy_button)
         self.diary_button = QPushButton("📖")
         self.diary_button.setToolTip("Abrir diário local da Yuna")
         self.diary_button.setFixedWidth(35)
@@ -405,13 +396,16 @@ class YunaOverlay(QWidget):
         root.addLayout(top)
         self.update_voice_button()
 
-        self.bubble = QLabel("Iniciando minha memória... ✦")
-        self.bubble.setWordWrap(True)
-        self.bubble.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.bubble.setMinimumHeight(88)
-        self.bubble.setMaximumHeight(138)
+        self.bubble = QTextEdit()
+        self.bubble.setPlainText("Iniciando minha memória... ✦")
+        self.bubble.setReadOnly(True)
+        self.bubble.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.bubble.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.bubble.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
+        self.bubble.setMinimumHeight(100)
+        self.bubble.setMaximumHeight(160)
         self.bubble.setStyleSheet(
-            "QLabel { background-color: rgba(28, 20, 46, 235); color: #f6efff;"
+            "QTextEdit { background-color: rgba(28, 20, 46, 235); color: #f6efff;"
             "border:1px solid #8254b3; border-radius:18px; padding:12px;"
             "font-size:13px; }"
         )
@@ -445,7 +439,7 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.copy_button, self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
@@ -608,13 +602,19 @@ class YunaOverlay(QWidget):
         else:
             self.show_expression("idle")
 
+    def copy_answer(self):
+        text = self.latest_message or self.bubble.toPlainText()
+        QApplication.clipboard().setText(text)
+        self.status.setText("Texto da resposta copiado para a área de transferência")
+
     def show_message(self, text):
         self.latest_message = text
         # Nunca sobrescrever o aviso de privacidade enquanto a confirmação está pendente.
         if self.voice_confirm_pending:
             return
-        self.bubble.setText(text[:450] + ("…" if len(text) > 450 else ""))
-        self.bubble.setToolTip(text)
+        self.bubble.setPlainText(text)
+        self.bubble.moveCursor(self.bubble.textCursor().MoveOperation.Start)
+        self.bubble.setToolTip("Role para ler a resposta inteira ou clique em 📋 para copiar.")
         if not self.voice_busy:
             self.show_expression("happy")
 
@@ -634,7 +634,7 @@ class YunaOverlay(QWidget):
         if not text or self.thinking:
             return
         self.entry.clear()
-        self.bubble.setText("Hmm, deixa eu pensar nisso... ✦")
+        self.bubble.setPlainText("Hmm, deixa eu pensar nisso... ✦")
         self.dialogue.submit(text)
         self.set_thinking(True)
 
@@ -651,7 +651,7 @@ class YunaOverlay(QWidget):
         self.cancel_voice_button.hide()
         self.amanda_button.show()
         self.update_voice_button()
-        self.bubble.setText(
+        self.bubble.setPlainText(
             self.latest_message[:450] if self.latest_message
             else "Beleza! A voz anterior continua selecionada. 🖤"
         )
@@ -660,7 +660,7 @@ class YunaOverlay(QWidget):
     def request_voice_consent(self, selected):
         if selected == "amanda" and not amanda_available():
             self.status.setText("Amanda Kelly precisa da chave ELEVENLABS_API_KEY.")
-            self.bubble.setText(
+            self.bubble.setPlainText(
                 "Quero usar a Amanda Kelly também! Mas falta configurar a chave da "
                 "ElevenLabs antes de abrir a Yuna. "
                 "No PowerShell, use: $env:ELEVENLABS_API_KEY = Read-Host "
@@ -688,7 +688,7 @@ class YunaOverlay(QWidget):
                 "FALADO para gerar áudio. Não a utilize para assuntos confidenciais. "
                 "Clique em Confirmar ou Cancelar."
             )
-        self.bubble.setText(warning)
+        self.bubble.setPlainText(warning)
         self.status.setText("Aguardando sua autorização · a nova voz ainda está DESLIGADA")
 
     def select_amanda(self):
@@ -714,7 +714,7 @@ class YunaOverlay(QWidget):
             self.amanda_button.show()
             self.voice_engine = target
             self.update_voice_button()
-            self.bubble.setText(
+            self.bubble.setPlainText(
                 "Pff, agora sim! Testando a minha voz nova... ✦"
             )
             self.status.setText(
@@ -823,7 +823,7 @@ class YunaOverlay(QWidget):
         self.cleanup_audio()
 
     def show_warning(self, error):
-        self.bubble.setText("Ops, encontrei um problema: " + error[:220])
+        self.bubble.setPlainText("Ops, encontrei um problema: " + error[:220])
 
     def closeEvent(self, event):
         self.diary_typing_timer.stop()
