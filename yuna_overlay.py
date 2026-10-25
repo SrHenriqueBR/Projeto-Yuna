@@ -12,7 +12,7 @@ from threading import Thread
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+    QApplication, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QVBoxLayout, QWidget
 )
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -143,6 +143,8 @@ class YunaOverlay(QWidget):
         if self.voice_engine == "edge":
             self.voice_engine = "windows"
         self.voice_busy = False
+        self.voice_confirm_pending = False
+        self.latest_message = ''
         self.thinking = False
         self.frame_index = 0
         self.last_expression = "idle"
@@ -180,6 +182,11 @@ class YunaOverlay(QWidget):
         self.voice_button.setToolTip("Escolher voz: Windows offline, Edge online, sem voz")
         self.voice_button.clicked.connect(self.cycle_voice)
         top.addWidget(self.voice_button)
+        # Confirmação dentro da mascote: evita que janelas modais fechem um Qt.Tool.
+        self.cancel_voice_button = QPushButton("Cancelar")
+        self.cancel_voice_button.clicked.connect(self.cancel_voice_consent)
+        self.cancel_voice_button.hide()
+        top.addWidget(self.cancel_voice_button)
         close = QPushButton("×")
         close.setFixedWidth(30)
         close.clicked.connect(self.close)
@@ -227,7 +234,7 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.voice_button, close, self.send_button):
+        for button in (self.voice_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
@@ -280,6 +287,10 @@ class YunaOverlay(QWidget):
             self.show_expression("idle")
 
     def show_message(self, text):
+        self.latest_message = text
+        # Nunca sobrescrever o aviso de privacidade enquanto a confirmação está pendente.
+        if self.voice_confirm_pending:
+            return
         self.bubble.setText(text[:450] + ("…" if len(text) > 450 else ""))
         self.bubble.setToolTip(text)
         if not self.voice_busy:
@@ -309,20 +320,51 @@ class YunaOverlay(QWidget):
         labels = {"windows": "🔊 Offline", "edge": "🔊 Jovem", "off": "🔇 Muda"}
         self.voice_button.setText(labels[self.voice_engine])
 
+    def cancel_voice_consent(self):
+        if not self.voice_confirm_pending:
+            return
+        self.voice_confirm_pending = False
+        self.cancel_voice_button.hide()
+        self.update_voice_button()
+        self.bubble.setText(
+            self.latest_message[:450] if self.latest_message
+            else "Beleza! A voz offline continua selecionada. 🖤"
+        )
+        self.status.setText("Voz offline mantida. Nenhum texto foi enviado à voz online.")
+
     def cycle_voice(self):
-        modes = {"windows": "edge", "edge": "off", "off": "windows"}
-        selected = modes[self.voice_engine]
+        if self.voice_confirm_pending:
+            # Segundo clique confirma o aviso que ficou visível dentro da própria janela.
+            self.voice_confirm_pending = False
+            self.cancel_voice_button.hide()
+            self.voice_engine = "edge"
+            self.update_voice_button()
+            self.bubble.setText("Pff, agora sim! Testando a minha voz nova... ✦")
+            self.status.setText("Voz jovem online ativada · texto falado enviado ao Edge TTS")
+            # Teste com frase fixa, sem enviar as conversas armazenadas.
+            if self.voice_busy:
+                self.status.setText("Voz jovem ativada. Teste enviando uma mensagem quando a voz terminar.")
+            else:
+                self.say("E aí, Kaizen! Agora eu tenho voz. Hahaha! Gostou?")
+            self.raise_()
+            self.activateWindow()
+            return
+
+        selected = {"windows": "edge", "edge": "off", "off": "windows"}[self.voice_engine]
         if selected == "edge":
-            answer = QMessageBox.question(
-                self, "Voz online",
-                "A voz jovem usa o serviço online do Edge TTS. O texto falado "
-                "será enviado para geração de áudio pela internet. "
-                "Não use este modo para informações pessoais ou confidenciais.\n\n"
-                "Quer ativar a voz jovem online?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            # Evita QMessageBox.question: fechar uma janela modal pode disparar
+            # lastWindowClosed no Windows quando a única janela principal é Qt.Tool.
+            self.voice_confirm_pending = True
+            self.voice_button.setText("✓ Confirmar")
+            self.cancel_voice_button.show()
+            self.bubble.setToolTip("")
+            self.bubble.setText(
+                "Ativar voz Jovem? Ela usa Edge TTS pela internet e ENVIA O TEXTO "
+                "FALADO para gerar áudio. Não a utilize para assuntos confidenciais. "
+                "Clique em Confirmar ou Cancelar."
             )
-            if answer != QMessageBox.StandardButton.Yes:
-                return
+            self.status.setText("Aguardando sua escolha · a voz online ainda está DESLIGADA")
+            return
         self.voice_engine = selected
         self.update_voice_button()
         self.status.setText({
@@ -388,12 +430,17 @@ class YunaOverlay(QWidget):
         self.player.setSource(QUrl())
         self.cleanup_audio()
         super().closeEvent(event)
+        # O widget é Qt.Tool, portanto não depende da contagem de janelas normais.
+        QTimer.singleShot(0, QApplication.quit)
 
 
 def main():
     if os.name != "nt":
         raise SystemExit("A mascote e a voz foram preparadas para Windows.")
     app = QApplication(sys.argv)
+    # Uma caixa de diálogo pode ser a última janela normal enquanto o mascote
+    # é Qt.Tool; não deixar o encerramento implícito fechar a Yuna.
+    app.setQuitOnLastWindowClosed(False)
     app.setFont(QFont("Segoe UI", 10))
     window = YunaOverlay()
     window.show()
