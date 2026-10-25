@@ -130,3 +130,21 @@ def append_sources(path, kind, urls):
     elif kind in ("texto", "markdown"):
         with Path(path).open("a", encoding="utf-8") as file:
             file.write("\n\nFontes consultadas:\n" + "\n".join(urls) + "\n")
+
+
+def execute_plan(plan, ask, progress=None, lookup=None, create=None):
+    """Executa pesquisa pública, gera arquivo e confirma gravação."""
+    if not isinstance(plan, TaskPlan):
+        raise ValueError("Plano inválido.")
+    progress = progress or (lambda message: None)
+    lookup = lookup or wikipedia_lookup
+    create = create or create_requested
+    progress("1/4 · Plano de pesquisa e documento validado")
+    progress("2/4 · Consultando Wikipédia: " + plan.topic)
+    research = lookup(plan.topic)
+    links = source_links(research) if isinstance(research, str) else []
+    if not links:
+        raise RuntimeError(
+            "A Wikipédia não retornou fontes verificáveis. "
+            "O documento não foi criado."
+        )
