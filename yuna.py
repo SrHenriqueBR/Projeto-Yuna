@@ -13,6 +13,7 @@ from local_agent import interpret
 from initiative import Initiative, looks_like_command
 from affect import AffectiveCore
 from self_model import Thinking, VERSION, about_text, is_self_question
+from document_writer import looks_like_file_request, parse_file_request, generate_contents, create_file
 from vision import describe_screen
 
 ROOT = Path(__file__).resolve().parent
@@ -44,6 +45,9 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o n
           'Na interface opcional yuna_overlay.py, se aberta no Windows, uma voz feminina pode reproduzir seus textos. '
           'A mascote opcional possui um diário de reflexões ficcionais com escrita local, manual ou periódica mediante ativação. '
           'O diário não representa sentimentos vividos nem acesso ao histórico do usuário. '
+          'Para salvar Word, TXT ou Markdown, existe uma ferramenta local acionada por pedidos explícitos. '
+          'Se não tiver um pedido completo, ensine a pessoa a usar o botão 📄 ou /criar word NOME | Documentos. '
+          'Nunca afirme ter criado ou salvo documento apenas pela resposta do modelo. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz da mascote é feminina em português brasileiro; a voz offline exige instalação no Windows, '
           'e a voz online Edge é ativada só com consentimento. '
@@ -89,6 +93,8 @@ Busca ignora sistema, caches, links e pastas sem permissão.
 /pensamentos               Lista notas de planejamento
 /esquecer_pensamento ID     Apaga uma nota
 /autonomia ligar|desligar   Controla autoavaliação periódica
+/criar word NOME | Documentos | TEMA   Cria um DOCX real sem sobrescrever arquivos
+/criar texto NOME | Downloads | TEMA   Cria arquivo TXT
 /fazer PEDIDO         Interpreta um pedido com o modelo local
 /sair                   Fecha a Yuna'''
 
@@ -293,6 +299,15 @@ def action_intent(text):
 
 
 def handle_message(memory, text, computer=None):
+    if looks_like_file_request(text):
+        request = parse_file_request(text)
+        if request is None:
+            raise ValueError("Use /criar word NOME | Documentos ou o botão 📄.")
+        text_for_file = generate_contents(request, ask_model)
+        target = create_file(request, text_for_file)
+        answer = f"Criei o documento e salvei em: {target}"
+        memory.save_turn(text, answer)
+        return answer
     if is_self_question(text):
         answer = about_text(memory, MODEL)
         memory.save_turn(text, answer)
@@ -522,7 +537,7 @@ def main():
                         print('Histórico e memórias apagados.')
                     else:
                         print('Para apagar histórico e memórias, digite /apagar CONFIRMAR.')
-                elif command in ('/abrir', '/buscar', '/localizar', '/apps', '/app', '/sistema', '/processos', '/fazer'):
+                elif command in ('/abrir', '/buscar', '/localizar', '/apps', '/app', '/sistema', '/processos', '/fazer', '/criar'):
                     print('Yuna:', handle_message(memory, text, computer))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
