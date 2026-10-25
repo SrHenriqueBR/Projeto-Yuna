@@ -47,6 +47,8 @@ class OfficeAgentTests(unittest.TestCase):
         self.assertEqual(req.kind, "word")
         self.assertFalse(file_intent("Como criar um PowerPoint?"))
         self.assertFalse(file_intent("Não crie um arquivo"))
+        self.assertFalse(file_intent("Eu vou criar um documento do Word depois"))
+        self.assertFalse(file_intent("Quero aprender como criar um Excel"))
         self.assertTrue(file_intent("Faça um PDF para mim"))
 
     def test_creates_all_supported_office_formats(self):
