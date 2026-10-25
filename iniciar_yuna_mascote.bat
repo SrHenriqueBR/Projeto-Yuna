@@ -1,6 +1,21 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+if not exist "office_agent.py" (
+    echo Falta office_agent.py. Atualize todos os arquivos da Yuna.
+    pause
+    exit /b 1
+)
+if not exist "web_actions.py" (
+    echo Falta web_actions.py. Atualize todos os arquivos da Yuna.
+    pause
+    exit /b 1
+)
+if not exist "screen_consent.py" (
+    echo Falta screen_consent.py. Atualize todos os arquivos da Yuna.
+    pause
+    exit /b 1
+)
 if not exist "document_writer.py" (
     echo Falta document_writer.py. Copie todos os arquivos atualizados da Yuna.
     pause

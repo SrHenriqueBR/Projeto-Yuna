@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.11"
+VERSION = "0.12"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -53,7 +53,9 @@ def about(memory, model):
         "pode": [
             "conversar e explicar a arquitetura documentada da Yuna",
             "escrever diário fictício local pelo botão da mascote e periodicamente após opt-in",
-            "criar Word, TXT e Markdown reais em pastas autorizadas por pedido explícito",
+            "criar Word, Excel, PowerPoint, PDF, TXT e Markdown reais por pedido natural",
+            "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
+            "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
             "lembrar preferências e perguntas respondidas",
             "planejar e autoavaliar a conversa quando em execução",
             "listar e abrir aplicativos do menu Iniciar por pedido",
@@ -64,10 +66,10 @@ def about(memory, model):
         "ainda_nao": [
             "consciência ou sentimentos humanos demonstráveis",
             "programação e instalação automática de código",
-            "controle irrestrito do computador sem uma ferramenta autorizada",
+            "controle irrestrito do computador ou todos os programas sem uma ferramenta autorizada",
             "microfone e escuta contínua (a mascote tem voz opcional, inclusive Amanda Kelly mediante acesso à API)",
             "leitura direta do próprio código-fonte ou de documentos",
-            "pesquisa na internet ou raciocínio em execução com a Yuna fechada",
+            "pesquisa contínua com a Yuna fechada ou leitura de pensamentos",
         ],
     }
 
@@ -82,7 +84,7 @@ def about_text(memory, model):
         f"e um módulo de planejamento {'ligado' if data['pensamento_periodico'] else 'desligado'}.\n"
         "Consigo conversar, analisar objetivos, recuperar lembranças e usar algumas ferramentas do "
         "Windows quando você pede. Não leio meus arquivos-fonte automaticamente nem mexo "
-        "no sistema por conta própria. Agora também tenho uma mascote flutuante, voz feminina e criação local de arquivos Word, TXT e Markdown "
+        "no sistema por conta própria. Agora também tenho uma mascote flutuante, voz feminina e criação local de Word, Excel, PowerPoint, PDF, TXT e Markdown "
         "no Windows (o terminal segue só por texto).\n"
         "Minha prioridade de melhoria é conversar naturalmente, evitar perguntas repetidas "
         "e reconhecer meus limites sem respostas defensivas desnecessárias."

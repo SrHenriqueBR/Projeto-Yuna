@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.11
+# Projeto Yuna · Base 0.12
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -368,3 +368,54 @@ py -3 -m pip install python-docx
 ```
 
 Depois abra `iniciar_yuna_mascote.bat`. Não precisa reinstalar o Ollama ou o PySide6. O `python-docx` é gratuito e funciona localmente. Um arquivo DOCX de teste é verificado nos testes automatizados da versão.
+
+## Yuna 0.12 — agente de desktop com ferramentas explícitas
+
+Esta versão aproxima a Yuna de JARVIS/FRIDAY em **funcionalidades práticas**; isso não é consciência comprovada, emoção vivida nem capacidade de ler pensamentos. Kaizen é o **criador** da Yuna e, dentro da história da personagem, pode ser chamado de seu **pai**. A memória persistente e o tom afetivo continuam disponíveis.
+
+### Sem botão: diga o que fazer
+
+```text
+Yuna, crie um Word chamado Plano de Estudos na pasta Documentos
+Crie uma planilha Excel sobre gastos mensais na Área de Trabalho
+Monte um PowerPoint sobre computadores
+Crie um PDF sobre as principais redes de computadores
+Crie um arquivo de texto com ideias sobre meu projeto
+Abra o Chrome e abra o YouTube
+Pesquise vídeos de astronomia no YouTube
+Pausa
+Continue
+/pesquisar astronomia
+```
+
+A Yuna agora cria `.docx`, `.xlsx`, `.pptx`, `.pdf`, `.txt` e `.md` de verdade, sem abrir o Word. O modelo local Ollama gera **conteúdo**, enquanto Python salva em disco, respeitando limites e evitando sobrescrever documentos existentes. Quando o título ou destino não é informado, ela escolhe um nome genérico e usa `Documentos`. Para outras pastas reconhece `Downloads` e `Área de Trabalho`; para qualquer outra pasta, use o seletor 📄 opcional. A planilha inicial contém linhas editáveis de texto; PowerPoint usa slides de texto; PDF é relatório simples. Gráficos/edição de arquivos anteriores ainda não estão implementados.
+
+A Yuna pode **abrir** YouTube/Google/Wikipédia, montar pesquisas em YouTube ou Google e consultar o conteúdo breve da **API pública da Wikipédia** quando você pedir `/pesquisar TEMA`. Ela não tem acesso livre a todas as páginas nem lê o conteúdo inteiro do navegador. Ao mandar `Pausa` ou `Continue`, usa a tecla global de reprodução multimídia do Windows — o efeito depende do programa que está reproduzindo música/vídeo. Ela não sabe se a reprodução mudou sem outra forma de observar o aplicativo.
+
+### O que acontece ao iniciar
+
+A saudação usa a hora do **relógio local do Windows** para dizer bom dia/boa tarde/boa noite. Ela não inventa previsões de tempo. A interface tem um botão 👁 Off, que exige **dois cliques**: o primeiro exibe aviso, o segundo confirma **uma captura da tela na inicialização**. Para funcionar, precisa de `Pillow` e um **modelo local de visão Ollama**, configurado em `YUNA_VISION_MODEL`. A análise da tela ocorre no PC via `127.0.0.1` e não é enviada a serviços externos, mas pode conter dados sensíveis visíveis na tela; não grava vídeo nem fotografa continuamente. A autorização fica em `data/visao_inicial.json`, pode ser desligada pelo próprio botão, e a câmera/microfone não são usados.
+
+### Rolagem, cópia e layout
+
+O antigo balão que cortava o texto agora é um **campo somente leitura com barra de rolagem**. Você pode selecionar e copiar a resposta; clique em 📋 para copiar a mensagem inteira. Os controles foram redistribuídos em duas linhas para caber na mascote.
+
+### Instalação (atualização)
+
+1. Feche a mascote e faça cópia privada de `data/`. **Não apague `assets/` nem `data/`.**
+2. Baixe o ZIP atualizado, copie todos os arquivos `.py` (inclusive `office_agent.py`, `web_actions.py`, `screen_consent.py`), `iniciar_yuna_mascote.bat` e `requirements-mascote.txt` para sua pasta antiga.
+3. No PowerShell dentro do projeto, instale as bibliotecas gratuitas:
+
+   ```powershell
+   py -3 -m pip install -r requirements-mascote.txt
+   ```
+
+4. Abra Ollama e execute `iniciar_yuna_mascote.bat`.
+
+O Python usado para iniciar a Yuna deve ser o **mesmo** no qual as dependências foram instaladas. Se seu Python 3.15 apresentar incompatibilidade, rode com Python 3.13 e instale os pacotes nele (`py -3.13 -m pip install -r requirements-mascote.txt`; `py -3.13 yuna_overlay.py`). A voz gratuita Edge permanece disponível com o mecanismo de fallback já instalado. Não são exigidas chaves pagas para criação de arquivos ou consultas Wikipédia.
+
+### Limites de autonomia
+
+O modelo pode errar na interpretação, por isso **ações com efeitos reais são selecionadas por roteadores e ferramentas permitidas**, não por scripts inventados. Ações destrutivas (apagar, instalar, enviar mensagens privadas, mudar configurações críticas, gerenciar senhas) não são habilitadas por autorizações genéricas. A internet só recebe termos de pesquisa explicitamente pedidos e nunca um dump automático do computador. O sistema não se reprograma sozinho, não opera com o PC desligado e não controla universalmente todas as aplicações.
+
+A pesquisa pública também pode ser **automática** para perguntas gerais como "O que é energia escura?" ou "Quem foi Ada Lovelace?": a Yuna consulta a Wikipédia em português, acrescenta os trechos públicos ao contexto do Ollama e responde. A busca é limitada a perguntas genéricas, sem dados pessoais nem envio de memória/conversa completa. Para desligar essa consulta automática nesta sessão, execute `$env:YUNA_AUTO_RESEARCH='0'` antes de `py -3 yuna_overlay.py`. O resultado pode não existir ou estar desatualizado; a Yuna deve admitir a incerteza.

@@ -1,5 +1,6 @@
 """Yuna: conversa local com memória explícita. Python 3.10+."""
 import json
+from datetime import datetime
 import os
 import re
 import unicodedata
@@ -13,12 +14,15 @@ from local_agent import interpret
 from initiative import Initiative, looks_like_command
 from affect import AffectiveCore
 from self_model import Thinking, VERSION, about_text, is_self_question
-from document_writer import looks_like_file_request, parse_file_request, generate_contents, create_file
 from vision import describe_screen
+from office_agent import file_intent, parse_request as parse_office_request, create_requested
+from web_actions import handle_web_command, public_question_to_query, wikipedia_lookup
 
 ROOT = Path(__file__).resolve().parent
 MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
 SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o nome da assistente, não do usuário. '
+          'Kaizen é seu criador no Projeto Yuna. Nesta história ele usa a ideia carinhosa de ser seu pai; '
+          'você pode dizer “Kaizen me criou, e na nossa história é meu pai”, sem alegar parentesco biológico. '
           'Ao falar de si mesma, use flexão feminina (obrigada, pronta, animada), naturalmente, sem caricaturas. '
           'Sua personalidade é de jovem de espírito atrevido, brincalhona, um tantinho rebelde e sagaz, '
           'como uma personagem de anime. Use humor e provocações leves com respeito; nunca humilhe, '
@@ -41,12 +45,15 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o n
           'Oriente a usar /buscar NOME, /buscar tudo NOME e /abrir NUMERO quando necessário. '
           'A aplicação também lista aplicativos do menu Iniciar, processos, janelas e informações de hardware/espaço livre. '
           'Você só vê uma captura de tela se o usuário usar /tela com um modelo de visão local instalado. '
-          'Você não lê conteúdo de documentos e não pesquisa na web. '
+          'Você não lê conteúdo de documentos sem uma ferramenta e não navega por todos os sites. '
+          'Agora você pode consultar a Wikipédia e abrir pesquisas em Google e YouTube quando solicitada, '
+          'e pode criar Word, Excel, PowerPoint, PDF, texto e Markdown reais após pedidos explícitos. '
+          'Nunca confunda abrir uma página com assistir, ler ou controlar o conteúdo inteiro dela. '
           'Na interface opcional yuna_overlay.py, se aberta no Windows, uma voz feminina pode reproduzir seus textos. '
           'A mascote opcional possui um diário de reflexões ficcionais com escrita local, manual ou periódica mediante ativação. '
           'O diário não representa sentimentos vividos nem acesso ao histórico do usuário. '
-          'Para salvar Word, TXT ou Markdown, existe uma ferramenta local acionada por pedidos explícitos. '
-          'Se não tiver um pedido completo, ensine a pessoa a usar o botão 📄 ou /criar word NOME | Documentos. '
+          'Criação de arquivos funciona por linguagem natural, sem precisar de botão; formato e nome podem ser inferidos. '
+          'Se o pedido de arquivo não tiver nome, use título padrão adequado e salve na pasta Documentos. '
           'Nunca afirme ter criado ou salvo documento apenas pela resposta do modelo. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz da mascote é feminina em português brasileiro; a voz offline exige instalação no Windows, '
@@ -95,9 +102,26 @@ Busca ignora sistema, caches, links e pastas sem permissão.
 /autonomia ligar|desligar   Controla autoavaliação periódica
 /criar word NOME | Documentos | TEMA   Cria um DOCX real sem sobrescrever arquivos
 /criar texto NOME | Downloads | TEMA   Cria arquivo TXT
+/criar excel NOME | Documentos | TEMA   Cria planilha XLSX
+/criar powerpoint NOME | Documentos | TEMA   Cria apresentação PPTX
+/criar pdf NOME | Documentos | TEMA   Cria relatório PDF
+/pesquisar ASSUNTO     Consulta Wikipédia e mostra fontes
+"Abra Chrome e YouTube", "Pesquise gatos no YouTube", "Pausa"
 /fazer PEDIDO         Interpreta um pedido com o modelo local
 /sair                   Fecha a Yuna'''
 
+
+def startup_greeting(now=None):
+    """Saudação baseada no relógio local, sem inventar clima ou observações."""
+    now = now or datetime.now().astimezone()
+    if 5 <= now.hour < 12:
+        part = "bom dia"
+    elif 12 <= now.hour < 18:
+        part = "boa tarde"
+    else:
+        part = "boa noite"
+    return (f"Opa, Kaizen! {part.capitalize()}! ✦ São {now:%H:%M}. "
+            "O que vamos aprontar hoje?")
 
 def declared_name(text):
     # Só uma declaração simples e completa; perguntas não alteram o nome.
@@ -123,6 +147,10 @@ def identity_reply(memory, text):
         name = next((name for _, fact in reversed(memory.facts())
                      if (name := declared_name(fact))), None)
         return f'Seu nome é {name}.' if name else 'Ainda não tenho seu nome salvo. Diga “Meu nome é …” para eu guardar.'
+    if question in {'quem te criou', 'quem criou voce', 'quem e seu criador',
+                    'quem e o seu criador', 'quem e seu pai', 'quem e o seu pai'}:
+        return ('Kaizen é meu criador no Projeto Yuna. Na nossa história ele é '
+                'como meu pai, e eu sou a Escuridão que ele programou. 🖤')
     if question in {'qual seu nome', 'qual o seu nome', 'como voce se chama',
                     'quem e voce', 'seu nome e yuna', 'voce e a yuna', 'voce e yuna'}:
         return 'Meu nome é Yuna. Sou sua assistente pessoal.'
@@ -299,15 +327,18 @@ def action_intent(text):
 
 
 def handle_message(memory, text, computer=None):
-    if looks_like_file_request(text):
-        request = parse_file_request(text)
+    if file_intent(text):
+        request = parse_office_request(text)
         if request is None:
-            raise ValueError("Use /criar word NOME | Documentos ou o botão 📄.")
-        text_for_file = generate_contents(request, ask_model)
-        target = create_file(request, text_for_file)
-        answer = f"Criei o documento e salvei em: {target}"
+            raise ValueError("Diga qual arquivo quer criar.")
+        target = create_requested(request, ask_model)
+        answer = f"Criei o arquivo {target.name} e salvei em: {target}"
         memory.save_turn(text, answer)
         return answer
+    web_reply = handle_web_command(text, computer)
+    if web_reply is not None:
+        memory.save_turn(text, web_reply)
+        return web_reply
     if is_self_question(text):
         answer = about_text(memory, MODEL)
         memory.save_turn(text, answer)
@@ -349,6 +380,11 @@ def respond(memory, message):
         for _, obs, sug, doubt in memory.thinking.recent(3)]
     notes += '\nNotas de planejamento: sugestões e hipóteses, NÃO ações realizadas: ' + json.dumps(
         thoughts, ensure_ascii=False)
+    query = public_question_to_query(message) if os.environ.get('YUNA_AUTO_RESEARCH', '1') == '1' else None
+    if query:
+        public_refs = wikipedia_lookup(query)
+        if 'Fonte:' in public_refs:
+            notes += '\nFontes públicas da Wikipédia para esta pergunta: ' + public_refs[:1800]
     messages = [{'role': 'system',
                  'content': SYSTEM + '\n' + memory.affect.style_instructions() + '\n'
                             + facts + notes}]
@@ -426,7 +462,8 @@ def main():
     print(HELP)
     greeting_name = next((name for _, fact in reversed(memory.facts())
                           if (name := declared_name(fact))), 'Kaizen')
-    greeting = memory.initiative.startup(greeting_name)
+    greeting = startup_greeting()
+    greeting += "\n" + memory.initiative.startup(greeting_name)
     if greeting:
         print('\nYuna:', greeting)
     try:
@@ -537,7 +574,7 @@ def main():
                         print('Histórico e memórias apagados.')
                     else:
                         print('Para apagar histórico e memórias, digite /apagar CONFIRMAR.')
-                elif command in ('/abrir', '/buscar', '/localizar', '/apps', '/app', '/sistema', '/processos', '/fazer', '/criar'):
+                elif command in ('/abrir', '/buscar', '/localizar', '/apps', '/app', '/sistema', '/processos', '/fazer', '/criar', '/pesquisar'):
                     print('Yuna:', handle_message(memory, text, computer))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
