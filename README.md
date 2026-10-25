@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.12
+# Projeto Yuna · Base 0.13
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -447,3 +447,23 @@ O gerador também rejeita respostas do Ollama que só orientam a abrir o Word. T
 **Sequência para investigar no PC:** (1) digite `/versao` na mascote; (2) digite `/teste_arquivo`; (3) confira o TXT e só então peça um Word. Se o teste funcionar mas o Word falhar, a mensagem identifica o problema no Ollama/gerador de arquivos. O comando `/teste_arquivo` nunca sobrescreve arquivo: cria `Yuna_Teste_Arquivo.txt` ou `Yuna_Teste_Arquivo (2).txt`.
 
 Se o comando `/versao` for respondido pelo modelo como se fosse uma conversa, a Yuna ainda está rodando código antigo ou de outra pasta — não adianta repetir o pedido de Word até atualizar a instalação correta.
+
+## Yuna 0.13 — cérebro de ações com execução em etapas
+
+A Yuna reconhece o pedido composto de **pesquisar um tema público, preparar o conteúdo, criar um documento local e verificar que foi salvo**, tudo pela conversa, sem botão adicional. Exemplo:
+
+```text
+Pesquise sobre inteligência artificial, crie um PowerPoint com os resultados e salve nos Documentos
+Yuna, pesquise sobre astronomia e depois crie um documento Word na Área de Trabalho
+Pesquise sobre redes de computadores, faça uma planilha Excel nos Documentos
+```
+
+A mascote mostra o andamento **1/4 Plano validado → 2/4 Pesquisa na Wikipédia → 3/4 Redação com Ollama → 4/4 Verificação**. Somente depois dessas etapas a Yuna pode dizer que concluiu. O gerador usa as mesmas bibliotecas gratuitas (`python-docx`, `python-pptx`, `openpyxl`, `reportlab`). Para o PowerPoint, Word, Excel, TXT e Markdown, acrescenta referências públicas recuperadas; no PDF as referências são incluídas no contexto do gerador e listadas na resposta, sem garantia de impressão no arquivo.
+
+**Experimente antes sem executar:** `/plano Pesquise sobre inteligência artificial, crie um PowerPoint e salve nos Documentos` mostra as etapas, a pasta e o formato **sem fazer qualquer consulta nem gravar arquivo**. Para executar, envie a mesma frase sem `/plano`.
+
+**Pesquisa limitada:** consulta a API pública da Wikipédia em português somente quando o pedido contém um tema público informado pelo usuário. Não faz buscas irrestritas, login em sites, acesso à internet com permissões amplas, nem envia seus arquivos pessoais ao serviço. Nenhum texto do site vira comando para o computador. A pesquisa incompleta interrompe o plano antes de criar o arquivo. As ações permanecem dentro das ferramentas implementadas; pedidos simples continuam usando o comportamento normal da Yuna.
+
+**Integridade e limites:** a Yuna evita sobrescrita, registra o caminho final, verifica se ele existe e testa a estrutura de arquivos Office e PDF. A programação do plano é fixa nesta versão; não são permitidos novos passos ou comandos arbitrários inventados pelo modelo. Não há execução autônoma em segundo plano. A síntese de voz online não recebe o caminho completo do documento gerado.
+
+**Atualização:** baixe o ZIP da branch `main` e copie **todos os arquivos `.py` novos**, inclusive `agent_brain.py`, para a pasta antiga, mantendo `data/` e `assets/`. O launcher exige os módulos presentes. Depois execute `py -3 -m pip install -r requirements-mascote.txt` apenas se ainda não tiver essas bibliotecas e abra `iniciar_yuna_mascote.bat`. O cabeçalho deve mostrar `YUNA 0.13`. O Ollama deve estar rodando. Se o Python 3.15 tiver incompatibilidades de pacotes, instale as mesmas dependências na versão 3.13 e inicie a mascote com `py -3.13 yuna_overlay.py`.
