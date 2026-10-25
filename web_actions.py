@@ -101,6 +101,18 @@ def handle_web_command(message):
     if re.fullmatch(r"(?:proxima|proximo)(?:\s+(?:musica|faixa|video))?", value):
         return media_key("next")
 
+    # Buscas explícitas em YouTube ou Google: o conteúdo NÃO é baixado por Yuna.
+    match = re.search(r"\b(?:pesquise|pesquisa|pesquisar|procure|buscar|busque)\s+(.+?)"
+                      r"\s+(?:no|na)\s+(youtube|google)\s*$", value)
+    if match:
+        query, engine = match[1].strip(), match[2]
+        if len(query) > 160:
+            return "Resuma a pesquisa em até 160 caracteres."
+        if engine == "youtube":
+            return open_allowed_url("https://www.youtube.com/results?search_query=" + quote(query), chrome=("chrome" in value))
+        return open_allowed_url("https://www.google.com/search?" + urlencode({"q": query}), chrome=("chrome" in value))
+
+
     # 'abra Chrome e YouTube' / 'abre meu navegador Chrome e abre YouTube'
     if re.search(r"\b(?:abra|abre|abrir|inicie|quero abrir)\b", value):
         chrome = "chrome" in value
@@ -110,17 +122,6 @@ def handle_web_command(message):
             return open_allowed_url(SAFE_SITES["google"], chrome=chrome)
         if "wikipedia" in value:
             return open_allowed_url(SAFE_SITES["wikipedia"], chrome=chrome)
-
-    # Buscas explícitas em YouTube ou Google: o conteúdo NÃO é baixado por Yuna.
-    match = re.search(r"\b(?:pesquise|pesquisa|pesquisar|procure|buscar|busque)\s+(.+?)"
-                      r"\s+(?:no|na)\s+(youtube|google)\s*$", value)
-    if match:
-        query, engine = match[1].strip(), match[2]
-        if len(query) > 160:
-            return "Resuma a pesquisa em até 160 caracteres."
-        if engine == "youtube":
-            return open_allowed_url("https://www.youtube.com/results?search_query=" + quote(query), chrome=False)
-        return open_allowed_url("https://www.google.com/search?" + urlencode({"q": query}), chrome=False)
 
     match = re.search(r"^(?:pesquise|pesquisa|pesquisar|busque|buscar|procure)\s+(.+?)"
                       r"\s+(?:na|pela|pela\s+internet\s+na)\s+wikipedia$", value)
