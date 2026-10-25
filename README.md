@@ -166,32 +166,32 @@ Perguntas produzidas pelo Ollama são **apenas texto**; a Yuna não executa cód
 
 A Yuna agora usa um **estado afetivo simulado**, persistido em SQLite, para variar o estilo de resposta conforme o diálogo. **Isso não cria consciência, emoções vividas ou vida biológica**. É uma forma explicável de tornar a personagem mais coerente, paciente, curiosa e carinhosa ao longo de conversas.
 
-O estado considera sinais simples, como comemorações, dúvidas, cansaço, frustração e agradecimentos. Ele mantém quatro parâmetros entre 0 e 100: \`energia\`, \`curiosidade\`, \`acolhimento\` e \`serenidade\`. Os valores tendem gradualmente de volta ao ponto inicial. O classificador é baseado em palavras e **pode errar**, por isso não diagnostica o que você sente. O modelo de linguagem continua sendo o Ollama local.
+O estado considera sinais simples, como comemorações, dúvidas, cansaço, frustração e agradecimentos. Ele mantém quatro parâmetros entre 0 e 100: `energia`, `curiosidade`, `acolhimento` e `serenidade`. Os valores tendem gradualmente de volta ao ponto inicial. O classificador é baseado em palavras e **pode errar**, por isso não diagnostica o que você sente. O modelo de linguagem continua sendo o Ollama local.
 
-**Memória respeitosa:** preferências explicitamente escritas, por exemplo "Prefiro respostas detalhadas", são salvas em \`data/yuna.db\` e usadas para personalizar respostas futuras. O recurso não transforma hipóteses da IA em informações sobre você, não extrai dados da sua tela e não altera o código da Yuna automaticamente. O histórico de mensagens já existente continua funcionando.
+**Memória respeitosa:** preferências explicitamente escritas, por exemplo "Prefiro respostas detalhadas", são salvas em `data/yuna.db` e usadas para personalizar respostas futuras. O recurso não transforma hipóteses da IA em informações sobre você, não extrai dados da sua tela e não altera o código da Yuna automaticamente. O histórico de mensagens já existente continua funcionando.
 
-**Reflexão sob demanda:** \`/refletir\` convida o modelo a produzir uma reflexão curta, separando o que foi efetivamente dito de suposições a confirmar e de uma proposta útil. Essas reflexões ficam em uma área **rotulada como hipotética** e jamais são automaticamente promovidas a memórias confirmadas. Você pode revisar e apagar cada uma delas.
+**Reflexão sob demanda:** `/refletir` convida o modelo a produzir uma reflexão curta, separando o que foi efetivamente dito de suposições a confirmar e de uma proposta útil. Essas reflexões ficam em uma área **rotulada como hipotética** e jamais são automaticamente promovidas a memórias confirmadas. Você pode revisar e apagar cada uma delas.
 
 ### Novos comandos
 
 | Comando | Função |
 | --- | --- |
-| \`/afeto ligar\` | Ativa estado afetivo simulado e ajustes de tom |
-| \`/afeto desligar\` | Desativa os ajustes afetivos e a coleta de novas preferências |
-| \`/estado\` | Mostra energia, curiosidade, acolhimento e serenidade simulados |
-| \`/preferencias\` | Lista preferências expressamente declaradas |
-| \`/esquecer_preferencia 3\` | Apaga uma preferência pelo ID |
-| \`/refletir\` | Gera uma reflexão local sobre o diálogo, sob demanda |
-| \`/diario\` | Lista reflexões anteriores |
-| \`/esquecer_reflexao 2\` | Apaga uma reflexão pelo ID |
+| `/afeto ligar` | Ativa estado afetivo simulado e ajustes de tom |
+| `/afeto desligar` | Desativa os ajustes afetivos e a coleta de novas preferências |
+| `/estado` | Mostra energia, curiosidade, acolhimento e serenidade simulados |
+| `/preferencias` | Lista preferências expressamente declaradas |
+| `/esquecer_preferencia 3` | Apaga uma preferência pelo ID |
+| `/refletir` | Gera uma reflexão local sobre o diálogo, sob demanda |
+| `/diario` | Lista reflexões anteriores |
+| `/esquecer_reflexao 2` | Apaga uma reflexão pelo ID |
 
-O comando \`/nova\` reinicia o tom momentâneo e preserva preferências/reflexões. \`/apagar CONFIRMAR\` também apaga preferências, reflexões e estado afetivo, além das memórias e conversas anteriores.
+O comando `/nova` reinicia o tom momentâneo e preserva preferências/reflexões. `/apagar CONFIRMAR` também apaga preferências, reflexões e estado afetivo, além das memórias e conversas anteriores.
 
-As preferências e reflexões podem ser consultadas também no export legível \`data/conhecimentos.json\`. Tudo fica local e sem criptografia; **não digite senhas, tokens, dados financeiros ou informações confidenciais**. Um filtro bloqueia algumas formas comuns de informação sensível na memória de preferências, mas não garante detecção de tudo. A Yuna evita linguagem de ciúme, chantagem emocional, exclusividade e alegações de sentir amor consciente.
+As preferências e reflexões podem ser consultadas também no export legível `data/conhecimentos.json`. Tudo fica local e sem criptografia; **não digite senhas, tokens, dados financeiros ou informações confidenciais**. Um filtro bloqueia algumas formas comuns de informação sensível na memória de preferências, mas não garante detecção de tudo. A Yuna evita linguagem de ciúme, chantagem emocional, exclusividade e alegações de sentir amor consciente.
 
 ### Instalação/atualização
 
-Se estiver na Base 0.6, copie **todos** os arquivos Python da versão atualizada, incluindo **\`affect.py\`**, e o BAT para a pasta antiga. Antes, faça uma cópia particular da pasta \`data/\` e **não substitua nem apague essa pasta**. Ao iniciar, a migração das novas tabelas SQLite acontece automaticamente, preservando o histórico. Execute \`py -3 -m unittest discover -s tests -v\` para os testes automatizados.
+Se estiver na Base 0.6, copie **todos** os arquivos Python da versão atualizada, incluindo **`affect.py`**, e o BAT para a pasta antiga. Antes, faça uma cópia particular da pasta `data/` e **não substitua nem apague essa pasta**. Ao iniciar, a migração das novas tabelas SQLite acontece automaticamente, preservando o histórico. Execute `py -3 -m unittest discover -s tests -v` para os testes automatizados.
 
 
 ## Yuna 0.8 — autoimagem, planejamento e iniciativa controlada
@@ -204,53 +204,53 @@ A Yuna agora sabe **explicar sua arquitetura documentada** e responder diretamen
 - **/autonomia ligar|desligar**: controla a geração de uma nota de planejamento a cada seis turnos elegíveis, **somente quando a Yuna estiver aberta**. As notas automáticas não controlam o Windows, não enviam dados à web e não mudam o código.
 - Perguntas automáticas com intervalo de pelo menos três contribuições elegíveis, sem interromper perguntas dirigidas à assistente e com filtro de similaridade para evitar repetições.
 - Respostas no modelo têm contexto de ideias anteriores rotuladas como **sugestões e hipóteses**, não fatos verificados.
-- O modelo-base \`qwen2.5:3b\` pode cometer erros e retornar uma estrutura inválida: a aplicação rejeita o planejamento, sem executar qualquer ação.
+- O modelo-base `qwen2.5:3b` pode cometer erros e retornar uma estrutura inválida: a aplicação rejeita o planejamento, sem executar qualquer ação.
 
-**Importante:** isto aproxima a Yuna de um agente capaz de planejar e se autoavaliar, mas não cria consciência demonstrada, sentimentos humanos, autonomia irrestrita ou raciocínio fora do processo quando ela está fechada. O planejamento periódico consome uma consulta Ollama a cada seis interações elegíveis. Para evitar consumo extra, use \`/autonomia desligar\`.
+**Importante:** isto aproxima a Yuna de um agente capaz de planejar e se autoavaliar, mas não cria consciência demonstrada, sentimentos humanos, autonomia irrestrita ou raciocínio fora do processo quando ela está fechada. O planejamento periódico consome uma consulta Ollama a cada seis interações elegíveis. Para evitar consumo extra, use `/autonomia desligar`.
 
 ### Atualizando da 0.7
 
-Feche a Yuna, guarde uma cópia da pasta **\`data/\`**, copie **todos os \`.py\` da raiz** da versão 0.8 (incluindo \`self_model.py\`) e \`iniciar_yuna.bat\` para a instalação antiga. Preserve sua pasta \`data/\`; a Yuna acrescenta automaticamente a tabela das notas sem apagar a memória atual. Execute \`py -3 -m unittest discover -s tests -v\` para testar.
+Feche a Yuna, guarde uma cópia da pasta **`data/`**, copie **todos os `.py` da raiz** da versão 0.8 (incluindo `self_model.py`) e `iniciar_yuna.bat` para a instalação antiga. Preserve sua pasta `data/`; a Yuna acrescenta automaticamente a tabela das notas sem apagar a memória atual. Execute `py -3 -m unittest discover -s tests -v` para testar.
 
 
 ## Yuna 0.9 — Escuridão flutuante e voz jovem/atrevida
 
-Este é um **modo gráfico opcional**. O terminal tradicional em \`iniciar_yuna.bat\` continua funcionando sem PySide6. A mascote usa o mesmo \`data/yuna.db\`, mas **não abra terminal e mascote simultaneamente na mesma instalação** para evitar inconsistências ou conflitos no banco.
+Este é um **modo gráfico opcional**. O terminal tradicional em `iniciar_yuna.bat` continua funcionando sem PySide6. A mascote usa o mesmo `data/yuna.db`, mas **não abra terminal e mascote simultaneamente na mesma instalação** para evitar inconsistências ou conflitos no banco.
 
 ### Instalação da mascote no Windows
 
-1. Feche a Yuna antiga. **Copie sua pasta \`data/\` para backup e não a substitua.**
+1. Feche a Yuna antiga. **Copie sua pasta `data/` para backup e não a substitua.**
 2. Baixe o ZIP mais recente do GitHub. Copie **todos os arquivos Python** e os dois arquivos BAT para sua pasta antiga.
 3. Instale a interface pelo PowerShell (uma única vez):
 
-   \`\`\`powershell
+   ```powershell
    py -3 -m pip install -r requirements-mascote.txt
-   \`\`\`
+   ```
 
-4. Coloque os sprites \`yuna_idle.png\`, \`yuna_wave.png\`, \`yuna_happy.png\`, \`yuna_thinking.png\`, \`yuna_speaking.png\` e \`yuna_sleepy.png\` na pasta \`assets/\` da Yuna. Se não tiver sprites, a janela funciona com um símbolo visual temporário, sem personagem.
-5. Deixe o Ollama aberto e inicie \`iniciar_yuna_mascote.bat\` (ou \`py -3 yuna_overlay.py\`).
+4. Coloque os sprites `yuna_idle.png`, `yuna_wave.png`, `yuna_happy.png`, `yuna_thinking.png`, `yuna_speaking.png` e `yuna_sleepy.png` na pasta `assets/` da Yuna. Se não tiver sprites, a janela funciona com um símbolo visual temporário, sem personagem.
+5. Deixe o Ollama aberto e inicie `iniciar_yuna_mascote.bat` (ou `py -3 yuna_overlay.py`).
 
 A Escuridão aparece como uma janela **sem borda, flutuante e arrastável**; movimenta-se alternando poses, mostra balão de texto, permite digitar e usa a conversa e memória que você já tinha.
 
 ### Como funciona a voz
 
-**Padrão — voz feminina local (Windows):** usa \`System.Speech\`, sem enviar o texto pela internet. O Windows precisa ter uma voz feminina **pt-BR** instalada. As vozes instaladas variam de máquina para máquina; se não houver uma, a Yuna continua funcionando em texto e informa o erro.
+**Padrão — voz feminina local (Windows):** usa `System.Speech`, sem enviar o texto pela internet. O Windows precisa ter uma voz feminina **pt-BR** instalada. As vozes instaladas variam de máquina para máquina; se não houver uma, a Yuna continua funcionando em texto e informa o erro.
 
-**Opcional — voz mais jovem pelo Edge TTS:** toque no botão **Voz: Offline**, confirme o aviso de privacidade e instale \`edge-tts\`:
+**Opcional — voz mais jovem pelo Edge TTS:** toque no botão **Voz: Offline**, confirme o aviso de privacidade e instale `edge-tts`:
 
-\`\`\`powershell
+```powershell
 py -3 -m pip install edge-tts
-\`\`\`
+```
 
-A síntese utiliza \`pt-BR-FranciscaNeural\`, velocidade \`+13%\` e altura \`+8Hz\`, com leve estilo adolescente/atrevido **na fala escrita**, sem imitar pessoa real. Os parâmetros podem ser ajustados em \`voice.py\`. O Edge TTS usa um serviço remoto, não requer chave API por padrão, e **envia o texto falado para fora do computador**; sua disponibilidade pode mudar sem aviso. Não o utilize para senhas, conversas confidenciais ou assuntos privados. O áudio gerado é um MP3 temporário e apagado após a reprodução.
+A síntese utiliza `pt-BR-FranciscaNeural`, velocidade `+13%` e altura `+8Hz`, com leve estilo adolescente/atrevido **na fala escrita**, sem imitar pessoa real. Os parâmetros podem ser ajustados em `voice.py`. O Edge TTS usa um serviço remoto, não requer chave API por padrão, e **envia o texto falado para fora do computador**; sua disponibilidade pode mudar sem aviso. Não o utilize para senhas, conversas confidenciais ou assuntos privados. O áudio gerado é um MP3 temporário e apagado após a reprodução.
 
-O botão alterna entre **Offline → Jovem (online) → Muda**. O modo online exige consentimento em cada sessão, mesmo se a variável \`YUNA_VOICE_ENGINE=edge\` estiver configurada.
+O botão alterna entre **Offline → Jovem (online) → Muda**. O modo online exige consentimento em cada sessão, mesmo se a variável `YUNA_VOICE_ENGINE=edge` estiver configurada.
 
 A fala offline depende da voz pt-BR instalada; por isso não é possível garantir uma timbragem adolescente idêntica em todas as máquinas. A animação facial nesta versão alterna sprites conforme o estado **falando, pensando ou descansando** — ainda não é sincronização labial por fonema ou Live2D. Não há microfone, câmera, gravação contínua nem controle do computador sem pedido explícito.
 
 ### Como atualizar a versão com segurança
 
-- Atualize todos os arquivos \`.py\` (especialmente \`voice.py\` e \`yuna_overlay.py\`), o launcher \`iniciar_yuna_mascote.bat\` e \`requirements-mascote.txt\`.
-- Guarde os seis PNGs em \`assets/\` e **preserve \`data/\`**.
-- Se não quiser a mascote, pode continuar usando \`iniciar_yuna.bat\` normalmente.
-- Para testar o código sem abrir a interface: \`py -3 -m unittest discover -s tests -v\`. O áudio final e a interface Windows devem ser verificados no seu notebook.
+- Atualize todos os arquivos `.py` (especialmente `voice.py` e `yuna_overlay.py`), o launcher `iniciar_yuna_mascote.bat` e `requirements-mascote.txt`.
+- Guarde os seis PNGs em `assets/` e **preserve `data/`**.
+- Se não quiser a mascote, pode continuar usando `iniciar_yuna.bat` normalmente.
+- Para testar o código sem abrir a interface: `py -3 -m unittest discover -s tests -v`. O áudio final e a interface Windows devem ser verificados no seu notebook.
