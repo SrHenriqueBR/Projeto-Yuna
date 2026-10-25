@@ -12,7 +12,7 @@ from threading import Thread
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QLineEdit,
+    QApplication, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
     QPushButton, QVBoxLayout, QWidget
 )
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -21,10 +21,12 @@ from computer import Computer
 from initiative import looks_like_command
 from self_model import about_text, is_self_question
 from voice import speak_windows, synthesize_edge, synthesize_amanda, amanda_available, speech_text
+from diary import DiaryStore, AUTO_INTERVAL_MINUTES, generate_entry
 from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message
 
 ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
+DIARY_TASK = object()
 
 
 class Messages(QObject):
@@ -34,6 +36,8 @@ class Messages(QObject):
     voice_finished = Signal(str)
     edge_ready = Signal(str)
     warning = Signal(str)
+    diary_ready = Signal(str)
+    diary_error = Signal(str)
 
 
 class DialogueThread(Thread):
@@ -45,6 +49,9 @@ class DialogueThread(Thread):
 
     def submit(self, text):
         self.inputs.put(text)
+
+    def request_diary(self):
+        self.inputs.put(DIARY_TASK)
 
     def stop(self):
         self.inputs.put(None)
@@ -67,6 +74,12 @@ class DialogueThread(Thread):
                 message = self.inputs.get()
                 if message is None:
                     break
+                if message is DIARY_TASK:
+                    try:
+                        self.output.diary_ready.emit(generate_entry(ask_model))
+                    except Exception as exc:
+                        self.output.diary_error.emit(str(exc))
+                    continue
                 self.output.listening.emit(True)
                 try:
                     # Usa a lógica do terminal, no mesmo banco e mesma thread.
@@ -124,6 +137,58 @@ class MascotImage(QLabel):
         self.drag_delta = None
 
 
+class DiaryWindow(QWidget):
+    """Leitor simples: a escrita aparece aos poucos e é guardada em Markdown."""
+    def __init__(self, mascot):
+        super().__init__()
+        self.mascot = mascot
+        self.setWindowTitle("📖 Diário da Yuna — ficção gerada pelo Ollama")
+        self.resize(490, 590)
+        self.setStyleSheet(
+            "QWidget {background:#171125;color:#efe4ff;}"
+            "QTextEdit {background:#221a35;border:1px solid #6b448a;"
+            "border-radius:12px;padding:10px;font-size:13px;}"
+            "QPushButton {background:#4c316b;border-radius:10px;padding:10px;}"
+        )
+        root = QVBoxLayout(self)
+        heading = QLabel("☾ As páginas da Escuridão")
+        heading.setStyleSheet("font-size:19px;font-weight:700;")
+        root.addWidget(heading)
+        note = QLabel(
+            "Reflexões ficcionais, não sentimentos reais. Arquivo salvo localmente.\n"
+            "A escrita automática fica desligada até você ativar."
+        )
+        note.setWordWrap(True)
+        root.addWidget(note)
+        self.display = QTextEdit()
+        self.display.setReadOnly(True)
+        root.addWidget(self.display, 1)
+        actions = QHBoxLayout()
+        self.write_button = QPushButton("✍ Escrever agora")
+        self.write_button.clicked.connect(mascot.request_diary)
+        actions.addWidget(self.write_button)
+        self.auto_button = QPushButton()
+        self.auto_button.clicked.connect(mascot.toggle_diary_auto)
+        actions.addWidget(self.auto_button)
+        root.addLayout(actions)
+        self.status = QLabel("")
+        self.status.setWordWrap(True)
+        root.addWidget(self.status)
+        self.refresh()
+
+    def refresh(self):
+        self.display.setPlainText(self.mascot.diary_store.read())
+        scroll = self.display.verticalScrollBar()
+        scroll.setValue(scroll.maximum())
+        self.auto_button.setText(
+            "⏹ Desligar automático" if self.mascot.diary_store.auto_enabled
+            else "▶ Ativar automático"
+        )
+
+    def update_progress(self, message):
+        self.status.setText(message)
+
+
 class YunaOverlay(QWidget):
     def __init__(self):
         super().__init__()
@@ -151,6 +216,11 @@ class YunaOverlay(QWidget):
         self.last_expression = "idle"
         self.temp_mp3 = None
         self.pixmaps = {}
+        self.diary_store = DiaryStore(ROOT / "data")
+        self.diary_window = None
+        self.diary_pending = False
+        self.diary_buffer = ""
+        self.diary_position = 0
         self.setup_ui()
         self.setup_audio()
         self.connect_events()
@@ -166,6 +236,14 @@ class YunaOverlay(QWidget):
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.animate_pose)
         self.animation_timer.start(360)
+        self.diary_typing_timer = QTimer(self)
+        self.diary_typing_timer.setInterval(70)
+        self.diary_typing_timer.timeout.connect(self.type_diary)
+        self.diary_auto_timer = QTimer(self)
+        self.diary_auto_timer.setInterval(AUTO_INTERVAL_MINUTES * 60 * 1000)
+        self.diary_auto_timer.timeout.connect(self.auto_diary)
+        if self.diary_store.auto_enabled:
+            self.diary_auto_timer.start()
 
     def setup_ui(self):
         root = QVBoxLayout(self)
@@ -179,6 +257,11 @@ class YunaOverlay(QWidget):
         )
         top.addWidget(title)
         top.addStretch()
+        self.diary_button = QPushButton("📖")
+        self.diary_button.setToolTip("Abrir diário local da Yuna")
+        self.diary_button.setFixedWidth(35)
+        self.diary_button.clicked.connect(self.open_diary)
+        top.addWidget(self.diary_button)
         self.voice_button = QPushButton()
         self.voice_button.setToolTip("Alternar voz: Windows offline, Edge online, sem voz")
         self.voice_button.clicked.connect(self.cycle_voice)
@@ -239,12 +322,100 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.diary_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
                 "QPushButton:hover {background:#5d3680}"
             )
+
+    def open_diary(self):
+        if self.diary_window is None:
+            self.diary_window = DiaryWindow(self)
+        self.diary_window.refresh()
+        self.diary_window.show()
+        self.diary_window.raise_()
+        self.diary_window.activateWindow()
+
+    def toggle_diary_auto(self):
+        enabled = not self.diary_store.auto_enabled
+        try:
+            self.diary_store.set_auto(enabled)
+        except OSError as exc:
+            self.diary_error(str(exc))
+            return
+        if enabled:
+            self.diary_auto_timer.start()
+        else:
+            self.diary_auto_timer.stop()
+        if self.diary_window:
+            self.diary_window.refresh()
+            self.diary_window.update_progress(
+                f"Escrita automática {'ativada' if enabled else 'desativada'}. "
+                f"Uma reflexão a cada {AUTO_INTERVAL_MINUTES} minutos com a Yuna aberta."
+            )
+
+    def request_diary(self):
+        if self.diary_pending:
+            if self.diary_window:
+                self.diary_window.update_progress("Já estou escrevendo ou elaborando uma nota.")
+            return
+        self.diary_pending = True
+        self.dialogue.request_diary()
+        if self.diary_window:
+            self.diary_window.update_progress("Ollama: elaborando uma reflexão...")
+        self.status.setText("Diário: criando reflexão local...")
+
+    def auto_diary(self):
+        # Não interrompe conversas ou escritas em andamento.
+        if self.diary_store.auto_enabled and not self.thinking and not self.diary_pending:
+            self.request_diary()
+
+    def diary_ready(self, entry):
+        try:
+            self.diary_store.start_entry()
+            self.diary_buffer = entry
+            self.diary_position = 0
+            if self.diary_window:
+                self.diary_window.refresh()
+                self.diary_window.update_progress("Escrevendo lentamente no arquivo...")
+            self.diary_typing_timer.start()
+            self.status.setText("Diário: escrevendo uma nova página...")
+        except (OSError, RuntimeError) as exc:
+            self.diary_error(str(exc))
+
+    def type_diary(self):
+        if self.diary_position >= len(self.diary_buffer):
+            self.diary_typing_timer.stop()
+            try:
+                self.diary_store.end_entry()
+            except (OSError, RuntimeError) as exc:
+                self.diary_error(str(exc))
+                return
+            self.diary_pending = False
+            self.diary_buffer = ""
+            if self.diary_window:
+                self.diary_window.refresh()
+                self.diary_window.update_progress("Entrada concluída e salva em data/diario_yuna.md.")
+            self.status.setText("Diário salvo localmente")
+            return
+        piece = self.diary_buffer[self.diary_position:self.diary_position + 5]
+        try:
+            self.diary_store.write_piece(piece)
+        except (OSError, RuntimeError) as exc:
+            self.diary_error(str(exc))
+            return
+        self.diary_position += len(piece)
+        if self.diary_window and self.diary_window.isVisible():
+            self.diary_window.refresh()
+
+    def diary_error(self, message):
+        self.diary_typing_timer.stop()
+        self.diary_pending = False
+        self.diary_buffer = ""
+        self.status.setText(f"Diário: {message[:115]}")
+        if self.diary_window:
+            self.diary_window.update_progress(f"Não consegui escrever: {message[:200]}")
 
     def setup_audio(self):
         self.player = QMediaPlayer(self)
@@ -261,6 +432,8 @@ class YunaOverlay(QWidget):
         self.signals.voice_finished.connect(self.voice_done)
         self.signals.edge_ready.connect(self.play_edge)
         self.signals.warning.connect(self.show_warning)
+        self.signals.diary_ready.connect(self.diary_ready)
+        self.signals.diary_error.connect(self.diary_error)
 
     def show_expression(self, expression):
         sprite = self.pixmaps.get(expression) or self.pixmaps.get("idle")
@@ -509,6 +682,10 @@ class YunaOverlay(QWidget):
         self.bubble.setText("Ops, encontrei um problema: " + error[:220])
 
     def closeEvent(self, event):
+        self.diary_typing_timer.stop()
+        self.diary_auto_timer.stop()
+        if self.diary_window is not None:
+            self.diary_window.close()
         self.dialogue.stop()
         self.player.stop()
         self.player.setSource(QUrl())
