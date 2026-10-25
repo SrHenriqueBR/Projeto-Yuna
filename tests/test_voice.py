@@ -77,10 +77,11 @@ class VoiceTests(unittest.TestCase):
             fallback.assert_not_called()
 
     def test_fallback_gives_a_readable_installation_message(self):
+        path = Path("resultado.mp3")
         with patch("voice.os.name", "nt"), patch("voice.shutil.which", return_value="py"), patch(
                 "voice.subprocess.run", return_value=SimpleResult(1)):
             with self.assertRaisesRegex(RuntimeError, "py -3.13 -m pip install edge-tts"):
-                voice._stable_python_edge("Teste", Path("resultado.mp3"))
+                voice._stable_python_edge("Teste", path)
 
 
 class SimpleResult:
