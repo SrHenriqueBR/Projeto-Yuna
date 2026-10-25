@@ -10,9 +10,9 @@ from agent_brain import (
 from office_agent import create_requested
 
 
-SOURCE = ("Inteligência artificial: área da ciência da computação. "
+SOURCE = ("Inteligência artificial: área da ciência da computação.\n"
           "Fonte: https://pt.wikipedia.org/wiki/Intelig%C3%AAncia_artificial\n"
-          "Algoritmos: técnicas computacionais. "
+          "Algoritmos: técnicas computacionais.\n"
           "Fonte: https://pt.wikipedia.org/wiki/Algoritmo")
 
 
