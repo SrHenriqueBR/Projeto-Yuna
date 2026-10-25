@@ -14,7 +14,6 @@ from local_agent import interpret
 from initiative import Initiative, looks_like_command
 from affect import AffectiveCore
 from self_model import Thinking, VERSION, about_text, is_self_question
-from document_writer import looks_like_file_request, parse_file_request, generate_contents, create_file
 from vision import describe_screen
 from office_agent import file_intent, parse_request as parse_office_request, create_requested
 from web_actions import handle_web_command, public_question_to_query, wikipedia_lookup
@@ -340,15 +339,6 @@ def handle_message(memory, text, computer=None):
     if web_reply is not None:
         memory.save_turn(text, web_reply)
         return web_reply
-    if looks_like_file_request(text):
-        request = parse_file_request(text)
-        if request is None:
-            raise ValueError("Use /criar word NOME | Documentos ou o botão 📄.")
-        text_for_file = generate_contents(request, ask_model)
-        target = create_file(request, text_for_file)
-        answer = f"Criei o documento e salvei em: {target}"
-        memory.save_turn(text, answer)
-        return answer
     if is_self_question(text):
         answer = about_text(memory, MODEL)
         memory.save_turn(text, answer)
