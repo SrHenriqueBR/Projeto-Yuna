@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.13.1
+# Projeto Yuna · Base 0.13.2
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -485,3 +485,18 @@ O modelo padrão continua `qwen2.5:3b`, para não quebrar instalações existent
 Para usar um terceiro modelo local já instalado, abra PowerShell dentro do projeto, execute `$env:YUNA_MODEL='nome-do-modelo'` e depois `py -3 yuna_overlay.py` na mesma janela. A interface mostra a versão da Yuna e `/versao` retorna o executável Python, mas a versão do Ollama atualmente carregada é exibida no comando `/modelo`.
 
 **Atualização:** faça backup de `data/`; preserve `assets/` e `data/`; feche a Yuna; copie todos os novos `.py`, especialmente `language_quality.py` e `yuna.py`, e o novo launcher. Não há bibliotecas Python adicionais necessárias para esta correção.
+
+## Yuna 0.13.2 — iniciativa própria coerente
+
+Agora a Yuna interpreta **`Yuna, o que você quer fazer?`** como um pedido para **ela própria escolher** uma atividade útil. O programa não passa essa pergunta ao Ollama para que ele invente tarefas sem fim ou devolva a responsabilidade ao usuário. A Yuna propõe UMA atividade que realmente possui suporte e mantém a proposta no SQLite:
+
+- **Diário da Yuna**: decide escrever uma página sobre sua evolução como assistente; após o usuário responder `pode fazer`, o Ollama local gera a reflexão ficcional e a Yuna grava de verdade em `data/diario_yuna.md`.
+- **Melhoria do projeto**: decide organizar uma sugestão concreta para a Yuna explicar melhor suas ações; após `pode fazer`, produz uma proposta, sem modificar código ou criar arquivos silenciosamente.
+
+As duas ideias se alternam sem depender do modelo e a preferência de qual foi a última sobrevive às reinicializações. Novos pedidos `O que você quer fazer?` substituem a proposta anterior. `Agora não` cancela a proposta. Qualquer outro assunto limpa a permissão pendente, impedindo que um `pode fazer` fora de contexto execute tarefas antigas.
+
+**Atenção:** perguntar a preferência da Yuna não autoriza alterações no computador; somente a confirmação explícita pode criar a página local. A persona pode simular iniciativa e afeto, mas não implica sentimentos conscientes. Nada executa operações destrutivas, publica arquivos ou faz pesquisas sem solicitação.
+
+**Atualizar:** faça backup da pasta `data/`, feche a mascote, copie todos os `.py` do ZIP, incluindo o novo `own_initiative.py`, e mantenha as pastas `data/` e `assets/` existentes. Reabra `iniciar_yuna_mascote.bat` e confira `YUNA 0.13.2`. Não são necessárias bibliotecas Python adicionais.
+
+**Testar:** escreva `Yuna, o que você quer fazer?` e, após ela propor seu diário, diga `pode fazer`. O arquivo será salvo no diário local. Na próxima pergunta, ela terá outra ideia útil.
