@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.10"
+VERSION = "0.11"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -53,6 +53,7 @@ def about(memory, model):
         "pode": [
             "conversar e explicar a arquitetura documentada da Yuna",
             "escrever diário fictício local pelo botão da mascote e periodicamente após opt-in",
+            "criar Word, TXT e Markdown reais em pastas autorizadas por pedido explícito",
             "lembrar preferências e perguntas respondidas",
             "planejar e autoavaliar a conversa quando em execução",
             "listar e abrir aplicativos do menu Iniciar por pedido",
@@ -81,7 +82,7 @@ def about_text(memory, model):
         f"e um módulo de planejamento {'ligado' if data['pensamento_periodico'] else 'desligado'}.\n"
         "Consigo conversar, analisar objetivos, recuperar lembranças e usar algumas ferramentas do "
         "Windows quando você pede. Não leio meus arquivos-fonte automaticamente nem mexo "
-        "no sistema por conta própria. Agora também tenho uma mascote flutuante e voz feminina opcional "
+        "no sistema por conta própria. Agora também tenho uma mascote flutuante, voz feminina e criação local de arquivos Word, TXT e Markdown "
         "no Windows (o terminal segue só por texto).\n"
         "Minha prioridade de melhoria é conversar naturalmente, evitar perguntas repetidas "
         "e reconhecer meus limites sem respostas defensivas desnecessárias."

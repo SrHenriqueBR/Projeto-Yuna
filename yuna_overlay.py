@@ -12,8 +12,8 @@ from threading import Thread
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
 from PySide6.QtGui import QPixmap, QFont
 from PySide6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
-    QPushButton, QVBoxLayout, QWidget
+    QApplication, QDialog, QFileDialog, QComboBox, QHBoxLayout, QLabel, QLineEdit,
+    QTextEdit, QPushButton, QVBoxLayout, QWidget
 )
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 
@@ -22,11 +22,16 @@ from initiative import looks_like_command
 from self_model import about_text, is_self_question
 from voice import speak_windows, synthesize_edge, synthesize_amanda, amanda_available, speech_text
 from diary import DiaryStore, AUTO_INTERVAL_MINUTES, generate_entry
+from document_writer import (
+    FileRequest, create_file, generate_contents, parse_file_request,
+    looks_like_file_request, validate_title
+)
 from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message
 
 ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
 DIARY_TASK = object()
+FILE_TASK = "create_file"
 
 
 class Messages(QObject):
@@ -38,6 +43,8 @@ class Messages(QObject):
     warning = Signal(str)
     diary_ready = Signal(str)
     diary_error = Signal(str)
+    file_ready = Signal(str)
+    file_failed = Signal(str)
 
 
 class DialogueThread(Thread):
@@ -52,6 +59,9 @@ class DialogueThread(Thread):
 
     def request_diary(self):
         self.inputs.put(DIARY_TASK)
+
+    def request_file(self, request):
+        self.inputs.put((FILE_TASK, request))
 
     def stop(self):
         self.inputs.put(None)
@@ -80,9 +90,36 @@ class DialogueThread(Thread):
                     except Exception as exc:
                         self.output.diary_error.emit(str(exc))
                     continue
+                if isinstance(message, tuple) and len(message) == 2 and message[0] == FILE_TASK:
+                    self.output.listening.emit(True)
+                    try:
+                        request = message[1]
+                        content = generate_contents(request, ask_model)
+                        target = create_file(request, content)
+                        self.output.file_ready.emit(str(target))
+                        self.output.speech.emit("Prontinho! Criei o seu documento.")
+                    except Exception as exc:
+                        self.output.file_failed.emit(str(exc))
+                    finally:
+                        self.output.listening.emit(False)
+                    continue
                 self.output.listening.emit(True)
                 try:
                     # Usa a lógica do terminal, no mesmo banco e mesma thread.
+                    if looks_like_file_request(message):
+                        try:
+                            request = parse_file_request(message)
+                            if request is None:
+                                raise ValueError("Use /criar word NOME | Documentos ou o botão 📄.")
+                            body = generate_contents(request, ask_model)
+                            saved = create_file(request, body)
+                            answer = f"Documento criado e salvo em: {saved}"
+                            self.output.speech.emit("Prontinho! O documento já está salvo.")
+                        except Exception as exc:
+                            answer = f"Não consegui criar o arquivo: {exc}"
+                        self.output.message.emit(answer)
+                        self.output.listening.emit(False)
+                        continue
                     if message == "/sobre":
                         answer = about_text(memory, MODEL)
                     elif message == "/estado":
@@ -189,6 +226,86 @@ class DiaryWindow(QWidget):
         self.status.setText(message)
 
 
+class FileCreatorDialog(QDialog):
+    """A pessoa escolhe destino e conteúdo; o modelo não controla o caminho."""
+    def __init__(self, mascot):
+        super().__init__(mascot)
+        self.mascot = mascot
+        self.setWindowTitle("📄 Criar documento com a Yuna")
+        self.setMinimumWidth(480)
+        self.setStyleSheet(
+            "QDialog {background:#1b152c;color:#f5eaff;}"
+            "QLineEdit, QComboBox {background:#2b2042;color:white;"
+            "border:1px solid #76569b;border-radius:9px;padding:10px;}"
+            "QPushButton {background:#523372;color:white;border-radius:9px;padding:10px;}"
+        )
+        root = QVBoxLayout(self)
+        root.addWidget(QLabel("📄 Que arquivo vamos criar, Kaizen?"))
+        root.addWidget(QLabel("Formato:"))
+        self.format = QComboBox()
+        self.format.addItem("Word (.docx)", "word")
+        self.format.addItem("Texto (.txt)", "texto")
+        self.format.addItem("Markdown (.md)", "markdown")
+        root.addWidget(self.format)
+        root.addWidget(QLabel("Nome do documento:"))
+        self.title = QLineEdit()
+        self.title.setPlaceholderText("Ex.: Diário da Yuna")
+        root.addWidget(self.title)
+        root.addWidget(QLabel("O que a Yuna deve escrever?"))
+        self.description = QLineEdit()
+        self.description.setPlaceholderText("Ex.: Uma primeira página de diário da personagem")
+        root.addWidget(self.description)
+        root.addWidget(QLabel("Pasta onde salvar:"))
+        self.folder = QLineEdit()
+        self.folder.setText(str(Path.home() / "Documents"))
+        self.folder.setReadOnly(True)
+        root.addWidget(self.folder)
+        browse = QPushButton("📂 Escolher pasta...")
+        browse.clicked.connect(self.choose_folder)
+        root.addWidget(browse)
+        self.create_button = QPushButton("✨ Criar arquivo")
+        self.create_button.clicked.connect(self.create)
+        root.addWidget(self.create_button)
+        self.feedback = QLabel("O arquivo só será salvo depois que você confirmar.")
+        self.feedback.setWordWrap(True)
+        root.addWidget(self.feedback)
+
+    def choose_folder(self):
+        selected = QFileDialog.getExistingDirectory(
+            self, "Escolha onde salvar o arquivo", self.folder.text()
+        )
+        if selected:
+            self.folder.setText(selected)
+
+    def create(self):
+        try:
+            title = validate_title(self.title.text())
+            directory = Path(self.folder.text())
+            if not directory.is_dir():
+                raise ValueError("Escolha uma pasta existente para salvar.")
+            description = self.description.text().strip()
+            if len(description) > 500:
+                raise ValueError("Descreva o documento usando no máximo 500 caracteres.")
+            request = FileRequest(
+                kind=self.format.currentData(),
+                title=title,
+                directory=directory,
+                description=description,
+            )
+            self.create_button.setEnabled(False)
+            self.feedback.setText("Ollama está escrevendo e salvando o arquivo...")
+            self.mascot.dialogue.request_file(request)
+        except ValueError as exc:
+            self.feedback.setText(str(exc))
+
+    def file_done(self, message, ok):
+        self.create_button.setEnabled(True)
+        self.feedback.setText(message)
+        if ok:
+            self.title.clear()
+            self.description.clear()
+
+
 class YunaOverlay(QWidget):
     def __init__(self):
         super().__init__()
@@ -218,6 +335,7 @@ class YunaOverlay(QWidget):
         self.pixmaps = {}
         self.diary_store = DiaryStore(ROOT / "data")
         self.diary_window = None
+        self.file_window = None
         self.diary_pending = False
         self.diary_buffer = ""
         self.diary_position = 0
@@ -262,6 +380,11 @@ class YunaOverlay(QWidget):
         self.diary_button.setFixedWidth(35)
         self.diary_button.clicked.connect(self.open_diary)
         top.addWidget(self.diary_button)
+        self.file_button = QPushButton("📄")
+        self.file_button.setToolTip("Criar Word, texto ou Markdown na pasta que você escolher")
+        self.file_button.setFixedWidth(35)
+        self.file_button.clicked.connect(self.open_file_creator)
+        top.addWidget(self.file_button)
         self.voice_button = QPushButton()
         self.voice_button.setToolTip("Alternar voz: Windows offline, Edge online, sem voz")
         self.voice_button.clicked.connect(self.cycle_voice)
@@ -322,12 +445,31 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.diary_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
                 "QPushButton:hover {background:#5d3680}"
             )
+
+    def open_file_creator(self):
+        if self.file_window is None:
+            self.file_window = FileCreatorDialog(self)
+        self.file_window.show()
+        self.file_window.raise_()
+        self.file_window.activateWindow()
+
+    def file_created(self, path):
+        self.show_message(f"Documento criado! Salvei em: {path}")
+        self.status.setText("Arquivo salvo localmente")
+        if self.file_window:
+            self.file_window.file_done(f"✅ Salvo em: {path}", True)
+
+    def file_failed(self, error):
+        self.show_message(f"Não consegui criar o documento: {error}")
+        self.status.setText("Falha ao criar documento")
+        if self.file_window:
+            self.file_window.file_done(f"❌ {error}", False)
 
     def open_diary(self):
         if self.diary_window is None:
@@ -434,6 +576,8 @@ class YunaOverlay(QWidget):
         self.signals.warning.connect(self.show_warning)
         self.signals.diary_ready.connect(self.diary_ready)
         self.signals.diary_error.connect(self.diary_error)
+        self.signals.file_ready.connect(self.file_created)
+        self.signals.file_failed.connect(self.file_failed)
 
     def show_expression(self, expression):
         sprite = self.pixmaps.get(expression) or self.pixmaps.get("idle")
@@ -686,6 +830,8 @@ class YunaOverlay(QWidget):
         self.diary_auto_timer.stop()
         if self.diary_window is not None:
             self.diary_window.close()
+        if self.file_window is not None:
+            self.file_window.close()
         self.dialogue.stop()
         self.player.stop()
         self.player.setSource(QUrl())

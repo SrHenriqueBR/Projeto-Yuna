@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.10
+# Projeto Yuna · Base 0.11
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -329,3 +329,42 @@ O arquivo é **Markdown**, que pode ser aberto no Bloco de Notas, VS Code ou con
 **Instalação:** feche a Yuna, copie `diary.py`, `yuna_overlay.py`, `self_model.py`, `yuna.py` e `iniciar_yuna_mascote.bat` atualizados para a pasta antiga, sem apagar `assets/` nem `data/`. Se preferir, atualize todos os arquivos `.py` a partir do ZIP. Não precisa instalar bibliotecas adicionais. Abra `iniciar_yuna_mascote.bat` e clique no botão **📖**.
 
 **Desempenho:** uma reflexão demanda uma chamada ao Ollama, então pode demorar alguns segundos dependendo do modelo. Se estiver conversando com a Yuna, a escrita aguarda sua vez e não executa comandos do computador.
+
+## Yuna 0.11 — arquivos reais Word, TXT e Markdown
+
+Antes desta atualização, o Ollama apenas **explicava** como criar um Word e não tinha permissão ou ferramenta para salvar arquivos. Agora a Yuna pode criar arquivos reais com o botão **📄** na mascote ou com pedidos explícitos pelo chat.
+
+### Jeito mais fácil: escolher onde salvar
+
+1. Abra `iniciar_yuna_mascote.bat` com o Ollama funcionando.
+2. Clique no botão **📄** ao lado do diário.
+3. Escolha **Word (.docx)**, **Texto (.txt)** ou **Markdown (.md)**; informe o nome e o assunto.
+4. Use **📂 Escolher pasta…** para selecionar qualquer pasta existente no seu Windows em que você tenha permissão de escrita.
+5. Clique em **✨ Criar arquivo**. O Ollama local escreve o conteúdo; a Yuna cria o documento e exibe o **caminho onde realmente salvou**. O Word não precisa estar instalado ou aberto para gerar `.docx`.
+
+### Pedidos pelo chat e terminal
+
+Estes comandos são reconhecidos pelo programa, não por instruções inventadas pelo modelo:
+
+```text
+Crie um documento Word chamado Diário da Yuna na pasta Documentos
+Cria um Word chamado Contas 2026 na Área de Trabalho
+/criar word Diário da Yuna | Documentos | Escreva a primeira página do diário
+/criar texto Lista de tarefas | Downloads | Faça uma lista curta
+```
+
+Pedidos escritos no chat só salvam automaticamente nas pastas **Documentos, Downloads ou Área de Trabalho** do perfil. Para qualquer outra pasta, use o botão **📄** e selecione o local explicitamente. Se o pedido estiver incompleto, a Yuna deve explicar como completá-lo, não fingir que criou um arquivo.
+
+Os arquivos **não são sobrescritos**: se `Diário da Yuna.docx` já existir, será salvo `Diário da Yuna (2).docx`. O conteúdo é gerado no computador pelo Ollama; nome, formato e caminho são determinados pela ferramenta local e nunca pela resposta do modelo. Nenhum comando do sistema é executado a partir do conteúdo gerado.
+
+**Importante:** nesta versão há suporte a **criação inicial** de documentos. Ela ainda não edita documentos Word existentes, nem cria planilhas Excel ou apresentações PowerPoint. Essas funções podem ser acrescentadas depois. O diário próprio em `data/diario_yuna.md` continua independente.
+
+### Instalação da versão 0.11
+
+Feche a Yuna e faça backup da pasta `data/`. Copie `document_writer.py`, `yuna.py`, `yuna_overlay.py`, `self_model.py` e `requirements-mascote.txt` da versão nova para a antiga. Preserve as pastas **`data` e `assets`**. No PowerShell aberto dentro da pasta do projeto, execute:
+
+```powershell
+py -3 -m pip install python-docx
+```
+
+Depois abra `iniciar_yuna_mascote.bat`. Não precisa reinstalar o Ollama ou o PySide6. O `python-docx` é gratuito e funciona localmente. Um arquivo DOCX de teste é verificado nos testes automatizados da versão.
