@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.13
+# Projeto Yuna · Base 0.13.1
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -467,3 +467,21 @@ A mascote mostra o andamento **1/4 Plano validado → 2/4 Pesquisa na Wikipédia
 **Integridade e limites:** a Yuna evita sobrescrita, registra o caminho final, verifica se ele existe e testa a estrutura de arquivos Office e PDF. A programação do plano é fixa nesta versão; não são permitidos novos passos ou comandos arbitrários inventados pelo modelo. Não há execução autônoma em segundo plano. A síntese de voz online não recebe o caminho completo do documento gerado.
 
 **Atualização:** baixe o ZIP da branch `main` e copie **todos os arquivos `.py` novos**, inclusive `agent_brain.py`, para a pasta antiga, mantendo `data/` e `assets/`. O launcher exige os módulos presentes. Depois execute `py -3 -m pip install -r requirements-mascote.txt` apenas se ainda não tiver essas bibliotecas e abra `iniciar_yuna_mascote.bat`. O cabeçalho deve mostrar `YUNA 0.13`. O Ollama deve estar rodando. Se o Python 3.15 tiver incompatibilidades de pacotes, instale as mesmas dependências na versão 3.13 e inicie a mascote com `py -3.13 yuna_overlay.py`.
+
+## Yuna 0.13.1 — português natural e identidade consistente
+
+Esta versão corrige frases artificiais do modelo local, por exemplo `vou precisa`, `vou pode`, `sou chama` e negação equivocada do nome da Yuna. O programa reforça o português brasileiro no prompt, reconhece alguns erros comuns e pede ao Ollama **uma revisão adicional somente quando necessário**. Essa revisão não é aplicada a ferramentas, nomes de arquivos ou comandos.
+
+Perguntas de identidade e interações curtas agora têm respostas previsíveis e corretas: `Olá, Yuna, tudo bom?`, `Isso, e o seu [nome]?`, `Você é a Yuna, minha criação`. A personagem sempre tem o nome **Yuna**; **Kaizen** é o criador e o interlocutor. Isso não afirma que ela tem consciência ou emoções humanas reais. Conversas anteriores com erros são preservadas no banco SQLite, mas mensagens incorretas detectadas são excluídas do contexto enviado ao modelo para não reforçar o problema.
+
+### Modelo local opcional de melhor qualidade
+
+O modelo padrão continua `qwen2.5:3b`, para não quebrar instalações existentes. Recomenda-se experimentar `qwen2.5:7b`, especialmente para português natural. Ele tem cerca de **4,7 GB de download**, comparado aos cerca de **1,9 GB do 3B**; exige mais RAM/VRAM e pode responder mais lentamente, mas costuma ter melhor capacidade linguística. Não é garantido corrigir todo erro.
+
+1. Abra PowerShell e execute `ollama pull qwen2.5:7b` (somente uma vez, com internet).
+2. Feche a Yuna atual. Depois execute **`iniciar_yuna_7b.bat`** que fica na mesma pasta do launcher normal. Ele define `YUNA_MODEL=qwen2.5:7b` apenas naquela sessão, sem apagar o 3B nem memórias.
+3. Se preferir velocidade e menor memória, continue usando `iniciar_yuna_mascote.bat` (modelo 3B).
+
+Para usar um terceiro modelo local já instalado, abra PowerShell dentro do projeto, execute `$env:YUNA_MODEL='nome-do-modelo'` e depois `py -3 yuna_overlay.py` na mesma janela. A interface mostra a versão da Yuna e `/versao` retorna o executável Python, mas a versão do Ollama atualmente carregada é exibida no comando `/modelo`.
+
+**Atualização:** faça backup de `data/`; preserve `assets/` e `data/`; feche a Yuna; copie todos os novos `.py`, especialmente `language_quality.py` e `yuna.py`, e o novo launcher. Não há bibliotecas Python adicionais necessárias para esta correção.
