@@ -89,7 +89,7 @@ def wikipedia_lookup(query):
     return "\n\n".join(lines)
 
 
-def handle_web_command(message):
+def handle_web_command(message, session=None):
     value = command_text(message)
     if re.search(r"\b(nao|nunca)\b", value) or re.match(r"^(?:como|por que|porque|se eu|o que acontece)\b", value):
         return None
@@ -108,14 +108,18 @@ def handle_web_command(message):
         query, engine = match[1].strip(), match[2]
         if len(query) > 160:
             return "Resuma a pesquisa em até 160 caracteres."
+        chrome = ("chrome" in value or bool(getattr(session, "prefer_chrome", False)))
         if engine == "youtube":
-            return open_allowed_url("https://www.youtube.com/results?search_query=" + quote(query), chrome=("chrome" in value))
-        return open_allowed_url("https://www.google.com/search?" + urlencode({"q": query}), chrome=("chrome" in value))
+            return open_allowed_url("https://www.youtube.com/results?search_query=" + quote(query), chrome=chrome)
+        return open_allowed_url("https://www.google.com/search?" + urlencode({"q": query}), chrome=chrome)
 
 
     # 'abra Chrome e YouTube' / 'abre meu navegador Chrome e abre YouTube'
     if re.search(r"\b(?:abra|abre|abrir|inicie|quero abrir)\b", value):
         chrome = "chrome" in value
+        if chrome and session is not None:
+            session.prefer_chrome = True
+        chrome = chrome or bool(getattr(session, "prefer_chrome", False))
         if "youtube" in value:
             return open_allowed_url(SAFE_SITES["youtube"], chrome=chrome)
         if "google" in value or ("navegador" in value and chrome):
@@ -133,3 +137,20 @@ def handle_web_command(message):
     if match:
         return "Resultados da Wikipédia:\n" + wikipedia_lookup(match[1])
     return None
+
+
+def public_question_to_query(message):
+    """Pesquisa Wikipédia automaticamente em perguntas gerais, sem dados pessoais."""
+    value = command_text(message)
+    if len(value) > 160 or re.search(
+            r"\b(meu|minha|meus|minhas|eu|cpf|senha|token|email|conta|familia|pai|mae)\b",
+            value):
+        return None
+    match = re.match(
+        r"^(?:o que e|quem foi|quem e|onde fica|qual a historia de|"
+        r"o que significa)\s+(.+)", value
+    )
+    if not match:
+        return None
+    query = match[1].strip(" ?!.")
+    return query if len(query) >= 3 else None
