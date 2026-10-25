@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.9"
+VERSION = "0.10"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -52,6 +52,7 @@ def about(memory, model):
         "pensamento_periodico": memory.thinking.enabled,
         "pode": [
             "conversar e explicar a arquitetura documentada da Yuna",
+            "escrever diário fictício local pelo botão da mascote e periodicamente após opt-in",
             "lembrar preferências e perguntas respondidas",
             "planejar e autoavaliar a conversa quando em execução",
             "listar e abrir aplicativos do menu Iniciar por pedido",
