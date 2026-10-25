@@ -2,7 +2,8 @@
 import tempfile
 from pathlib import Path
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
+import os
 
 from document_writer import (
     FileRequest, create_file, generate_contents, known_folder,
@@ -51,6 +52,16 @@ class DocumentWriterTests(unittest.TestCase):
         self.assertIsNone(parse_file_request("Como faço um Word?", home=self.home))
         with self.assertRaises(ValueError):
             known_folder("C:\\Windows", self.home)
+
+    def test_windows_known_folder_redirected_to_onedrive(self):
+        if os.name != "nt":
+            self.skipTest("Windows known folders require Windows")
+        redirected = self.home / "OneDrive" / "Desktop"
+        redirected.mkdir(parents=True)
+        with patch("document_writer._windows_known_folder", return_value=redirected):
+            self.assertEqual(known_folder("Área de Trabalho"), redirected)
+        with patch("document_writer._windows_known_folder", return_value=redirected):
+            self.assertEqual(known_folder("Desktop"), redirected)
 
     def test_unique_name_prevents_overwrite(self):
         request = FileRequest("texto", "Diário", self.home / "Documents")
