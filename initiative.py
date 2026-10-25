@@ -24,7 +24,9 @@ def looks_like_command(text):
         r"^(?:/|abra\b|abre\b|abrir\b|inicie\b|iniciar\b|execute\b|executar\b|"
         r"busque\b|buscar\b|procure\b|procura\b|encontre\b|ache\b|"
         r"mostre\b|liste\b|localize\b|verifique\b|apague\b|delete\b|"
-        r"instale\b|feche\b|rode\b|coloca\b)", value))
+        r"instale\b|feche\b|rode\b|coloca\b|crie\b|cria\b|criar\b|"
+        r"faca\b|faz\b|fazer\b|monte\b|gere\b|produza\b|escreva\b|"
+        r"quero que voce\b|preciso que voce\b)", value))
 
 
 class Initiative:
