@@ -22,6 +22,8 @@ from initiative import looks_like_command
 from self_model import about_text, is_self_question
 from voice import speak_windows, synthesize_edge, synthesize_amanda, amanda_available, speech_text
 from diary import DiaryStore, AUTO_INTERVAL_MINUTES, generate_entry
+from screen_consent import ScreenConsent
+from vision import describe_screen
 from document_writer import (
     FileRequest, create_file, generate_contents, parse_file_request,
     looks_like_file_request, validate_title
@@ -32,6 +34,7 @@ ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
 DIARY_TASK = object()
 FILE_TASK = "create_file"
+SCREEN_TASK = object()
 
 
 class Messages(QObject):
@@ -45,6 +48,7 @@ class Messages(QObject):
     diary_error = Signal(str)
     file_ready = Signal(str)
     file_failed = Signal(str)
+    observed = Signal(str)
 
 
 class DialogueThread(Thread):
@@ -59,6 +63,9 @@ class DialogueThread(Thread):
 
     def request_diary(self):
         self.inputs.put(DIARY_TASK)
+
+    def request_screen(self):
+        self.inputs.put(SCREEN_TASK)
 
     def request_file(self, request):
         self.inputs.put((FILE_TASK, request))
@@ -84,6 +91,12 @@ class DialogueThread(Thread):
                 message = self.inputs.get()
                 if message is None:
                     break
+                if message is SCREEN_TASK:
+                    try:
+                        self.output.observed.emit(describe_screen())
+                    except Exception as exc:
+                        self.output.warning.emit(f"Não consegui observar a tela: {exc}")
+                    continue
                 if message is DIARY_TASK:
                     try:
                         self.output.diary_ready.emit(generate_entry(ask_model))
@@ -320,6 +333,8 @@ class YunaOverlay(QWidget):
         self.temp_mp3 = None
         self.pixmaps = {}
         self.diary_store = DiaryStore(ROOT / "data")
+        self.screen_consent = ScreenConsent(ROOT / "data")
+        self.screen_confirm_pending = False
         self.diary_window = None
         self.file_window = None
         self.diary_pending = False
@@ -337,6 +352,9 @@ class YunaOverlay(QWidget):
 
         self.dialogue = DialogueThread(self.signals)
         self.dialogue.start()
+        if self.screen_consent.enabled:
+            # Uma observação por início de sessão, enviada somente ao Ollama local.
+            self.dialogue.request_screen()
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.animate_pose)
         self.animation_timer.start(360)
@@ -361,6 +379,11 @@ class YunaOverlay(QWidget):
         )
         top.addWidget(title)
         top.addStretch()
+        self.vision_button = QPushButton()
+        self.vision_button.setToolTip("Visão local da tela ao iniciar (opt-in)")
+        self.vision_button.clicked.connect(self.toggle_screen)
+        top.addWidget(self.vision_button)
+        self.update_vision_button()
         self.copy_button = QPushButton("📋")
         self.copy_button.setToolTip("Copiar o texto completo da resposta")
         self.copy_button.setFixedWidth(35)
@@ -439,7 +462,7 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.copy_button, self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.vision_button, self.copy_button, self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
@@ -572,6 +595,7 @@ class YunaOverlay(QWidget):
         self.signals.diary_error.connect(self.diary_error)
         self.signals.file_ready.connect(self.file_created)
         self.signals.file_failed.connect(self.file_failed)
+        self.signals.observed.connect(self.screen_observed)
 
     def show_expression(self, expression):
         sprite = self.pixmaps.get(expression) or self.pixmaps.get("idle")
@@ -601,6 +625,42 @@ class YunaOverlay(QWidget):
             self.show_expression("happy")
         else:
             self.show_expression("idle")
+
+    def update_vision_button(self):
+        if self.screen_confirm_pending:
+            self.vision_button.setText("✓ Visão")
+        else:
+            self.vision_button.setText(
+                "👁 On" if self.screen_consent.enabled else "👁 Off"
+            )
+
+    def toggle_screen(self):
+        if self.screen_consent.enabled:
+            self.screen_consent.set_enabled(False)
+            self.screen_confirm_pending = False
+            self.update_vision_button()
+            self.status.setText("Visão inicial desativada. Nenhuma nova captura automática.")
+            return
+        if not self.screen_confirm_pending:
+            self.screen_confirm_pending = True
+            self.update_vision_button()
+            self.bubble.setPlainText(
+                "Ativar observação inicial? Ao abrir a Yuna, uma imagem da tela "
+                "será enviada SOMENTE ao seu Ollama local se houver modelo "
+                "de visão configurado. A captura pode conter dados pessoais "
+                "visíveis. Clique novamente em ✓ Visão para confirmar; "
+                "para cancelar, feche e reabra a Yuna."
+            )
+            return
+        self.screen_confirm_pending = False
+        self.screen_consent.set_enabled(True)
+        self.update_vision_button()
+        self.status.setText("Visão inicial ativada. Captura local solicitada.")
+        self.dialogue.request_screen()
+
+    def screen_observed(self, result):
+        self.show_message("Visão inicial (uma captura local):\n" + result)
+        self.status.setText("Visão inicial concluída · câmera e microfone seguem desligados")
 
     def copy_answer(self):
         text = self.latest_message or self.bubble.toPlainText()
