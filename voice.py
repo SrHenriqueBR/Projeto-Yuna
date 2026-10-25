@@ -5,6 +5,7 @@ Edge usa edge-tts (serviço online), com ritmo e tom um pouco mais jovens.
 Nenhum texto é enviado a um provedor externo sem ativar o modo online.
 """
 import asyncio
+import json
 import os
 from pathlib import Path
 import re
@@ -12,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 
 EDGE_VOICE = "pt-BR-FranciscaNeural"
 EDGE_RATE = "+13%"
@@ -150,3 +153,82 @@ def synthesize_edge(text):
     except Exception:
         path.unlink(missing_ok=True)
         raise
+
+
+# Voz Amanda Kelly - Sweet, Warm and Clear (ElevenLabs Voice Library).
+# ID publicado no catálogo JSON2Video; uso depende de acesso na conta ElevenLabs.
+AMANDA_VOICE_ID = "oi8rgjIfLgJRsQ6rbZh3"
+AMANDA_MODEL = "eleven_multilingual_v2"
+AMANDA_ENDPOINT = (
+    "https://api.elevenlabs.io/v1/text-to-speech/"
+    + AMANDA_VOICE_ID + "?output_format=mp3_44100_128"
+)
+
+
+def amanda_available():
+    """Não salva credenciais em arquivos nem transmite uma chave sem autorização."""
+    return bool(os.environ.get("ELEVENLABS_API_KEY", "").strip())
+
+
+def synthesize_amanda(text):
+    """Gera áudio da voz licenciada via API oficial, somente após opt-in no GUI.
+
+    Toda solicitação envia o texto para a ElevenLabs e consome créditos do plano.
+    Chave recebida do ambiente do processo (nunca salva em GitHub/SQLite).
+    """
+    clean = speech_text(text)
+    if not clean:
+        return None
+    key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError(
+            "Amanda Kelly requer uma chave API da ElevenLabs. "
+            "Configure ELEVENLABS_API_KEY no PowerShell antes de abrir a Yuna."
+        )
+    request = urllib.request.Request(
+        AMANDA_ENDPOINT,
+        data=json.dumps({
+            "text": clean, "model_id": AMANDA_MODEL,
+            "voice_settings": {
+                "stability": 0.45, "similarity_boost": 0.8,
+                "style": 0.2, "use_speaker_boost": True,
+            }
+        }, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "xi-api-key": key,
+            "Content-Type": "application/json",
+            "Accept": "audio/mpeg",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            data = response.read(16 * 1024 * 1024 + 1)
+            media_type = response.headers.get("Content-Type", "").lower()
+            if len(data) > 16 * 1024 * 1024:
+                raise RuntimeError("O áudio retornado pela ElevenLabs ultrapassou o limite.")
+            if not data or ("audio" not in media_type and "octet-stream" not in media_type):
+                raise RuntimeError("A ElevenLabs não devolveu um arquivo de áudio.")
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+        if status in (401, 403):
+            detail = "Chave inválida, permissão insuficiente ou voz indisponível na sua conta."
+        elif status == 402:
+            detail = "Plano sem créditos suficientes para sintetizar áudio."
+        elif status == 404:
+            detail = "Amanda Kelly não está disponível na sua conta ElevenLabs."
+        elif status == 429:
+            detail = "Limite de solicitações ou créditos atingido na ElevenLabs."
+        else:
+            detail = "Não foi possível sintetizar a voz; confira o serviço ou a conta."
+        # Não expor corpo de erro ou credencial na interface.
+        raise RuntimeError(f"ElevenLabs HTTP {status}: {detail}") from None
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise RuntimeError("Sem conexão com a API ElevenLabs. Verifique a internet.") from None
+
+    # Não guardar o áudio permanentemente.
+    with tempfile.NamedTemporaryFile(
+        prefix="yuna_amanda_", suffix=".mp3", delete=False
+    ) as file:
+        file.write(data)
+        return Path(file.name)
