@@ -134,10 +134,16 @@ class DialogueThread(Thread):
                         answer = handle_message(memory, message, computer)
                     self.output.message.emit(answer)
                     # Não enviar caminho local completo para o serviço de voz online.
-                    self.output.speech.emit(
-                        "Prontinho! O arquivo foi criado. Veja o local na resposta."
-                        if file_intent(message) else answer
-                    )
+                    # Os diagnósticos podem incluir caminhos privados do computador.
+                    # Também não transmitir caminhos completos à voz online.
+                    if message.strip().casefold() in ("/versao", "/diagnostico"):
+                        pass
+                    elif file_intent(message):
+                        self.output.speech.emit("Veja na janela se seu arquivo foi realmente criado.")
+                    elif message.strip().casefold() == "/teste_arquivo":
+                        self.output.speech.emit("Teste de gravação concluído. Confira o arquivo na Área de Trabalho.")
+                    else:
+                        self.output.speech.emit(answer)
 
                     if (not looks_like_command(message) and "?" not in message
                             and not is_self_question(message)):
