@@ -37,6 +37,13 @@ def plan_request(message, home=None):
         raise ValueError("Pedido muito longo: máximo de 600 caracteres.")
     value = folded(message.strip())
     value = re.sub(r"^(?:yuna|ei yuna)[, :]+", "", value)
+    # Plano apenas quando a pessoa pede a pesquisa como ação principal.
+    # Menções hipotéticas de palavras parecidas não devem executar tarefas.
+    if not re.match(
+        r"^(?:(?:por favor|voce pode|pode|consegue)\s+)?"
+        r"(?:pesquise|pesquisa|busque|procure|investigue)\b", value
+    ):
+        return None
     if re.match(r"^(?:como|por que|porque|e se|se eu|nao|nunca)\b", value):
         return None
     search = re.search(r"\b" + SEARCH + r"\b\s*(?:sobre\s+|a respeito de\s+)?", value)
