@@ -1,6 +1,11 @@
 @echo off
 chcp 65001 >nul
 cd /d "%~dp0"
+if not exist "file_diagnostics.py" (
+    echo Falta file_diagnostics.py. Atualize todos os arquivos Python da Yuna.
+    pause
+    exit /b 1
+)
 if not exist "office_agent.py" (
     echo Falta office_agent.py. Atualize todos os arquivos da Yuna.
     pause
