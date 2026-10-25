@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.13.2
+# Projeto Yuna · Base 0.14
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -500,3 +500,21 @@ As duas ideias se alternam sem depender do modelo e a preferência de qual foi a
 **Atualizar:** faça backup da pasta `data/`, feche a mascote, copie todos os `.py` do ZIP, incluindo o novo `own_initiative.py`, e mantenha as pastas `data/` e `assets/` existentes. Reabra `iniciar_yuna_mascote.bat` e confira `YUNA 0.13.2`. Não são necessárias bibliotecas Python adicionais.
 
 **Testar:** escreva `Yuna, o que você quer fazer?` e, após ela propor seu diário, diga `pode fazer`. O arquivo será salvo no diário local. Na próxima pergunta, ela terá outra ideia útil.
+
+## Yuna 0.14 — companhia mais ativa, sem interromper
+
+Na versão 0.14, a mascote não precisa esperar a pergunta `o que você quer fazer?` para tomar a iniciativa. Ela pode, enquanto estiver aberta, sugerir uma **atividade real e limitada** do Projeto Yuna. Não há leitura de pensamentos ou emoção consciente: o sistema escolhe entre atividades pré-definidas e aguarda autorização para executá-las.
+
+**Cadência:** depois de **12 minutos sem uma mensagem sua**, com **90 segundos sem teclado/mouse** no Windows, a Yuna poderá tomar a palavra. Ela espera no mínimo **45 minutos entre sugestões** e apresenta **no máximo três iniciativas por sessão**. Se a mascote estiver pensando, falando, com diálogo de consentimento aberto, com uma tarefa em andamento ou se você estiver digitando, ela não interrompe. Se a personagem já fez uma proposta ainda pendente, não envia outra. Ela não acompanha o conteúdo do que você digita: consulta somente o tempo desde a última entrada no Windows.
+
+**Atividades implementadas:** sugerir escrever uma página do diário ou preparar uma proposta de melhoria para a Yuna. A sugestão **não cria arquivos e não pesquisa na internet**. Diga `pode fazer` para autorizar a proposta que acabou de aparecer ou `agora não` para rejeitá-la. As regras continuam iguais aos pedidos manuais da versão 0.13.2.
+
+### Como pausar
+
+- Na mascote, clique em **💬 Ativa** para deixá-la **💤 Pausada**; clique novamente para reativar.
+- Na mascote ou terminal: `/atividade desligar`, `/atividade ligar` ou `/atividade status`.
+- A preferência fica gravada localmente em SQLite e permanece após reiniciar a Yuna. Com o modo pausado, ela não envia novas sugestões espontâneas, mas continua respondendo normalmente quando você chama.
+
+**Privacidade:** não há monitoramento de tela, câmera, microfone ou navegação web nessa função. Nenhum arquivo do usuário é alterado sem um pedido ou confirmação expressa. O modo espontâneo só funciona com a **mascote aberta**. Ações automáticas ficam limitadas a frases e sugestões.
+
+**Atualizar:** feche a Yuna, faça backup da pasta `data`, copie **todos os novos `.py`** do GitHub, incluindo **`proactive.py`**, para sua pasta atual; preserve **`data` e `assets`**. Abra `iniciar_yuna_mascote.bat` e confira **YUNA 0.14**. Não é preciso instalar nenhuma biblioteca Python nova. A versão terminal suporta os comandos de controle, mas não dispõe de timer espontâneo em segundo plano.

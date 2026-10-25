@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.13.2"
+VERSION = "0.14"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -56,6 +56,7 @@ def about(memory, model):
             "criar Word, Excel, PowerPoint, PDF, TXT e Markdown reais por pedido natural",
             "planejar pesquisa pública, redigir documentos e verificar salvamento em sequência",
             "escolher uma atividade própria útil e executá-la após autorização explícita",
+            "puxar conversa espontaneamente enquanto a mascote está aberta, com pausas e limites",
             "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
             "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
             "lembrar preferências e perguntas respondidas",

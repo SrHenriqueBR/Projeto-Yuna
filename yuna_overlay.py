@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from queue import Queue
 import sys
+import time
 from threading import Thread
 
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
@@ -31,12 +32,18 @@ from document_writer import (
 from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message, startup_greeting
 from office_agent import file_intent
 from self_model import VERSION
+from own_initiative import pending_own_activity, propose_own_activity
+from proactive import (
+    NudgeSchedule, spontaneous_enabled, set_spontaneous, system_idle_seconds
+)
 
 ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
 DIARY_TASK = object()
 FILE_TASK = "create_file"
 SCREEN_TASK = object()
+SPONTANEOUS_TASK = object()
+SPONTANEOUS_SWITCH = "spontaneous_switch"
 
 
 class Messages(QObject):
@@ -52,6 +59,8 @@ class Messages(QObject):
     file_failed = Signal(str)
     observed = Signal(str)
     plan_progress = Signal(str)
+    spontaneous_state = Signal(bool)
+    spontaneous_notice = Signal(str)
 
 
 class DialogueThread(Thread):
@@ -73,6 +82,12 @@ class DialogueThread(Thread):
     def request_file(self, request):
         self.inputs.put((FILE_TASK, request))
 
+    def request_spontaneous(self):
+        self.inputs.put(SPONTANEOUS_TASK)
+
+    def set_spontaneous_mode(self, enabled):
+        self.inputs.put((SPONTANEOUS_SWITCH, bool(enabled)))
+
     def stop(self):
         self.inputs.put(None)
 
@@ -80,6 +95,7 @@ class DialogueThread(Thread):
         try:
             memory = Memory(ROOT / "data" / "yuna.db")
             computer = Computer()
+            self.output.spontaneous_state.emit(spontaneous_enabled(memory.initiative))
         except Exception as exc:
             self.output.warning.emit(f"Falha ao iniciar a Yuna: {exc}")
             return
@@ -94,6 +110,19 @@ class DialogueThread(Thread):
                 message = self.inputs.get()
                 if message is None:
                     break
+                if message is SPONTANEOUS_TASK:
+                    if (spontaneous_enabled(memory.initiative)
+                            and not pending_own_activity(memory.initiative)):
+                        offer = propose_own_activity(memory.initiative)
+                        self.output.spontaneous_notice.emit(
+                            "Kaizen, tive uma ideia! 🖤\n\n" + offer
+                        )
+                    continue
+                if (isinstance(message, tuple) and len(message) == 2
+                        and message[0] == SPONTANEOUS_SWITCH):
+                    set_spontaneous(memory.initiative, message[1])
+                    self.output.spontaneous_state.emit(spontaneous_enabled(memory.initiative))
+                    continue
                 if message is SCREEN_TASK:
                     try:
                         self.output.observed.emit(describe_screen())
@@ -134,6 +163,8 @@ class DialogueThread(Thread):
                             memory.affect.observe(message)
                         answer = handle_message(memory, message, computer, progress=self.output.plan_progress.emit)
                     self.output.message.emit(answer)
+                    if message.strip().casefold().startswith("/atividade"):
+                        self.output.spontaneous_state.emit(spontaneous_enabled(memory.initiative))
                     # Não enviar caminho local completo para o serviço de voz online.
                     # Os diagnósticos podem incluir caminhos privados do computador.
                     # Também não transmitir caminhos completos à voz online.
@@ -343,6 +374,8 @@ class YunaOverlay(QWidget):
         self.voice_confirm_target = None
         self.latest_message = ''
         self.thinking = False
+        self.spontaneous_enabled = True
+        self.spontaneous_schedule = NudgeSchedule.start(time.monotonic())
         self.frame_index = 0
         self.last_expression = "idle"
         self.temp_mp3 = None
@@ -381,6 +414,10 @@ class YunaOverlay(QWidget):
         self.diary_auto_timer.timeout.connect(self.auto_diary)
         if self.diary_store.auto_enabled:
             self.diary_auto_timer.start()
+        self.spontaneous_timer = QTimer(self)
+        self.spontaneous_timer.setInterval(60 * 1000)
+        self.spontaneous_timer.timeout.connect(self.check_spontaneous)
+        self.spontaneous_timer.start()
 
     def setup_ui(self):
         root = QVBoxLayout(self)
@@ -415,6 +452,12 @@ class YunaOverlay(QWidget):
         self.file_button.setFixedWidth(35)
         self.file_button.clicked.connect(self.open_file_creator)
         top.addWidget(self.file_button)
+        self.spontaneous_button = QPushButton("💬 Ativa")
+        self.spontaneous_button.setToolTip(
+            "Yuna sugere atividades após um tempo sem conversa. Clique para pausar."
+        )
+        self.spontaneous_button.clicked.connect(self.toggle_spontaneous)
+        voice_row.addWidget(self.spontaneous_button)
         self.voice_button = QPushButton()
         self.voice_button.setToolTip("Alternar voz: Windows offline, Edge online, sem voz")
         self.voice_button.clicked.connect(self.cycle_voice)
@@ -480,7 +523,7 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.vision_button, self.copy_button, self.diary_button, self.file_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.vision_button, self.copy_button, self.diary_button, self.file_button, self.spontaneous_button, self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
@@ -615,6 +658,8 @@ class YunaOverlay(QWidget):
         self.signals.file_failed.connect(self.file_failed)
         self.signals.observed.connect(self.screen_observed)
         self.signals.plan_progress.connect(self.show_plan_progress)
+        self.signals.spontaneous_state.connect(self.update_spontaneous_state)
+        self.signals.spontaneous_notice.connect(self.display_spontaneous)
 
     def show_expression(self, expression):
         sprite = self.pixmaps.get(expression) or self.pixmaps.get("idle")
@@ -686,6 +731,44 @@ class YunaOverlay(QWidget):
         QApplication.clipboard().setText(text)
         self.status.setText("Texto da resposta copiado para a área de transferência")
 
+    def update_spontaneous_state(self, enabled):
+        self.spontaneous_enabled = bool(enabled)
+        self.spontaneous_button.setText("💬 Ativa" if enabled else "💤 Pausada")
+        self.spontaneous_button.setToolTip(
+            "Pausar as iniciativas espontâneas da Yuna"
+            if enabled else "Ativar as iniciativas espontâneas da Yuna"
+        )
+
+    def toggle_spontaneous(self):
+        self.spontaneous_schedule.user_active(time.monotonic())
+        self.dialogue.set_spontaneous_mode(not self.spontaneous_enabled)
+
+    def check_spontaneous(self):
+        busy = (
+            self.thinking or self.voice_busy or self.voice_confirm_pending
+            or self.screen_confirm_pending or self.diary_pending
+            or self.diary_typing_timer.isActive()
+            or bool(self.entry.text().strip())
+            or bool(self.diary_window and self.diary_window.isVisible())
+            or not self.isVisible()
+        )
+        now = time.monotonic()
+        if self.spontaneous_schedule.ready(
+            now, system_idle_seconds(),
+            enabled=self.spontaneous_enabled, busy=busy
+        ):
+            self.spontaneous_schedule.mark_notice(now)
+            self.dialogue.request_spontaneous()
+
+    def display_spontaneous(self, message):
+        if (self.thinking or self.voice_busy or self.voice_confirm_pending
+                or self.screen_confirm_pending or self.entry.text().strip()):
+            return
+        self.show_message(message)
+        self.status.setText("Yuna tomou iniciativa · diga 'pode fazer' ou 'agora não'")
+        # Texto pré-definido, sem dados pessoais. Voz permanece opcional.
+        self.say("Kaizen, tive uma ideia! Quer ouvir?")
+
     def show_plan_progress(self, step):
         self.bubble.setPlainText("Yuna 0.13 · Executando plano\n" + step)
         self.status.setText(step[:100])
@@ -718,6 +801,7 @@ class YunaOverlay(QWidget):
         if not text or self.thinking:
             return
         self.entry.clear()
+        self.spontaneous_schedule.user_active(time.monotonic())
         self.bubble.setPlainText("Hmm, deixa eu pensar nisso... ✦")
         self.dialogue.submit(text)
         self.set_thinking(True)
@@ -911,6 +995,7 @@ class YunaOverlay(QWidget):
         self.status.setText("Falha na ação · veja a mensagem no balão")
 
     def closeEvent(self, event):
+        self.spontaneous_timer.stop()
         self.diary_typing_timer.stop()
         self.diary_auto_timer.stop()
         if self.diary_window is not None:
