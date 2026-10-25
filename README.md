@@ -277,3 +277,30 @@ py -3.13 -m edge_tts --voice pt-BR-FranciscaNeural --text "Oi, Kaizen!" --write-
 
 Abra `teste_yuna.mp3` no Windows. Se o áudio funcionar, a geração está correta; se a mascote ainda estiver muda, verifique o volume/dispositivo de saída e a reprodução Qt. Mantenha o texto privado fora da voz online.
 
+
+
+## Voz Amanda Kelly (ElevenLabs) — opção adicional
+
+A Yuna oferece a voz **Amanda Kelly — Sweet, Warm and Clear** da ElevenLabs, com a identificação pública da voz `oi8rgjIfLgJRsQ6rbZh3`. A integração usa a API oficial de texto para fala da ElevenLabs, com o modelo `eleven_multilingual_v2` e saída MP3.
+
+**Requisitos:** conta ElevenLabs com acesso autorizado a essa voz, chave de API com permissão Text-to-Speech e créditos suficientes. O plano gratuito pode ter créditos limitados, mas a disponibilidade de Amanda Kelly **não é garantida em toda conta**. O modo gera áudio na internet e pode consumir créditos. A voz nunca é clonada pela Yuna.
+
+### Instalar e ativar
+
+1. Crie uma conta em [elevenlabs.io](https://elevenlabs.io/). Localize Amanda Kelly na biblioteca de vozes e confira se sua conta possui acesso.
+2. Crie uma chave no painel de **API Keys**, com permissão de Text-to-Speech. **Nunca coloque a chave no GitHub, no chat ou em um arquivo público.**
+3. Feche a mascote e abra o PowerShell na pasta do projeto. Configure a chave somente nessa janela, sem mostrar os caracteres no terminal:
+
+   ```powershell
+   $segredo = Read-Host "Cole sua chave da ElevenLabs" -AsSecureString
+   $env:ELEVENLABS_API_KEY = [System.Net.NetworkCredential]::new("", $segredo).Password
+   py -3 yuna_overlay.py
+   ```
+
+4. Na Yuna, clique no novo botão **🎙 Amanda** e leia o aviso sobre envio das falas à internet e consumo de créditos. Clique em **✓ Confirmar**. A personagem tocará uma frase curta de teste e usará essa voz nas respostas seguintes.
+
+A chave fica somente no ambiente da sessão do PowerShell; não é guardada na memória `data/yuna.db` nem no código. Para usar Amanda em uma nova sessão, repita a configuração no PowerShell. Com a chave ausente, a opção mostra instruções e mantém a voz anterior. O modo Edge TTS e a voz local continuam funcionando sem chave ElevenLabs.
+
+**Atenção à privacidade:** ao confirmar a voz Amanda, o texto falado será enviado para a ElevenLabs, inclusive qualquer resposta da Yuna que possa conter fatos pessoais, e pode ser armazenado pelo provedor conforme o plano. Não use para conversas privadas. É possível desligar a voz a qualquer momento. A Yuna não envia áudios ou memórias completas à ElevenLabs: envia somente o texto que seria falado, limitado a 520 caracteres.
+
+A reprodução pelo Windows/Qt e o acesso à voz Amanda precisam ser validados no seu computador. Os testes automatizados apenas simulam a resposta da API; não consomem créditos nem garantem que sua chave tenha acesso à voz.
