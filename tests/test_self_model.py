@@ -38,6 +38,21 @@ class SelfModelTests(unittest.TestCase):
         self.assertTrue(self_model.is_self_question("Yuna, como está seu código?"))
         self.assertEqual(self.memory.history()[-1]["role"], "assistant")
 
+    def test_natural_conversation_not_routed_to_actions(self):
+        self.assertFalse(yuna.action_intent("Bom, quero saber como está seu código"))
+        self.assertFalse(yuna.action_intent("Pode executar o que quiser no meu PC"))
+        self.assertFalse(yuna.action_intent("Como posso abrir a Steam?"))
+        self.assertTrue(yuna.action_intent("Quero ver os programas instalados"))
+        self.assertTrue(yuna.action_intent("/fazer coloca o Discord pra rodar"))
+        computer = Mock()
+        computer.handle.return_value = None
+        with patch("yuna.respond", return_value="Podemos conversar sobre isso.") as chat, \
+                patch("yuna.interpret", side_effect=AssertionError("Não deve interpretar ações")):
+            self.assertEqual(
+                yuna.handle_message(self.memory, "Quero conversar sobre meu projeto", computer),
+                "Podemos conversar sobre isso.")
+            chat.assert_called_once()
+
     def test_planning_store_and_restart(self):
         ask = Mock(return_value=self.example())
         result = self.memory.thinking.plan("melhorar projeto Yuna", ask)
