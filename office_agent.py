@@ -12,7 +12,7 @@ from document_writer import (FileRequest, create_file as write_basic, generate_c
                              validate_title, known_folder, _reserve_unique_file)
 
 FORMAT = {
-    "word": "word", "docx": "word", "documento": "word",
+    "word": "word", "docx": "word", "documento": "word", "diario": "word",
     "excel": "excel", "xlsx": "excel", "planilha": "excel",
     "powerpoint": "powerpoint", "pptx": "powerpoint", "apresentacao": "powerpoint",
     "slides": "powerpoint", "pdf": "pdf",
@@ -39,26 +39,30 @@ def folded(text):
 
 
 def file_intent(message):
-    """Só cria após pedido operacional, não quando a pessoa menciona criar algo."""
+    """Aceita solicitações comuns, mas não explicações, negações nem planos futuros."""
     clean = folded(message.strip())
-    clean = re.sub(r"^yuna[, ]+", "", clean)
+    clean = re.sub(r"^(?:ei|oi|opa|ola)[, ]+", "", clean)
+    clean = re.sub(r"^yuna[, :]+", "", clean)
+    clean = clean.strip()
     if clean.startswith("/criar "):
         return True
-    if re.match(r"^(?:como|por que|porque|e se|se eu|o que e|nao|nunca)\b", clean):
+    if re.match(r"^(?:como|por que|porque|e se|se eu|o que e|nao|nunca|"
+                r"vou|eu vou|talvez|quando|depois)\b", clean):
         return False
-    request = re.match(
-        r"^(?:(?:por favor|ei yuna)[, ]+)?"
-        r"(?:(?:voce|vc)\s+)?"
-        r"(?:(?:pode|consegue|poderia)\s+)?"
-        r"(?:crie|cria|faca|monte|gere|produza)\b",
-        clean
-    ) or re.match(
-        r"^(?:quero|preciso)\s+que\s+(?:voce|a yuna)?\s*"
-        r"(?:crie|cria|faca|monte|gere)\b", clean
-    )
-    return bool(request and re.search(
+    prefix = (r"^(?:(?:por favor|ei yuna)[, ]+)?"
+              r"(?:(?:voce|vc)\s+)?"
+              r"(?:(?:pode|consegue|poderia|vai|deve)\s+)?"
+              r"(?:crie|cria|criar|faz|faca|fazer|monte|montar|gere|gerar|"
+              r"produza|prepare|escreva|escreve)\b")
+    second = (r"^(?:quero|preciso|gostaria)\s+(?:que\s+)?"
+              r"(?:(?:voce|vc|a yuna)\s+)?"
+              r"(?:crie|cria|criar|faca|faz|fazer|monte|gere|prepare|escreva)\b")
+    if not (re.match(prefix, clean) or re.match(second, clean)):
+        return False
+    return bool(re.search(
         r"\b(?:word|docx|documento|planilha|excel|powerpoint|pptx|"
-        r"apresentacao|slides|pdf|arquivo|texto|txt|markdown)\b", clean
+        r"apresentacao|slides|pdf|arquivo|texto|txt|markdown|"
+        r"diario)\b", clean
     ))
 
 
@@ -70,7 +74,13 @@ def parse_request(message, home=None):
     normalized = folded(text)
     verb = re.search(r"\b" + VERBS + r"\b", normalized)
     after = normalized[verb.end():] if verb else normalized
-    fmt = next((FORMAT[key] for key in FORMAT if re.search(r"\b" + re.escape(key) + r"\b", after)), "texto")
+    # Palavras genéricas como "documento" não podem ganhar de PDF/Excel/PPTX.
+    priority = ("powerpoint", "pptx", "apresentacao", "slides",
+                "excel", "xlsx", "planilha", "pdf",
+                "word", "docx", "markdown", "md", "txt", "texto", "diario",
+                "documento", "arquivo")
+    fmt = next((FORMAT[key] for key in priority
+                if re.search(r"\b" + re.escape(key) + r"\b", after)), "texto")
     # Suporte a /criar excel|pptx|pdf e pastas conhecidas.
     quoted = re.search(r'["“]([^"”]{1,100})["”]', text)
     title = quoted.group(1) if quoted else None
@@ -78,7 +88,10 @@ def parse_request(message, home=None):
         r"\b(?:chamado|chamada|intitulado|intitulada|nome(?:\s+de)?)\s+"
         r"(.{2,150})", text, re.I
     )
-    destination = re.search(DEST + r"[\s.!?]*$", text, re.I)
+    # "na minha área de trabalho", "no desktop, por favor" também contam.
+    friendly_dest = (r"(?:na|no|em|para a|para o)\s+(?:minha?\s+|pasta\s+)?"
+                     r"(Documentos|Documents|Downloads|Área de Trabalho|Area de Trabalho|Desktop)")
+    destination = re.search(friendly_dest + r"(?:[,!.?\s]|por favor)*$", text, re.I)
     dest_name = destination.group(1) if destination else "Documentos"
 
     if title is None and explicit:
@@ -94,7 +107,7 @@ def parse_request(message, home=None):
             fmt = FORMAT.get(folded(slash.group(1)), fmt)
             parts = [p.strip() for p in slash.group(2).split("|")]
             if parts and parts[0]:
-                title = title or parts[0]
+                title = parts[0]
                 if len(parts) > 1 and parts[1]:
                     dest_name = parts[1]
                 if len(parts) > 2:
