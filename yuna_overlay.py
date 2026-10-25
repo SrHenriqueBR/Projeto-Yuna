@@ -51,6 +51,7 @@ class Messages(QObject):
     file_ready = Signal(str)
     file_failed = Signal(str)
     observed = Signal(str)
+    plan_progress = Signal(str)
 
 
 class DialogueThread(Thread):
@@ -131,13 +132,15 @@ class DialogueThread(Thread):
                     else:
                         if not looks_like_command(message):
                             memory.affect.observe(message)
-                        answer = handle_message(memory, message, computer)
+                        answer = handle_message(memory, message, computer, progress=self.output.plan_progress.emit)
                     self.output.message.emit(answer)
                     # Não enviar caminho local completo para o serviço de voz online.
                     # Os diagnósticos podem incluir caminhos privados do computador.
                     # Também não transmitir caminhos completos à voz online.
                     if message.strip().casefold() in ("/versao", "/diagnostico"):
                         pass
+                    elif answer.startswith("✅ Plano concluído"):
+                        self.output.speech.emit("Concluí seu plano e verifiquei o arquivo. Confira o resultado na janela.")
                     elif file_intent(message):
                         self.output.speech.emit("Veja na janela se seu arquivo foi realmente criado.")
                     elif message.strip().casefold() == "/teste_arquivo":
@@ -611,6 +614,7 @@ class YunaOverlay(QWidget):
         self.signals.file_ready.connect(self.file_created)
         self.signals.file_failed.connect(self.file_failed)
         self.signals.observed.connect(self.screen_observed)
+        self.signals.plan_progress.connect(self.show_plan_progress)
 
     def show_expression(self, expression):
         sprite = self.pixmaps.get(expression) or self.pixmaps.get("idle")
@@ -681,6 +685,11 @@ class YunaOverlay(QWidget):
         text = self.latest_message or self.bubble.toPlainText()
         QApplication.clipboard().setText(text)
         self.status.setText("Texto da resposta copiado para a área de transferência")
+
+    def show_plan_progress(self, step):
+        self.bubble.setPlainText("Yuna 0.13 · Executando plano\n" + step)
+        self.status.setText(step[:100])
+        self.show_expression("thinking")
 
     def show_message(self, text):
         self.latest_message = text
