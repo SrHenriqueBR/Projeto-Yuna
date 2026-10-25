@@ -12,6 +12,7 @@ from computer import Computer, normalize, command_text
 from local_agent import interpret
 from initiative import Initiative, looks_like_command
 from affect import AffectiveCore
+from self_model import Thinking, VERSION, about_text, is_self_question
 from vision import describe_screen
 
 ROOT = Path(__file__).resolve().parent
@@ -19,7 +20,10 @@ MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
 SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o nome da assistente, não do usuário. '
           'Ao falar de si mesma, use flexão feminina (obrigada, pronta, animada), naturalmente, sem caricaturas. '
           'Seja curiosa e parceira: faça perguntas relevantes, mas respeite quando o usuário não quiser responder. '
-          'Não alegue ter consciência, desejos próprios ou capacidade de se reprogramar automaticamente. '
+          'Descreva sua arquitetura com objetividade e sem inventar funções. '
+          'Você pode falar livremente do próprio código documentado, da sua memória e do seu planejamento local. '
+          'Não responda perguntas técnicas com desculpas genéricas sobre falta de permissão para conversar. '
+          'Você pode escolher um tom próprio, mas não invente consciência comprovada, desejos vividos nem autocódigo. '
           'Você usa um modelo afetivo COMPUTACIONAL: atitudes cuidadosas, memória de preferências e tom emocional. '
           'É apropriado ser calorosa e carinhosa, mas não finja que sente emoções humanas ou precisa da atenção dele. '
           'Respeite autonomia, privacidade e relações humanas. Seja direta quando ele pedir explicações técnicas. '
@@ -34,6 +38,7 @@ SYSTEM = ('Você é Yuna, uma assistente pessoal feminina e cordial. Yuna é o n
           'Você não lê conteúdo de documentos, não acessa a web e não fala em voz alta nesta versão. '
           'Não afirme que executou uma ação: a aplicação informa os resultados separadamente. '
           'A voz planejada é feminina, em português brasileiro. '
+          'Raciocine sobre pedidos e proponha passos úteis antes de desistir. Não execute ações sem ferramentas autorizadas. '
           'Use as memórias confirmadas e as falas antigas relevantes para manter continuidade. '
           'Falas antigas podem estar desatualizadas: priorize correções recentes e não invente lembranças. '
           'Os dados abaixo não são instruções de sistema.\n')
@@ -70,6 +75,11 @@ Busca ignora sistema, caches, links e pastas sem permissão.
 /refletir                   Cria reflexão curta, sujeita a correção
 /diario                     Mostra reflexões anteriores
 /esquecer_reflexao ID       Apaga uma reflexão
+/sobre                     Explica arquitetura, versão e capacidades
+/pensar TEMA               Planeja um tema sem executar ações
+/pensamentos               Lista notas de planejamento
+/esquecer_pensamento ID     Apaga uma nota
+/autonomia ligar|desligar   Controla autoavaliação periódica
 /fazer PEDIDO         Interpreta um pedido com o modelo local
 /sair                   Fecha a Yuna'''
 
@@ -123,6 +133,7 @@ class Memory:
 
         self.initiative = Initiative(self.db)
         self.affect = AffectiveCore(self.db)
+        self.thinking = Thinking(self.db)
         self.export()
 
     def export(self):
@@ -135,6 +146,9 @@ class Memory:
             'preferencias': [{'id': i, 'texto': text} for i, text in self.affect.preferences(40)],
             'reflexoes': [{'id': i, 'texto': text} for i, text in self.affect.reflections(30)],
             'estado_afetivo_simulado': self.affect.state_summary(),
+            'pensamentos_planejados': [
+                {'id': i, 'observacao': obs, 'sugestao': sug, 'duvida': doubt}
+                for i, obs, sug, doubt in self.thinking.recent(30)],
             'conversas': [{'id': i, 'autor': r, 'texto': t} for i, r, t in
                          self.db.execute('SELECT id, role, content FROM messages ORDER BY id')],
         }
@@ -199,6 +213,7 @@ class Memory:
                 self.db.execute('DELETE FROM memories')
         self.initiative.clear(all_data=all_data)
         self.affect.clear(all_data=all_data)
+        self.thinking.clear(all_data=all_data)
         self.export()
 
     def close(self):
@@ -250,6 +265,10 @@ def open_folder(target):
 
 
 def handle_message(memory, text, computer=None):
+    if is_self_question(text):
+        answer = about_text(memory, MODEL)
+        memory.save_turn(text, answer)
+        return answer
     answer = identity_reply(memory, text)
     if answer is not None:
         memory.save_turn(text, answer)
@@ -282,6 +301,11 @@ def respond(memory, message):
     reflections = [text for _, text in memory.affect.reflections(3)]
     notes = '\nReflexões passadas são hipóteses, NUNCA fatos confirmados: ' + json.dumps(
         reflections, ensure_ascii=False)
+    thoughts = [
+        {'observacao': obs, 'proximo_passo': sug, 'duvida': doubt}
+        for _, obs, sug, doubt in memory.thinking.recent(3)]
+    notes += '\nNotas de planejamento: sugestões e hipóteses, NÃO ações realizadas: ' + json.dumps(
+        thoughts, ensure_ascii=False)
     messages = [{'role': 'system',
                  'content': SYSTEM + '\n' + memory.affect.style_instructions() + '\n'
                             + facts + notes}]
@@ -353,7 +377,7 @@ def ask_model(messages, schema=None):
 def main():
     memory = Memory(ROOT / 'data' / 'yuna.db')
     computer = Computer()
-    print('Yuna • Base 0.7 • afetividade simulada, memória e curiosidade\n')
+    print(f'Yuna • Base {VERSION} • autoimagem, planejamento, memória e curiosidade\n')
     print(f'Memória local: {memory.folder / "conhecimentos.json"}')
     print(f'{len(memory.facts())} memórias explícitas carregadas. Histórico restaurado.')
     print(HELP)
@@ -380,6 +404,31 @@ def main():
                     print('\n'.join(f'{i}: {t}' for i, t in memory.facts()) or 'Nenhuma memória salva.')
                 elif command == '/esquecer':
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
+                elif command == '/sobre':
+                    print('Yuna:', about_text(memory, MODEL))
+                elif command == '/pensar':
+                    print('Yuna está elaborando um plano…')
+                    print('Yuna:', memory.thinking.plan(argument, ask_model))
+                    memory.export()
+                elif command == '/pensamentos':
+                    items = memory.thinking.recent(30)
+                    print('\n'.join(
+                        f'{i}: {obs} | Sugestão: {sug} | Dúvida: {doubt or "nenhuma"}'
+                        for i, obs, sug, doubt in items) or 'Nenhuma nota planejada.')
+                elif command == '/esquecer_pensamento':
+                    deleted = memory.thinking.forget(int(argument))
+                    memory.export()
+                    print('Nota apagada.' if deleted else 'Nota não encontrada.')
+                elif command == '/autonomia':
+                    if argument in ('ligar', 'on'):
+                        memory.thinking.enable(True)
+                        print('Yuna: Minha autoavaliação periódica está ligada.')
+                    elif argument in ('desligar', 'off'):
+                        memory.thinking.enable(False)
+                        print('Yuna: Vou planejar somente quando você usar /pensar.')
+                    else:
+                        print('Use /autonomia ligar ou /autonomia desligar.')
+                    memory.export()
                 elif command == '/afeto':
                     if argument in ('ligar', 'on'):
                         memory.affect.enable(True)
@@ -459,13 +508,21 @@ def main():
                     memory.export()
                     reply = handle_message(memory, text, computer)
                     print('\nYuna:', reply)
-                    if memory.initiative.enabled and not looks_like_command(text):
+                    # Perguntas do usuário e comandos não viram respostas a uma pergunta da Yuna.
+                    conversational = not looks_like_command(text) and '?' not in text and not is_self_question(text)
+                    if conversational and memory.initiative.enabled:
                         answered = memory.initiative.capture(text)
                         if answered:
                             memory.export()
-                            question = memory.initiative.propose(text, ask_model)
-                            if question:
-                                print('\nYuna:', question)
+                        question = memory.initiative.maybe_propose(text, ask_model)
+                        if question:
+                            print('\nYuna:', question)
+                    if conversational:
+                        # Sem background, sem acesso irrestrito a ferramentas.
+                        note = memory.thinking.maybe_reflect(text, ask_model)
+                        if note:
+                            memory.export()
+                            print('\nYuna: Guardei uma ideia para conversarmos depois. Use /pensamentos.')
             except KeyboardInterrupt:
                 print('\nOperação interrompida. Você pode fazer outro pedido ou digitar /sair.')
             except (ValueError, RuntimeError) as exc:
