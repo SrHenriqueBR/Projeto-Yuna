@@ -20,7 +20,7 @@ from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from computer import Computer
 from initiative import looks_like_command
 from self_model import about_text, is_self_question
-from voice import speak_windows, synthesize_edge, speech_text
+from voice import speak_windows, synthesize_edge, synthesize_amanda, amanda_available, speech_text
 from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message
 
 ASSETS = ROOT / "assets"
@@ -137,13 +137,14 @@ class YunaOverlay(QWidget):
         self.setFixedSize(400, 590)
         self.signals = Messages()
         self.voice_engine = os.environ.get("YUNA_VOICE_ENGINE", "windows").strip().lower()
-        if self.voice_engine not in {"windows", "edge", "off"}:
+        if self.voice_engine not in {"windows", "edge", "amanda", "off"}:
             self.voice_engine = "windows"
         # A opção edge só é ativada com consentimento nesta sessão de interface.
-        if self.voice_engine == "edge":
+        if self.voice_engine in {"edge", "amanda"}:
             self.voice_engine = "windows"
         self.voice_busy = False
         self.voice_confirm_pending = False
+        self.voice_confirm_target = None
         self.latest_message = ''
         self.thinking = False
         self.frame_index = 0
@@ -179,9 +180,13 @@ class YunaOverlay(QWidget):
         top.addWidget(title)
         top.addStretch()
         self.voice_button = QPushButton()
-        self.voice_button.setToolTip("Escolher voz: Windows offline, Edge online, sem voz")
+        self.voice_button.setToolTip("Alternar voz: Windows offline, Edge online, sem voz")
         self.voice_button.clicked.connect(self.cycle_voice)
         top.addWidget(self.voice_button)
+        self.amanda_button = QPushButton("🎙 Amanda")
+        self.amanda_button.setToolTip("Ativar Amanda Kelly (ElevenLabs, requer chave API)")
+        self.amanda_button.clicked.connect(self.select_amanda)
+        top.addWidget(self.amanda_button)
         # Confirmação dentro da mascote: evita que janelas modais fechem um Qt.Tool.
         self.cancel_voice_button = QPushButton("Cancelar")
         self.cancel_voice_button.clicked.connect(self.cancel_voice_consent)
@@ -234,7 +239,7 @@ class YunaOverlay(QWidget):
         self.status.setStyleSheet("color:#bda7d8;font-size:10px")
         root.addWidget(self.status)
 
-        for button in (self.voice_button, self.cancel_voice_button, close, self.send_button):
+        for button in (self.voice_button, self.amanda_button, self.cancel_voice_button, close, self.send_button):
             button.setStyleSheet(
                 "QPushButton {background:#42275d;color:#f8f0ff;border-radius:10px;"
                 "border:1px solid #765097;padding:9px;font-weight:600}"
@@ -317,59 +322,112 @@ class YunaOverlay(QWidget):
         self.set_thinking(True)
 
     def update_voice_button(self):
-        labels = {"windows": "🔊 Offline", "edge": "🔊 Jovem", "off": "🔇 Muda"}
+        labels = {"windows": "🔊 Offline", "edge": "🔊 Jovem",
+                  "amanda": "🎙 Amanda", "off": "🔇 Muda"}
         self.voice_button.setText(labels[self.voice_engine])
 
     def cancel_voice_consent(self):
         if not self.voice_confirm_pending:
             return
         self.voice_confirm_pending = False
+        self.voice_confirm_target = None
         self.cancel_voice_button.hide()
+        self.amanda_button.show()
         self.update_voice_button()
         self.bubble.setText(
             self.latest_message[:450] if self.latest_message
-            else "Beleza! A voz offline continua selecionada. 🖤"
+            else "Beleza! A voz anterior continua selecionada. 🖤"
         )
-        self.status.setText("Voz offline mantida. Nenhum texto foi enviado à voz online.")
+        self.status.setText("Voz anterior mantida. Nenhum texto novo foi enviado à API.")
+
+    def request_voice_consent(self, selected):
+        if selected == "amanda" and not amanda_available():
+            self.status.setText("Amanda Kelly precisa da chave ELEVENLABS_API_KEY.")
+            self.bubble.setText(
+                "Quero usar a Amanda Kelly também! Mas falta configurar a chave da "
+                "ElevenLabs antes de abrir a Yuna. "
+                "No PowerShell, use: $env:ELEVENLABS_API_KEY = Read-Host "
+                "'Cole sua chave API'; depois execute py -3 yuna_overlay.py. "
+                "A chave nunca deve ser enviada para o chat ou colocada no GitHub."
+            )
+            return
+        self.voice_confirm_pending = True
+        self.voice_confirm_target = selected
+        self.voice_button.setText("✓ Confirmar")
+        self.amanda_button.hide()
+        self.cancel_voice_button.show()
+        self.bubble.setToolTip("")
+        if selected == "amanda":
+            warning = (
+                "Usar Amanda Kelly? A voz é da ElevenLabs (online) e envia o "
+                "TEXTO FALADO para a API, consumindo créditos. "
+                "Sua conta precisa ter acesso à voz. "
+                "Não envie informações privadas ou confidenciais. "
+                "Clique em Confirmar ou Cancelar."
+            )
+        else:
+            warning = (
+                "Ativar voz Jovem? Ela usa Edge TTS pela internet e ENVIA O TEXTO "
+                "FALADO para gerar áudio. Não a utilize para assuntos confidenciais. "
+                "Clique em Confirmar ou Cancelar."
+            )
+        self.bubble.setText(warning)
+        self.status.setText("Aguardando sua autorização · a nova voz ainda está DESLIGADA")
+
+    def select_amanda(self):
+        if self.voice_confirm_pending:
+            return
+        if self.voice_engine == "amanda":
+            self.status.setText("Amanda Kelly já está selecionada.")
+            return
+        self.request_voice_consent("amanda")
 
     def cycle_voice(self):
         if self.voice_confirm_pending:
-            # Segundo clique confirma o aviso que ficou visível dentro da própria janela.
+            target = self.voice_confirm_target
+            if target not in {"edge", "amanda"}:
+                return
+            if target == "amanda" and not amanda_available():
+                self.cancel_voice_consent()
+                self.status.setText("Ainda falta ELEVENLABS_API_KEY para usar Amanda Kelly.")
+                return
             self.voice_confirm_pending = False
+            self.voice_confirm_target = None
             self.cancel_voice_button.hide()
-            self.voice_engine = "edge"
+            self.amanda_button.show()
+            self.voice_engine = target
             self.update_voice_button()
-            self.bubble.setText("Pff, agora sim! Testando a minha voz nova... ✦")
-            self.status.setText("Voz jovem online ativada · texto falado enviado ao Edge TTS")
-            # Teste com frase fixa, sem enviar as conversas armazenadas.
+            self.bubble.setText(
+                "Pff, agora sim! Testando a minha voz nova... ✦"
+            )
+            self.status.setText(
+                "Amanda Kelly online ativada · créditos ElevenLabs"
+                if target == "amanda" else
+                "Voz jovem online ativada · texto falado enviado ao Edge TTS"
+            )
+            # Frase fixa, nunca envia histórico de conversa no teste.
             if self.voice_busy:
-                self.status.setText("Voz jovem ativada. Teste enviando uma mensagem quando a voz terminar.")
+                self.status.setText(
+                    "Voz ativada. Envie uma mensagem quando a fala anterior terminar."
+                )
             else:
                 self.say("E aí, Kaizen! Agora eu tenho voz. Hahaha! Gostou?")
             self.raise_()
             self.activateWindow()
             return
 
-        selected = {"windows": "edge", "edge": "off", "off": "windows"}[self.voice_engine]
+        # A voz Amanda tem botão dedicado. Preservar ciclo antigo simples.
+        selected = {"windows": "edge", "edge": "off",
+                    "amanda": "off", "off": "windows"}[self.voice_engine]
         if selected == "edge":
-            # Evita QMessageBox.question: fechar uma janela modal pode disparar
-            # lastWindowClosed no Windows quando a única janela principal é Qt.Tool.
-            self.voice_confirm_pending = True
-            self.voice_button.setText("✓ Confirmar")
-            self.cancel_voice_button.show()
-            self.bubble.setToolTip("")
-            self.bubble.setText(
-                "Ativar voz Jovem? Ela usa Edge TTS pela internet e ENVIA O TEXTO "
-                "FALADO para gerar áudio. Não a utilize para assuntos confidenciais. "
-                "Clique em Confirmar ou Cancelar."
-            )
-            self.status.setText("Aguardando sua escolha · a voz online ainda está DESLIGADA")
+            self.request_voice_consent("edge")
             return
         self.voice_engine = selected
         self.update_voice_button()
         self.status.setText({
             "windows": "Voz feminina do Windows (offline), depende das vozes instaladas",
             "edge": "Voz jovem online ativada (pt-BR Francisca Neural)",
+            "amanda": "Amanda Kelly online ativada (ElevenLabs, consome créditos)",
             "off": "Voz desligada: somente texto",
         }[selected])
 
@@ -384,8 +442,13 @@ class YunaOverlay(QWidget):
                 if mode == "windows":
                     speak_windows(text)
                     self.signals.voice_finished.emit("")
-                else:
+                    return
+                if mode == "edge":
                     audio = synthesize_edge(text)
+                elif mode == "amanda":
+                    audio = synthesize_amanda(text)
+                else:
+                    return
                     if audio is not None:
                         self.signals.edge_ready.emit(str(audio))
                     else:
