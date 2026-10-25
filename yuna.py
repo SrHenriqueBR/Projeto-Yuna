@@ -264,6 +264,22 @@ def open_folder(target):
     return f'Solicitei ao Windows a abertura de {label}. Confira a janela do Explorador.'
 
 
+def action_intent(text):
+    """Só classifica como ação frases com pedido operacional explícito."""
+    value = command_text(text)
+    if value.startswith('/fazer '):
+        return True
+    if re.search(r'\b(nao|nunca)\b', value) or re.match(
+            r'^(?:como|por que|porque|e se|se eu|o que acontece)\b', value):
+        return False
+    return bool(re.match(
+        r'^(?:abra|abre|abrir|inicie|iniciar|execute|executar|'
+        r'procure|procurar|busque|buscar|encontre|liste|listar|'
+        r'mostre|mostrar|veja|verifique|coloque|coloca|quero ver|'
+        r'quero abrir|pode abrir|pode procurar|preciso que abra|'
+        r'preciso que liste)\b', value))
+
+
 def handle_message(memory, text, computer=None):
     if is_self_question(text):
         answer = about_text(memory, MODEL)
@@ -282,9 +298,9 @@ def handle_message(memory, text, computer=None):
         result = computer.handle(text)
         if result is not None:
             return result
-    if computer is not None:
+    if computer is not None and action_intent(text):
         request = text.removeprefix('/fazer ').strip()
-        if not request or request == '/fazer':
+        if not request:
             return 'Exemplo: /fazer veja quanto espaço livre tem no disco'
         result = interpret(request, ask_model, computer)
         if result is not None:
