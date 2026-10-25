@@ -10,7 +10,7 @@ import sys
 from threading import Thread
 
 from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
-from PySide6.QtGui import QPixmap, QFont
+from PySide6.QtGui import QPixmap, QFont, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QDialog, QFileDialog, QComboBox, QHBoxLayout, QLabel, QLineEdit,
     QTextEdit, QPushButton, QVBoxLayout, QWidget
@@ -613,7 +613,7 @@ class YunaOverlay(QWidget):
         if self.voice_confirm_pending:
             return
         self.bubble.setPlainText(text)
-        self.bubble.moveCursor(self.bubble.textCursor().MoveOperation.Start)
+        self.bubble.moveCursor(QTextCursor.MoveOperation.Start)
         self.bubble.setToolTip("Role para ler a resposta inteira ou clique em 📋 para copiar.")
         if not self.voice_busy:
             self.show_expression("happy")
