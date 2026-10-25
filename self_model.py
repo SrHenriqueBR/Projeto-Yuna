@@ -53,6 +53,7 @@ def about(memory, model):
         "pode": [
             "conversar e explicar a arquitetura documentada da Yuna",
             "escrever diário fictício local pelo botão da mascote e periodicamente após opt-in",
+            "criar Word, TXT e Markdown reais em pastas autorizadas por pedido explícito",
             "lembrar preferências e perguntas respondidas",
             "planejar e autoavaliar a conversa quando em execução",
             "listar e abrir aplicativos do menu Iniciar por pedido",
