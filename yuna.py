@@ -47,6 +47,7 @@ Admita o que não sabe. Não prometa controlar qualquer programa ou aprender soz
 
 HELP = '''/ajuda                 Mostra os comandos
 /versao                Mostra versão, pasta ativa e geradores instalados
+/modelo                Mostra o modelo Ollama usado nesta sessão
 /teste_arquivo         Cria um TXT de teste na Área de Trabalho, sem Ollama
 /plano PEDIDO          Mostra o plano de pesquisa e documento sem executar
 /lembrar TEXTO          Guarda uma memória explicitamente
@@ -328,6 +329,8 @@ def handle_message(memory, text, computer=None, progress=None):
         if memory is not None:
             memory.save_turn(text, answer)
         return answer
+    if requested == "/modelo":
+        return f"Modelo Ollama de texto em uso: {MODEL}. Para trocar, feche a Yuna e use o launcher apropriado."
     if requested in ("/versao", "/diagnostico"):
         return runtime_report(VERSION, ROOT)
     if requested == "/teste_arquivo":
@@ -522,6 +525,8 @@ def main():
                 elif command == '/esquecer':
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
                 elif command == '/plano':
+                    print('Yuna:', handle_message(memory, text, computer))
+                elif command == '/modelo':
                     print('Yuna:', handle_message(memory, text, computer))
                 elif command == '/sobre':
                     print('Yuna:', about_text(memory, MODEL))
