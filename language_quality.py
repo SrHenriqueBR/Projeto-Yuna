@@ -22,6 +22,7 @@ def identity_conversation_reply(text, history=None):
         "ola yuna tudo bem", "ola tudo bem", "oi yuna tudo bem",
         "oi tudo bem", "tudo bem yuna", "yuna tudo bem",
         "ola yuna tudo bom", "oi yuna tudo bom", "tudo bom yuna",
+        "tudo bom", "tudo bem",
     ):
         return "Oi, Kaizen! Tudo bem por aqui. E com você? 🖤"
     if value in ("voce e a yuna", "voce e yuna", "voce e minha criacao",
