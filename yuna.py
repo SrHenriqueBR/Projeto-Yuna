@@ -269,6 +269,9 @@ def action_intent(text):
     value = command_text(text)
     if value.startswith('/fazer '):
         return True
+    # Autorizações genéricas ("execute o que quiser") não indicam um alvo permitido.
+    if re.search(r'\b(o que quiser|qualquer coisa|tudo sozinho|faz o que quiser)\b', value):
+        return False
     if re.search(r'\b(nao|nunca)\b', value) or re.match(
             r'^(?:como|por que|porque|e se|se eu|o que acontece)\b', value):
         return False
