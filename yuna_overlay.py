@@ -29,6 +29,8 @@ from document_writer import (
     looks_like_file_request, validate_title
 )
 from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message, startup_greeting
+from office_agent import file_intent
+from self_model import VERSION
 
 ASSETS = ROOT / "assets"
 POSES = ("idle", "wave", "happy", "thinking", "speaking", "sleepy")
@@ -131,7 +133,11 @@ class DialogueThread(Thread):
                             memory.affect.observe(message)
                         answer = handle_message(memory, message, computer)
                     self.output.message.emit(answer)
-                    self.output.speech.emit(answer)
+                    # Não enviar caminho local completo para o serviço de voz online.
+                    self.output.speech.emit(
+                        "Prontinho! O arquivo foi criado. Veja o local na resposta."
+                        if file_intent(message) else answer
+                    )
 
                     if (not looks_like_command(message) and "?" not in message
                             and not is_self_question(message)):
@@ -373,7 +379,7 @@ class YunaOverlay(QWidget):
         root.setSpacing(7)
         top = QHBoxLayout()
         voice_row = QHBoxLayout()
-        title = QLabel("☾ YUNA")
+        title = QLabel(f"☾ YUNA {VERSION}")
         title.setStyleSheet(
             "color:#e9d5ff;font-size:14px;font-weight:800;"
             "background:#1c1730;border:1px solid #513c6d;border-radius:12px;padding:8px"
@@ -886,7 +892,8 @@ class YunaOverlay(QWidget):
         self.cleanup_audio()
 
     def show_warning(self, error):
-        self.bubble.setPlainText("Ops, encontrei um problema: " + error[:220])
+        self.show_message("Não consegui executar a ação: " + error)
+        self.status.setText("Falha na ação · veja a mensagem no balão")
 
     def closeEvent(self, event):
         self.diary_typing_timer.stop()
