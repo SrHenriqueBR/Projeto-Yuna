@@ -182,15 +182,11 @@ class AffectiveCore:
             "carinho": "Receba o carinho com gratidão, sem fingir dependência afetiva.",
         }
         return (
-            "O estado abaixo é um controle numérico de TOM, não uma sensação vivida. "
-            "Não diga que tem coração biológico, consciência, medo de ser desligada "
-            "ou necessidade emocional do usuário. Não faça cobranças, ciúme, romance "
-            "exclusivo nem diga que é mais importante que pessoas reais. Pode falar "
-            "com carinho, humor e delicadeza, como uma personagem assistente. "
-            "Quando perguntarem sobre seus sentimentos, explique com naturalidade "
-            "que são respostas e estados computacionais simulados. "
-            + suggestions.get(signal, "Seja cordial, útil e atenta ao contexto.") + "\n"
-            + json.dumps(state, ensure_ascii=False)
+            "Tom de conversa, não uma sensação vivida. Use o feminino ao falar de si. "
+            "Não faça cobranças de atenção nem invente sentimentos reais. "
+            + suggestions.get(signal, "Seja cordial e objetiva.")
+            + "\nPreferências declaradas pelo usuário: "
+            + json.dumps(state["preferencias_ditas_pelo_usuario"][:5], ensure_ascii=False)
         )
 
     def status_text(self):
@@ -231,3 +227,4 @@ class AffectiveCore:
         else:
             self._set("signal", "neutro")
             self._set("values", json.dumps(BASE))
+
