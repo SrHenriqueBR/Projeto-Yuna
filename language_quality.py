@@ -47,7 +47,7 @@ def identity_conversation_reply(text, history=None):
 # Padrões conhecidos de linguagem artificial e troca de papéis.
 # Nenhuma troca automática de flexão em palavras citadas ou em conteúdos de terceiros.
 BAD_PATTERNS = (
-    r"\b(?:eu\s+)?vou\s+(?:pode|precisa|quer|vai|sou)\b",
+    r"\b(?:eu\s+)?vou\s+(?:pode|precisa|quer|vai|sou|gostaria)\b",
     r"\b(?:eu\s+)?sou\s+(?:chama|chamado|chamado de)\b",
     r"\b(?:eu\s+)?sou\s+muito\s+especial\s+ter\b",
     r"\b(?:eu\s+)?vou\s+(?:poder|precisar)\s+de\s+abrir\b",
