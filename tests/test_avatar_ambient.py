@@ -159,9 +159,9 @@ class AmbientQtTests(unittest.TestCase):
             try:
                 avatar.show()
                 self.app.processEvents()
-                with patch("yuna_avatar.QCursor.pos",
-                           return_value=avatar.mapToGlobal(
-                               __import__("PySide6").QtCore.QPoint(170, 210))):
+                from PySide6.QtCore import QPoint
+                with patch("yuna_avatar.QCursor") as cursor:
+                    cursor.pos.return_value = avatar.mapToGlobal(QPoint(170, 210))
                     avatar._update_gaze()
                 self.assertGreater(avatar._eye_cursor[0], 95)
                 self.assertLess(avatar._eye_cursor[0], 170)
