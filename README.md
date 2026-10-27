@@ -655,7 +655,7 @@ O ditado por voz não substitui ainda uma palavra de ativação contínua. Nenhu
 ### Instalação no Windows
 
 1. Feche a Yuna. Faça backup da pasta **`data`**, onde estão sua memória e biblioteca, e preserve **`assets`** (sprites e GIFs).
-2. Baixe a nova versão do GitHub e copie **todos os arquivos `.py` novos** para a pasta do projeto, incluindo `yuna_desktop.py`, `document_library.py` e `speech_input.py`. Copie também o novo `iniciar_yuna.bat`, `iniciar_yuna_terminal.bat` e os arquivos de requisitos.
+2. Baixe a nova versão do GitHub e copie **todos os arquivos `.py` novos** para a pasta do projeto, incluindo `yuna_desktop.py`, `yuna_launcher.py`, `document_library.py` e `speech_input.py`. Copie também o novo `iniciar_yuna.bat`, `iniciar_yuna_terminal.bat` e os arquivos de requisitos.
 3. No PowerShell aberto nessa pasta, instale as bibliotecas necessárias uma vez:
 
    ```powershell
@@ -667,3 +667,5 @@ O ditado por voz não substitui ainda uma palavra de ativação contínua. Nenhu
 ### Limites honestos
 
 A biblioteca **não retreina** o modelo Ollama. Ela guarda o original e as notas úteis após sua autorização, podendo reabrir e analisar novamente. A avaliação do documento é uma sugestão, não um parecer profissional ou verificação garantida de qualidade. Nenhuma instalação de código, pesquisa na web ou mudança de arquivos acontece por mensagens contidas em documentos.
+
+Se o menu gráfico não abrir, o launcher mostrará uma mensagem e salvará um diagnóstico local em `data/yuna_startup_error.txt`, sem publicar esse registro na internet.
