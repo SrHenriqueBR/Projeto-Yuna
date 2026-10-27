@@ -33,7 +33,11 @@ def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False):
     blink = 1.0 if cycle in (1, 2) else 0.0
     if (tick // 60) % 4 == 2 and cycle in (8, 9):
         blink = 1.0
-    if pose in ("sit", "sleepy"):
+    if pose == "sleepy":
+        blink = 1.0  # Duas pálpebras fechadas ao tirar uma soneca.
+    elif pose == "laugh":
+        blink = 1.0  # Olhos em meia-lua, desenhados pelo avatar.
+    elif pose == "sit":
         blink = max(blink, .5)
 
     eye_dx = eye_dy = 0.0
@@ -51,14 +55,14 @@ def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False):
     hair_sway = 3.1 * math.sin(t * 2.0) + 1.2 * math.sin(t * 3.6)
     walking = pose == "walk"
     body_bob = 2.6 * math.sin(t * 8) if walking else .8 * math.sin(t * 1.5)
-    if pose == "sit":
+    if pose in ("sit", "sleepy"):
         body_bob = .2 * math.sin(t)
     mouth_open = 0.0
     if speaking or pose == "talk":
         # A abertura acompanha o ritmo de fala de forma aproximada,
         # sem alegar sincronização fonética exata.
         mouth_open = 2.0 + 3.0 * abs(math.sin(t * 13))
-    tilt = 1.6 * math.sin(t * 1.1) if pose in ("idle", "happy") else 0.0
+    tilt = 1.6 * math.sin(t * 1.1) if pose in ("idle", "happy", "shy", "wink") else 0.0
 
     return MotionFrame(blink, eye_dx, eye_dy, hair_sway, breath,
                        body_bob, mouth_open, tilt)
