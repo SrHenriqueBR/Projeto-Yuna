@@ -85,7 +85,7 @@ def parse_avatar_request(message):
         return ("pose", movement[value])
     match = re.fullmatch(
         r"(?:muda|mude|troca|troque|deixa|deixe|coloca|coloque|"
-        r"pinta|pinte)\s+(?:seu|o seu|os seus|sua|a sua|as suas)?\s*"
+        r"pinta|pinte)\s+(?:seu|o seu|os seus|sua|a sua|as suas|o|a|os|as)?\s*"
         r"(cabelo|cabelos|olho|olhos|roupa|vestido)\s+"
         r"(?:de|para|pra|na cor|em|com|por)?\s*"
         r"(preto|branco|ruivo|roxo|vermelhos|azuis|dourados|roxos|"
@@ -97,7 +97,7 @@ def parse_avatar_request(message):
     element, chosen = match.groups()
     if element.startswith("cabelo"):
         key = "hair"
-        aliases = {"preta": "preto", "preta": "preto", "ruiva": "ruivo",
+        aliases = {"preta": "preto", "ruiva": "ruivo",
                    "branca": "branco", "roxa": "roxo"}
         chosen = aliases.get(chosen, chosen)
         if chosen not in HAIR:
