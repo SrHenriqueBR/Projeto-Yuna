@@ -170,6 +170,13 @@ class DialogueThread(Thread):
                     # Também não transmitir caminhos completos à voz online.
                     if message.strip().casefold() in ("/versao", "/diagnostico"):
                         pass
+                    elif message.strip().casefold().startswith(("/github", "/melhorar", "/openai",
+                                                              "/apis", "/api ", "/integracoes",
+                                                              "/clima", "/livros", "/cep",
+                                                              "/ias", "/ia ", "/provedores")):
+                        # Respostas de APIs, inclusive endereços e perguntas enviadas
+                        # a outros modelos, ficam apenas no balão da Yuna.
+                        self.output.speech.emit("Consulta finalizada. Veja o resultado na tela.")
                     elif message.strip().casefold().startswith(("/github", "/melhorar", "/openai")):
                         # Código e resultados de integrações ficam só na interface;
                         # não repassar conteúdos e caminhos ao serviço online de voz.

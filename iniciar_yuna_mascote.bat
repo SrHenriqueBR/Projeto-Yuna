@@ -11,6 +11,11 @@ if not exist "file_diagnostics.py" (
     pause
     exit /b 1
 )
+if not exist "free_apis.py" (
+    echo Falta free_apis.py. Atualize todos os arquivos Python para Yuna 0.16.
+    pause
+    exit /b 1
+)
 if not exist "integrations.py" (
     echo Falta integrations.py. Atualize todos os arquivos para Yuna 0.15.
     pause

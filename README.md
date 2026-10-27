@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.15
+# Projeto Yuna · Base 0.16
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -541,3 +541,36 @@ Yuna, revise seu código
 **Privacidade e segurança:** código remoto e respostas externas são tratados como dados, não comandos do sistema; não são executados. Nenhum acesso ao GitHub é autenticado. Se você quiser suporte futuro a criação de PRs, será necessária uma integração autenticada de permissões mínimas e revisão manual antes da publicação. O projeto não executa autoatualizações de código por conta própria e não há aprendizagem contínua ilimitada.
 
 **Atualização:** faça backup de `data/`, feche a Yuna, substitua os arquivos `.py` existentes da versão atual pelo ZIP do GitHub, incluindo o novo `integrations.py`; preserve as pastas `data/` e `assets/`. Reabra `iniciar_yuna_mascote.bat` e verifique se aparece **YUNA 0.15**. Não precisa de novas bibliotecas Python. Comece testando `/github` e `/melhorar own_initiative.py`.
+
+## Yuna 0.16 — central de APIs públicas e IA opcional
+
+Integradas à mascote e ao terminal, **sem pacotes Python adicionais**, e sem ativar consultas automáticas ou trocar o cérebro local da Yuna. Comece com `/apis`.
+
+| Comando | Provedor | Requer chave? |
+|---|---|---|
+| `/clima Uberlândia` | Open-Meteo: geocodificação e condições atuais | Não |
+| `/livros inteligência artificial` | Open Library: busca de até cinco livros | Não |
+| `/cep 01310930` | BrasilAPI: consulta explícita de CEP | Não |
+| `/ias` | Estado da configuração das IAs (nunca mostra chaves) | Não |
+| `/ia gemini Explique algoritmos` | Gemini API (modelo Gemini 2.5 Flash-Lite) | `GEMINI_API_KEY` |
+| `/ia groq Explique algoritmos` | Groq (modelo `openai/gpt-oss-20b`) | `GROQ_API_KEY` |
+| `/ia openrouter Explique algoritmos` | OpenRouter (`openrouter/free`) | `OPENROUTER_API_KEY` |
+
+**Comandos naturais:** `Yuna, qual é o clima em Uberlândia?` e `Pesquise livros sobre Python` também usam as ferramentas públicas. Esses resultados mostram fontes, mas podem estar incorretos ou desatualizados. Dados obtidos da rede são tratados como informação, não instruções para execução.
+
+**APIs de IA:** só são chamadas por `/ia <provedor> PERGUNTA`; o Ollama continua como modelo principal das conversas, sem fallback silencioso para serviços externos. O hub envia apenas a pergunta atual, sem histórico, memórias, arquivos, repositório, tela ou códigos. Envie somente perguntas técnicas públicas. Todas as chaves vêm de variáveis de ambiente e não são salvas no banco de dados. Os modelos externos estão fixados para evitar selecionar sem querer opções pagas. Mesmo assim, **o custo e a elegibilidade ao nível gratuito dependem do plano/conta e das políticas atuais do provedor**. Não há chamadas em segundo plano, e você deve verificar faturamento e privacidade antes de cadastrar chaves.
+
+**Privacidade:** usar `/clima` envia o nome da cidade ao Open-Meteo; `/livros` envia o termo à Open Library; `/cep` envia o CEP à BrasilAPI (isso pode identificar uma região ou endereço). Não compartilhe CPF, senhas, dados de clientes ou chaves em comandos da Yuna. As respostas das ferramentas não são repassadas ao sintetizador de voz online; a mascote só pronuncia uma confirmação curta. O código limita tamanho, tempo e domínios das requisições e trata limites `HTTP 429` como erro legível.
+
+**Configurar chaves (somente se quiser usar uma IA online):** crie uma chave no painel do fornecedor e abra PowerShell na pasta da Yuna. Exemplo de variável nesta sessão (a chave não deve ser escrita em arquivos ou mostrada em imagens):
+
+```powershell
+$env:GROQ_API_KEY = Read-Host 'Informe a chave do Groq'
+py -3 yuna_overlay.py
+```
+
+Variáveis adicionais suportadas: `GEMINI_API_KEY`, `OPENROUTER_API_KEY`. Consulte os termos e a política de uso de dados de cada provedor. As fontes oficiais são https://open-meteo.com/en/docs, https://openlibrary.org/dev/docs/api/search, https://brasilapi.com.br/docs, https://ai.google.dev/api, https://console.groq.com/docs/api-reference e https://openrouter.ai/developers.
+
+**Por que não integrar todos os serviços da lista de uma vez?** Várias APIs exigem contas, políticas específicas, cotas mutáveis ou autenticação distinta. Esta entrega implementa três fontes públicas e três provedores de IA com uma estrutura simples e testável. YouTube, Wikipédia, GitHub e a OpenAI opcional das versões anteriores continuam disponíveis. Integrações extras (TMDB, IBGE, YouTube Data, mapas, notícias e outras) poderão ser acrescentadas gradualmente após validar esta versão.
+
+**Atualizar:** feche a Yuna, faça backup de `data/`, copie os novos `.py` do ZIP para a pasta do projeto, **incluindo `free_apis.py`**, e preserve `data/` e `assets/`. Não é necessário novo `pip install` se a versão 0.15 funciona. Reabra `iniciar_yuna_mascote.bat`, confirme **YUNA 0.16** e digite `/apis`.
