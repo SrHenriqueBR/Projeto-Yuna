@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.23
+# Projeto Yuna · Base 0.24
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, o ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
 
@@ -767,3 +767,27 @@ Ao pedir, a Yuna executa uma piscadinha com um olho fechado e um brilho; uma ris
 Com o avatar visível, também é possível usar **clique direito → Dar piscadinha / Dar risada / Ficar tímida / Tirar soneca / Acordar**. As reações duram de 4 a 20 segundos; comandos hipotéticos não devem acioná-las e não são persistidas na pasta `data/`.
 
 A renderização foi feita para funcionar nos tamanhos 75%, 100% e 130% da versão 0.22, sem GPU nova, animações 3D, câmera ou pacotes extras. Para atualizar, feche a Yuna, preserve `data/` e substitua os arquivos de código do ZIP novo antes de iniciar `iniciar_yuna.bat`. Testes no GitHub verificam sintaxe, intenção e Qt offscreen; o comportamento real ainda deve ser conferido no Windows.
+
+## Yuna 0.24 — Movimentos ambientais mais naturais e controle de animação
+
+O avatar vetorial agora alterna, sem depender da IA ou da internet, entre pequenas caminhadas, pausas em pé e períodos sentada. A sequência é determinística e só ocorre quando a personagem está aberta e as caminhadas estão habilitadas. O olhar se aproxima gradualmente da posição do mouse; o cabelo oscila em ritmos ligeiramente diferentes e balança menos quando sentada. O deslocamento começa com aceleração gradual.
+
+### Preferência para reduzir animações
+
+No chat, digite uma destas frases (sem barra):
+
+```text
+Yuna, reduza as animações
+Yuna, diminua as animações
+Yuna retoma as animações
+```
+
+Ou clique com o botão direito no avatar → **Reduzir animações** / **Restaurar animações**.
+
+Quando reduzidas, a personagem não passeia pela tela nem oscila o corpo, cabelo ou boca, mas mantém os comandos visuais e o olhar orientado ao cursor. A preferência é salva apenas em `data/avatar_yuna.json`, com `reduced_motion: true/false`, preservando o ajuste anterior de tamanho, cabelo e caminhada. Ao restaurar as animações, a caminhada retoma seu ajuste anterior se ele estiver ativado.
+
+**Atualização segura:** feche a Yuna, guarde uma cópia de `data/`, copie os arquivos novos do repositório para a instalação e **não substitua sua pasta `data/`**. Use `iniciar_yuna.bat`. Sem pacotes adicionais; ainda é um avatar 2D e não existe movimento 3D.
+
+### Separação de responsabilidades
+
+O código de comportamento e movimento permanece em `avatar_motion.py`, independente de PySide6. O módulo calcula poses ambientais e interpolação do olhar. `yuna_avatar.py` continua responsável por desenhar e mover a janela. Isso prepara uma futura troca de renderizador (por exemplo, um avatar 3D) sem afirmar que o sistema já suporta 3D. Os testes do GitHub não substituem a verificação visual no notebook Windows.
