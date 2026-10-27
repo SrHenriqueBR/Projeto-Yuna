@@ -23,7 +23,11 @@ def looks_like_command(text):
     from natural_memory import parse_memory_intent
     # A resposta sobre clima/livros ou uma lembrança não é resposta
     # a perguntas antigas da Yuna, nem deve gerar nova pergunta aleatória.
-    if classify_public_request(text) is not None or parse_memory_intent(text) is not None:
+    memo = parse_memory_intent(text)
+    # Preferências declaradas continuam sendo conversa para o núcleo afetivo.
+    # Mas pedidos explícitos de guardar/listar/apagar lembranças e consultas
+    # externas são ações; não tratá-los como resposta à curiosidade pendente.
+    if classify_public_request(text) is not None or (memo is not None and not memo.automatic):
         return True
     value = command_text(text)
     return bool(re.match(
