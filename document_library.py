@@ -169,7 +169,7 @@ class DocumentLibrary:
         except (FileNotFoundError, ValueError):
             return []
 
-    def add(self, source):
+    def add(self, source, notes=''):
         """Guarda somente quando o botão Guardar foi confirmado."""
         source = check_source(source)
         self.folder.mkdir(parents=True, exist_ok=True)
@@ -182,6 +182,7 @@ class DocumentLibrary:
                 "id": ident, "name": source.name, "file": target.name,
                 "saved_at": datetime.now().astimezone().isoformat(timespec="seconds"),
                 "size": target.stat().st_size,
+                "notes": str(notes or "")[:3000],
             }
             items = self.entries()
             items.append(item)
