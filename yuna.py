@@ -31,6 +31,7 @@ from diary import DiaryStore, generate_entry
 from proactive import spontaneous_enabled, set_spontaneous
 from free_apis import handle_hub
 from natural_memory import parse_memory_intent, memory_response
+from avatar_state import parse_avatar_request, apply_avatar_request
 from integrations import github_overview, github_read, improvement_proposal, consult_openai, SOURCE_ALLOWLIST
 
 ROOT = Path(__file__).resolve().parent
@@ -83,6 +84,9 @@ e escrever propostas locais de melhoria, SEM editar o código-fonte, subir commi
 abrir PRs automaticamente. A OpenAI API é opcional, paga à parte, usada somente quando
 a pessoa disser /openai e se houver chave de API configurada. Nunca alegue controlar
 uma conversa do ChatGPT ou acessar sua assinatura.
+AVATAR 2D: quando Kaizen pede mudar cabelo, olhos, roupa ou postura,
+use apenas controles implementados e relate só modificações reais.
+O corpo 2D é uma representação animada, não consciência ou dor física.
 FERRAMENTAS: a aplicação abre apps/pastas, busca nomes de arquivos, consulta o Windows,
 cria documentos e oferece pesquisas web limitadas. Tela e voz dependem dos módulos opcionais.
 A conversa, sozinha, não executa essas ações. Só relate uma execução se houver resultado real.
@@ -401,6 +405,14 @@ def handle_message(memory, text, computer=None, progress=None):
         return HELP
     if requested == "/comandos":
         return TECH_HELP
+    avatar_request = parse_avatar_request(text)
+    if avatar_request is not None:
+        # Alterações visuais locais apenas em data/avatar_yuna.json.
+        # Não envia comandos para o Windows ou para o Ollama.
+        answer = apply_avatar_request(ROOT, avatar_request)
+        if memory is not None:
+            memory.save_turn(text, answer)
+        return answer
     # Uma lembrança só pode nascer da fala atual do usuário, nunca do modelo,
     # de pesquisas web, dos resultados do GitHub ou de prompts recuperados.
     memo = parse_memory_intent(text)

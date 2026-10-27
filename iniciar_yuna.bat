@@ -6,6 +6,16 @@ if not exist "yuna_launcher.py" (
     pause
     exit /b 1
 )
+if not exist "avatar_state.py" (
+    echo Falta avatar_state.py. Atualize todos os arquivos para Yuna 0.19.
+    pause
+    exit /b 1
+)
+if not exist "yuna_avatar.py" (
+    echo Falta yuna_avatar.py.
+    pause
+    exit /b 1
+)
 if not exist "yuna_desktop.py" (
     echo A interface grafica da Yuna nao foi encontrada. Atualize todos os arquivos.
     pause

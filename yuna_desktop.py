@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
 
 from computer import Computer
 from document_library import DocumentLibrary, analyze_document, check_source
+from avatar_state import parse_avatar_request
+from yuna_avatar import YunaAvatar
 from self_model import VERSION
 from voice import speak_windows, synthesize_edge, speech_text
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
@@ -166,6 +168,8 @@ class YunaDesktop(QMainWindow):
         self.setMinimumSize(830, 550)
         self.setStyleSheet(STYLE)
         self.pending_path = None
+        self.avatar_window = None
+        self.last_avatar_request = None
         self.from_library = False
         self.last_analysis_path = None
         self.last_analysis = ""
@@ -244,6 +248,13 @@ class YunaDesktop(QMainWindow):
         self.sidebar_caption.setObjectName("subtle")
         self.sidebar_caption.setWordWrap(True)
         sidebar.addWidget(self.sidebar_caption)
+
+        self.avatar_button = QPushButton("✦  Mostrar Yuna viva")
+        self.avatar_button.setObjectName("primary")
+        self.avatar_button.setToolTip(
+            "Abre uma personagem chibi interativa que passeia na área de trabalho."
+        )
+        sidebar.addWidget(self.avatar_button)
 
         title = QLabel("SUA BIBLIOTECA")
         title.setObjectName("section")
@@ -362,6 +373,7 @@ class YunaDesktop(QMainWindow):
         self.signals.mic_ready.connect(self.microphone_ready)
         self.signals.mic_error.connect(self.microphone_error)
 
+        self.avatar_button.clicked.connect(self.toggle_avatar)
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
@@ -448,6 +460,23 @@ class YunaDesktop(QMainWindow):
 
     def show_answer(self, answer, is_document):
         self.add_message("Yuna", answer, accent=is_document)
+        if not is_document and self.avatar_window is not None:
+            self.avatar_window.reload_appearance()
+            request = self.last_avatar_request
+            if request is not None:
+                if request[0] == "pose":
+                    pose = request[1]
+                    if pose in ("sit", "stand", "angry", "happy", "walk", "stop"):
+                        chosen_pose = {"stand": "idle", "stop": "idle"}.get(pose, pose)
+                        self.avatar_window.set_pose(
+                            chosen_pose, 20 if pose == "sit" else 4
+                        )
+                else:
+                    self.avatar_window.set_pose(
+                        "happy", 3, "Visual atualizado! 🖤"
+                    )
+        if not is_document:
+            self.last_avatar_request = None
         if is_document:
             self.last_analysis_path = self.pending_path
             self.last_analysis = answer
@@ -460,6 +489,18 @@ class YunaDesktop(QMainWindow):
     def show_error(self, error):
         self.add_message("Yuna", "Não consegui concluir: " + str(error))
         self.set_busy(False)
+
+    def toggle_avatar(self):
+        if self.avatar_window is None:
+            self.avatar_window = YunaAvatar(ROOT)
+        if self.avatar_window.isVisible():
+            self.avatar_window.hide()
+            self.avatar_button.setText("✦  Mostrar Yuna viva")
+        else:
+            self.avatar_window.reload_appearance()
+            self.avatar_window.show()
+            self.avatar_window.raise_()
+            self.avatar_button.setText("✦  Esconder avatar")
 
     def send_message(self):
         content = self.composer.toPlainText().strip()
@@ -474,6 +515,11 @@ class YunaDesktop(QMainWindow):
             )
             self.worker.analyze(self.pending_path, content)
         else:
+            self.last_avatar_request = parse_avatar_request(content)
+            if (self.last_avatar_request is not None
+                    and (self.avatar_window is None
+                         or not self.avatar_window.isVisible())):
+                self.toggle_avatar()
             self.add_message("Kaizen", content)
             self.worker.submit(content)
 
@@ -716,6 +762,8 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        if self.avatar_window is not None:
+            self.avatar_window.close()
         self.worker.stop()
         self.player.stop()
         self.player.setSource(QUrl())
