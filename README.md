@@ -1,6 +1,6 @@
 # Projeto Yuna · Base 0.22
 
-Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, a ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
+Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, o ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
 
 ## Atualizar uma instalação existente
 
