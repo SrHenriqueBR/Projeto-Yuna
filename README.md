@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.22
+# Projeto Yuna · Base 0.23
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, o ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
 
@@ -749,3 +749,21 @@ Yuna, deixa o avatar normal
 Também funciona com **clique direito sobre o avatar → Tamanho do avatar**. A escolha é guardada em `data/avatar_yuna.json` e volta quando a Yuna abre novamente; não altera o modelo de IA, o histórico, os arquivos pessoais ou a aparência previamente escolhida. A personagem continua sendo **2D vetorial**, não um corpo 3D ainda. Nesta versão não existe arrasto para alterar a escala livremente ou gestos por câmera.
 
 **Atualização:** baixe os arquivos novos e substitua os arquivos `.py`, especialmente `avatar_state.py`, `yuna_avatar.py` e `self_model.py`, preservando a pasta `data/`. Feche o programa antes de substituir os arquivos.
+
+## Yuna 0.23 — Expressões anime interativas
+
+O avatar **2D vetorial** agora tem quatro reações diferentes, temporárias, sem alterar as memórias nem o visual salvo. É possível falar com a Yuna naturalmente:
+
+```text
+Yuna, pisca pra mim
+Yuna dá risada
+Yuna fica tímida
+Yuna vai dormir
+Yuna acorda
+```
+
+Ao pedir, a Yuna executa uma piscadinha com um olho fechado e um brilho; uma risada com os olhos fechados e a boca aberta; um rosto tímido com bochechas mais coradas; ou uma soneca sentada com os olhos fechados e um efeito `Zzz`. Ao acordar, a Yuna retoma o comportamento habitual. Essas expressões aparecem **inclusive enquanto a fala está tocando**, quando solicitadas no chat. Não significa que a IA tem emoções ou que um sensor acompanha suas expressões.
+
+Com o avatar visível, também é possível usar **clique direito → Dar piscadinha / Dar risada / Ficar tímida / Tirar soneca / Acordar**. As reações duram de 4 a 20 segundos; comandos hipotéticos não devem acioná-las e não são persistidas na pasta `data/`.
+
+A renderização foi feita para funcionar nos tamanhos 75%, 100% e 130% da versão 0.22, sem GPU nova, animações 3D, câmera ou pacotes extras. Para atualizar, feche a Yuna, preserve `data/` e substitua os arquivos de código do ZIP novo antes de iniciar `iniciar_yuna.bat`. Testes no GitHub verificam sintaxe, intenção e Qt offscreen; o comportamento real ainda deve ser conferido no Windows.
