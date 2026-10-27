@@ -51,6 +51,8 @@ class DesktopSignals(QObject):
     saved = Signal(str)
     audio_ready = Signal(str)
     audio_error = Signal(str)
+    mic_ready = Signal(str)
+    mic_error = Signal(str)
 
 
 class DesktopWorker(Thread):
@@ -348,6 +350,8 @@ class YunaDesktop(QMainWindow):
         self.signals.saved.connect(self.saved_file)
         self.signals.audio_ready.connect(self.play_audio)
         self.signals.audio_error.connect(self.voice_error)
+        self.signals.mic_ready.connect(self.microphone_ready)
+        self.signals.mic_error.connect(self.microphone_error)
 
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
@@ -457,3 +461,240 @@ class YunaDesktop(QMainWindow):
         else:
             self.add_message("Kaizen", content)
             self.worker.submit(content)
+
+
+    def select_document(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Selecionar documento para a Yuna",
+            str(Path.home() / "Documents"),
+            "Documentos (*.docx *.xlsx *.pptx *.pdf *.txt *.md)"
+        )
+        if path:
+            self.attach_document(path)
+
+    def attach_document(self, filename):
+        try:
+            path = check_source(filename)
+        except (ValueError, FileNotFoundError, OSError) as exc:
+            QMessageBox.warning(self, "Anexo não aceito", str(exc))
+            return
+        self.pending_path = path
+        self.attachment_notice.setText(
+            "📎  " + path.name + "   •   Analise com Enviar ou guarde uma cópia com autorização."
+        )
+        self.attachment_notice.show()
+        self.save_attachment.setEnabled(True)
+        self.composer.setFocus()
+        self.status.setText("Anexo selecionado • original não foi alterado")
+
+    def use_library_document(self, item):
+        try:
+            self.pending_path = LIBRARY.path_for(item.data(Qt.ItemDataRole.UserRole))
+        except (ValueError, OSError, FileNotFoundError) as exc:
+            self.show_error(str(exc))
+            return
+        self.attachment_notice.setText("📚  " + self.pending_path.name + " • da biblioteca pessoal")
+        self.attachment_notice.show()
+        self.save_attachment.setEnabled(False)
+        self.composer.setFocus()
+
+    def archive_document(self):
+        if not self.pending_path:
+            return
+        answer = QMessageBox.question(
+            self, "Guardar na biblioteca pessoal?",
+            "Deseja criar uma cópia privada de '" + self.pending_path.name
+            + "' em data/biblioteca?\n\n"
+            "O original permanece no mesmo lugar. "
+            "A Yuna não enviará o arquivo à internet.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        self.set_busy(True)
+        self.worker.archive(self.pending_path)
+
+    def saved_file(self, filename):
+        self.set_busy(False)
+        self.status.setText("Arquivo '" + filename + "' guardado na biblioteca local")
+        self.add_message(
+            "Yuna", "Guardei uma cópia de '" + filename
+            + "' na minha biblioteca pessoal, com sua autorização. "
+            "O arquivo original continua intacto."
+        )
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls() and any(
+            url.isLocalFile() for url in event.mimeData().urls()
+        ):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        paths = [url.toLocalFile() for url in event.mimeData().urls()
+                 if url.isLocalFile()]
+        if paths:
+            self.attach_document(paths[0])
+            event.acceptProposedAction()
+
+    def voice_changed(self, index):
+        if self._changing_voice:
+            return
+        if index == 2 and not self._edge_consent:
+            consent = QMessageBox.question(
+                self, "Voz online",
+                "A voz Edge envia o texto da resposta a um serviço externo "
+                "para síntese de fala. Não enviaremos conteúdo de documentos "
+                "anexados por essa função.\n\nDeseja ativá-la?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if consent != QMessageBox.StandardButton.Yes:
+                self._changing_voice = True
+                self.voice_selector.setCurrentIndex(0)
+                self._changing_voice = False
+                self.voice_index = 0
+                return
+            self._edge_consent = True
+        self.voice_index = index
+        self.status.setText(
+            ["Respostas por texto", "Voz feminina Windows • offline",
+             "Voz Edge • serviço externo autorizado"][index]
+        )
+
+    def say(self, text, private=False):
+        if self.voice_index == 0 or self.voice_busy:
+            return
+        mode = self.voice_index
+        if private and mode == 2:
+            # Apenas aviso genérico, nunca trechos do documento anexado.
+            text = "A análise está pronta para ser lida na janela."
+        if not speech_text(text):
+            return
+        self.voice_busy = True
+
+        def speak():
+            try:
+                if mode == 1:
+                    speak_windows(text)
+                    self.signals.audio_error.emit("")
+                elif mode == 2:
+                    result = synthesize_edge(text)
+                    if result:
+                        self.signals.audio_ready.emit(str(result))
+                    else:
+                        self.signals.audio_error.emit("")
+            except Exception as exc:
+                self.signals.audio_error.emit(str(exc))
+        Thread(target=speak, daemon=True).start()
+
+    def play_audio(self, path):
+        self.audio_file = Path(path)
+        self.player.setSource(QUrl.fromLocalFile(str(self.audio_file)))
+        self.player.play()
+        self.status.setText("Yuna está falando...")
+
+    def playback_status(self, value):
+        if value == QMediaPlayer.MediaStatus.EndOfMedia:
+            self.player.stop()
+            self.player.setSource(QUrl())
+            self.cleanup_audio()
+            self.voice_busy = False
+            self.status.setText("Pronta • conversa local")
+
+    def playback_error(self, error, detail):
+        self.player.stop()
+        self.player.setSource(QUrl())
+        self.cleanup_audio()
+        self.voice_error(detail or "A reprodução de voz falhou.")
+
+    def cleanup_audio(self):
+        if self.audio_file:
+            try:
+                self.audio_file.unlink(missing_ok=True)
+            except OSError:
+                pass
+            self.audio_file = None
+
+    def voice_error(self, error):
+        self.voice_busy = False
+        if error:
+            self.status.setText("Voz indisponível: " + error[:180])
+        else:
+            self.status.setText("Pronta • conversa local")
+
+    def request_microphone(self):
+        if self.microphone_busy:
+            return
+        try:
+            import importlib.util
+            if (importlib.util.find_spec("sounddevice") is None
+                    or importlib.util.find_spec("faster_whisper") is None):
+                QMessageBox.information(
+                    self, "Microfone opcional",
+                    "Para usar o ditado de voz local, instale:\n"
+                    "py -3 -m pip install -r requirements-voz.txt\n\n"
+                    "Sem esses pacotes, a conversa por texto continua funcionando."
+                )
+                return
+        except (ImportError, ValueError) as exc:
+            self.status.setText("Microfone indisponível: " + str(exc))
+            return
+        confirm = QMessageBox.question(
+            self, "Iniciar ditado local?",
+            "A Yuna gravará 8 segundos do microfone após você confirmar "
+            "e transcreverá localmente pelo Whisper. O áudio não será "
+            "salvo em arquivo ou enviado para a internet.\n\n"
+            "No primeiro uso, os pesos do modelo podem ser baixados "
+            "da internet. Continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+        self.microphone_busy = True
+        self.microphone_button.setEnabled(False)
+        self.status.setText("🎙  Ouvindo por 8 segundos...")
+
+        def recording():
+            try:
+                from speech_input import listen_once
+                result = listen_once()
+                self.signals.mic_ready.emit(result)
+            except Exception as exc:
+                self.signals.mic_error.emit(str(exc))
+        Thread(target=recording, daemon=True).start()
+
+    def microphone_ready(self, result):
+        self.microphone_busy = False
+        self.microphone_button.setEnabled(True)
+        earlier = self.composer.toPlainText().strip()
+        self.composer.setPlainText((earlier + "\n" if earlier else "") + result)
+        self.composer.setFocus()
+        self.status.setText("Ditado transcrito localmente • revise antes de enviar")
+
+    def microphone_error(self, error):
+        self.microphone_busy = False
+        self.microphone_button.setEnabled(True)
+        self.status.setText("Falha no microfone: " + str(error)[:180])
+
+    def closeEvent(self, event):
+        self.worker.stop()
+        self.player.stop()
+        self.player.setSource(QUrl())
+        self.cleanup_audio()
+        super().closeEvent(event)
+
+
+def main():
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    window = YunaDesktop()
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
