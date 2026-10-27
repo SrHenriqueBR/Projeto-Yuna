@@ -121,7 +121,7 @@ def memory_response(memory, intent):
     if intent.action != "store":
         return None
     fact = intent.detail.strip()
-    if not 4 <= len(fact) <= 400 or SENSITIVE.search(fact):
+    if not 4 <= len(fact) <= 400 or SENSITIVE.search(fold(fact)):
         if intent.automatic:
             return None
         return ("Essa informação pode ser sensível ou longa demais. "
