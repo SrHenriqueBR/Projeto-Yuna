@@ -68,8 +68,8 @@ class DesktopWorker(Thread):
     def analyze(self, file_path, question):
         self.queue.put(("analyze", str(file_path), question))
 
-    def archive(self, file_path):
-        self.queue.put(("archive", str(file_path)))
+    def archive(self, file_path, notes=""):
+        self.queue.put(("archive", str(file_path), str(notes)[:3000]))
 
     def refresh(self):
         self.queue.put(("refresh",))
@@ -114,7 +114,7 @@ class DesktopWorker(Thread):
                         self.signals.status.emit("Análise concluída • arquivo não guardado")
                     elif kind == "archive":
                         self.signals.status.emit("Guardando cópia com autorização...")
-                        item = LIBRARY.add(task[1])
+                        item = LIBRARY.add(task[1], task[2])
                         self.signals.library.emit(LIBRARY.entries())
                         self.signals.saved.emit(item["name"])
                         self.signals.status.emit("Documento guardado na biblioteca local")
@@ -166,6 +166,9 @@ class YunaDesktop(QMainWindow):
         self.setMinimumSize(830, 550)
         self.setStyleSheet(STYLE)
         self.pending_path = None
+        self.from_library = False
+        self.last_analysis_path = None
+        self.last_analysis = ""
         self.voice_index = 0
         self.voice_busy = False
         self.audio_file = None
@@ -313,7 +316,13 @@ class YunaDesktop(QMainWindow):
         self.attachment_notice.setStyleSheet("color:#cdbbf9;")
         self.attachment_notice.setWordWrap(True)
         self.attachment_notice.hide()
-        controls.addWidget(self.attachment_notice)
+        attachment_row = QHBoxLayout()
+        attachment_row.addWidget(self.attachment_notice, 1)
+        self.remove_attachment = QPushButton("✕ Remover anexo")
+        self.remove_attachment.setObjectName("ghost")
+        self.remove_attachment.hide()
+        attachment_row.addWidget(self.remove_attachment)
+        controls.addLayout(attachment_row)
 
         composer_row = QHBoxLayout()
         self.composer = Composer()
@@ -356,6 +365,7 @@ class YunaDesktop(QMainWindow):
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
+        self.remove_attachment.clicked.connect(self.clear_attachment)
         self.save_attachment.clicked.connect(self.archive_document)
         self.files_list.itemClicked.connect(self.use_library_document)
         self.voice_selector.currentIndexChanged.connect(self.voice_changed)
@@ -430,12 +440,17 @@ class YunaDesktop(QMainWindow):
         self.send_button.setEnabled(not value)
         self.composer.setEnabled(not value)
         self.open_attachment.setEnabled(not value)
-        self.save_attachment.setEnabled(not value and self.pending_path is not None)
+        self.save_attachment.setEnabled(
+            not value and self.pending_path is not None and not self.from_library
+        )
         if not value:
             self.composer.setFocus()
 
     def show_answer(self, answer, is_document):
         self.add_message("Yuna", answer, accent=is_document)
+        if is_document:
+            self.last_analysis_path = self.pending_path
+            self.last_analysis = answer
         self.set_busy(False)
         if is_document:
             self.say("Terminei de analisar o documento. O resultado está na tela.", private=True)
@@ -463,6 +478,15 @@ class YunaDesktop(QMainWindow):
             self.worker.submit(content)
 
 
+    def clear_attachment(self):
+        self.pending_path = None
+        self.from_library = False
+        self.attachment_notice.clear()
+        self.attachment_notice.hide()
+        self.remove_attachment.hide()
+        self.save_attachment.setEnabled(False)
+        self.status.setText("Anexo removido • pronto para conversar")
+
     def select_document(self):
         path, _ = QFileDialog.getOpenFileName(
             self, "Selecionar documento para a Yuna",
@@ -479,6 +503,8 @@ class YunaDesktop(QMainWindow):
             QMessageBox.warning(self, "Anexo não aceito", str(exc))
             return
         self.pending_path = path
+        self.from_library = False
+        self.remove_attachment.show()
         self.attachment_notice.setText(
             "📎  " + path.name + "   •   Analise com Enviar ou guarde uma cópia com autorização."
         )
@@ -490,16 +516,24 @@ class YunaDesktop(QMainWindow):
     def use_library_document(self, item):
         try:
             self.pending_path = LIBRARY.path_for(item.data(Qt.ItemDataRole.UserRole))
+            self.from_library = True
         except (ValueError, OSError, FileNotFoundError) as exc:
             self.show_error(str(exc))
             return
         self.attachment_notice.setText("📚  " + self.pending_path.name + " • da biblioteca pessoal")
         self.attachment_notice.show()
+        self.remove_attachment.show()
         self.save_attachment.setEnabled(False)
         self.composer.setFocus()
+        saved_notes = next(
+            (row.get("notes", "") for row in LIBRARY.entries()
+             if row.get("id") == item.data(Qt.ItemDataRole.UserRole)), ""
+        )
+        if saved_notes:
+            self.add_message("Yuna", "Anotação que guardei sobre esse arquivo:\n" + saved_notes)
 
     def archive_document(self):
-        if not self.pending_path:
+        if not self.pending_path or self.from_library:
             return
         answer = QMessageBox.question(
             self, "Guardar na biblioteca pessoal?",
@@ -512,8 +546,9 @@ class YunaDesktop(QMainWindow):
         )
         if answer != QMessageBox.StandardButton.Yes:
             return
+        notes = (self.last_analysis if self.last_analysis_path == self.pending_path else "")
         self.set_busy(True)
-        self.worker.archive(self.pending_path)
+        self.worker.archive(self.pending_path, notes)
 
     def saved_file(self, filename):
         self.set_busy(False)
