@@ -86,7 +86,10 @@ def extract_document(path):
     elif kind == ".pptx":
         from pptx import Presentation
         pres = Presentation(path)
-        for index, slide in enumerate(pres.slides[:MAX_SLIDES], 1):
+        for index, slide in enumerate(pres.slides, 1):
+            if index > MAX_SLIDES:
+                warnings.append("A apresentação tem muitos slides; só parte foi examinada.")
+                break
             snippets.append(f"Slide {index}:")
             for shape in slide.shapes:
                 if shape.has_text_frame and shape.text.strip():
