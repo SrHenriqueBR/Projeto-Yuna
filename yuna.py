@@ -15,7 +15,7 @@ from initiative import Initiative, looks_like_command
 from affect import AffectiveCore
 from self_model import Thinking, VERSION, about_text, is_self_question
 from vision import describe_screen
-from office_agent import file_intent, parse_request as parse_office_request, create_requested
+from office_agent import file_intent, parse_request as parse_office_request, create_requested, folded
 from web_actions import handle_web_command, public_question_to_query, wikipedia_lookup
 from file_diagnostics import runtime_report, create_test_file
 from agent_brain import plan_request, describe_plan, execute_plan
@@ -339,6 +339,19 @@ def action_intent(text):
 
 def handle_message(memory, text, computer=None, progress=None):
     requested = text.strip().casefold()
+    # Um pedido de revisão também pode ser feito em linguagem natural,
+    # sempre preparando PROPOSTA, jamais alterando código ou fazendo push.
+    natural = folded(text.strip())
+    natural = re.sub(r"^(?:ei )?yuna[, :]+", "", natural)
+    if re.fullmatch(
+        r"(?:analise|revise|examine|avalie) (?:seu|o seu|nosso|o nosso) "
+        r"codigo(?: no github)?(?: e (?:proponha|sugira) uma melhoria)?",
+        natural
+    ):
+        proposal = improvement_proposal("own_initiative.py", ask_model, ROOT / "data")
+        return ("Revisei um arquivo público do projeto e preparei uma sugestão "
+                "para você avaliar. Nada foi alterado no código nem no GitHub.\n"
+                + "Proposta: " + str(proposal))
     if requested == "/github":
         return github_overview()
     if requested.startswith("/github ler "):
@@ -628,7 +641,7 @@ def main():
                     print('Memória apagada.' if memory.forget(int(argument)) else 'Memória não encontrada.')
                 elif command == '/plano':
                     print('Yuna:', handle_message(memory, text, computer))
-                elif command == '/modelo':
+                elif command in ('/modelo', '/github', '/melhorar', '/openai', '/chatgpt'):
                     print('Yuna:', handle_message(memory, text, computer))
                 elif command == '/sobre':
                     print('Yuna:', about_text(memory, MODEL))
