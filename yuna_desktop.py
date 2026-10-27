@@ -475,6 +475,9 @@ class YunaDesktop(QMainWindow):
                     self.avatar_window.set_pose(
                         "happy", 3, "Visual atualizado! 🖤"
                     )
+            elif not is_document and self.avatar_window.isVisible():
+                # Mostra uma reação curta mesmo sem áudio habilitado.
+                self.avatar_window.set_pose("talk", seconds=2.5)
         if not is_document:
             self.last_avatar_request = None
         if is_document:
@@ -655,6 +658,8 @@ class YunaDesktop(QMainWindow):
         if not speech_text(text):
             return
         self.voice_busy = True
+        if self.avatar_window is not None and self.avatar_window.isVisible():
+            self.avatar_window.set_speaking(True)
 
         def speak():
             try:
@@ -683,6 +688,8 @@ class YunaDesktop(QMainWindow):
             self.player.setSource(QUrl())
             self.cleanup_audio()
             self.voice_busy = False
+            if self.avatar_window is not None:
+                self.avatar_window.set_speaking(False)
             self.status.setText("Pronta • conversa local")
 
     def playback_error(self, error, detail):
@@ -701,6 +708,8 @@ class YunaDesktop(QMainWindow):
 
     def voice_error(self, error):
         self.voice_busy = False
+        if self.avatar_window is not None:
+            self.avatar_window.set_speaking(False)
         if error:
             self.status.setText("Voz indisponível: " + error[:180])
         else:
