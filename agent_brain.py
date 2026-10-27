@@ -33,8 +33,9 @@ def plan_request(message, home=None):
     """Deterministic routing; returns None for ordinary chat and single tasks."""
     if not isinstance(message, str) or not message.strip():
         return None
-    if len(message) > 600:
-        raise ValueError("Pedido muito longo: máximo de 600 caracteres.")
+    # Não impor limite de caracteres à conversa.
+    # Só pedidos compostos explicitamente reconhecidos viram planos;
+    # os parâmetros operacionais (assunto/pasta/formato) são validados abaixo.
     value = folded(message.strip())
     value = re.sub(r"^(?:yuna|ei yuna)[, :]+", "", value)
     # Plano apenas quando a pessoa pede a pesquisa como ação principal.

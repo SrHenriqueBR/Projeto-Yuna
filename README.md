@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.17
+# Projeto Yuna · Base 0.17.1
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -601,3 +601,13 @@ Yuna, esqueça que eu prefiro respostas curtas.
 **Segurança:** perguntas hipotéticas, negações e comentários cotidianos não deveriam disparar pesquisa externa. Para IA online, a pessoa precisa citar explicitamente o nome do provedor e solicitar uma pergunta; não há encaminhamento de histórico, arquivos ou memórias. Respostas das APIs e memórias guardadas não são repassadas automaticamente à voz online. O sistema mantém limites claros: não há acesso irrestrito a sites, não lê pensamentos e não aprende sozinho alterando pesos do modelo.
 
 **Atualização:** feche a Yuna, faça backup de `data/`, copie todos os novos `.py`, incluindo **`natural_interaction.py` e `natural_memory.py`**, e preserve `data/` e `assets/`. Reabra o launcher `iniciar_yuna_mascote.bat` e confira **YUNA 0.17**. Não é preciso instalar bibliotecas adicionais se a versão 0.16 já funciona. Comece digitando `Yuna, como está o tempo em Uberlândia?` ou `Yuna, lembra que eu prefiro respostas curtas.`
+
+## Yuna 0.17.1 — conversas longas, sem limites artificiais de caracteres
+
+O usuário recebeu `Pedido muito longo: máximo de 600 caracteres` ao compartilhar uma explicação pessoal da personalidade desejada para a Yuna. O problema vinha do `agent_brain.plan_request`: ele rejeitava toda mensagem com mais de 600 caracteres **mesmo quando não era um plano**. Também existia bloqueio de 4.000 caracteres no terminal e 2.000 na entrada de texto da mascote.
+
+**Correções:** o planejador deixou de barrar conversas pelo comprimento; as restrições específicas de ferramentas (por exemplo nome do assunto de pesquisa, nome de arquivo, dado sensível e permissões) continuam valendo. No terminal, conversas longas seguem o mesmo fluxo das curtas. Na mascote, a caixa de conversa agora tem múltiplas linhas, rolagem e nenhuma limitação fixa de 2.000 caracteres. **Enter envia** e **Shift+Enter adiciona nova linha**. O histórico de conversa original é registrado no banco SQLite sem resumir o texto da pessoa ao salvar.
+
+**Limite físico do modelo:** nenhum modelo de linguagem processa entradas literalmente infinitas. O Ollama ainda utiliza uma janela de contexto configurada em **8.192 tokens**, que inclui instruções, memórias e a mensagem. Um texto muito extenso poderá ficar além dessa capacidade e ter partes antigas omitidas pelo modelo, ficar lento ou resultar em erro; aceitar a mensagem não garante que todos os detalhes sejam considerados. Mensagens de comprimento normal (inclusive parágrafos com mais de 600 caracteres) deixam de ser rejeitadas. Não foram alterados limites de segurança dos serviços externos, de criação de arquivos ou de memória sensível.
+
+**Atualização:** feche a Yuna, faça backup de `data/` e preserve `assets/`. Baixe a versão nova do GitHub e copie os arquivos atualizados `.py` da raiz, especialmente `agent_brain.py`, `yuna.py`, `yuna_overlay.py` e `self_model.py`, para a mesma pasta que executa a Yuna. Abra `iniciar_yuna_mascote.bat` ou `iniciar_yuna.bat` e confirme **YUNA 0.17.1**. Teste colando a mensagem longa anterior sem cortá-la.

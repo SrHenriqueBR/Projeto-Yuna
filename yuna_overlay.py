@@ -14,7 +14,7 @@ from PySide6.QtCore import QObject, QPoint, Qt, QUrl, QTimer, Signal
 from PySide6.QtGui import QPixmap, QFont, QTextCursor
 from PySide6.QtWidgets import (
     QApplication, QDialog, QFileDialog, QComboBox, QHBoxLayout, QLabel, QLineEdit,
-    QTextEdit, QPushButton, QVBoxLayout, QWidget
+    QTextEdit, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 )
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 
@@ -46,6 +46,19 @@ FILE_TASK = "create_file"
 SCREEN_TASK = object()
 SPONTANEOUS_TASK = object()
 SPONTANEOUS_SWITCH = "spontaneous_switch"
+
+
+class LongMessageInput(QPlainTextEdit):
+    """Campo de conversa sem corte artificial; Enter envia, Shift+Enter quebra linha."""
+    submitRequested = Signal()
+
+    def keyPressEvent(self, event):
+        if (event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+                and not (event.modifiers() & Qt.KeyboardModifier.ShiftModifier)):
+            self.submitRequested.emit()
+            event.accept()
+            return
+        super().keyPressEvent(event)
 
 
 class Messages(QObject):
@@ -519,13 +532,13 @@ class YunaOverlay(QWidget):
         self.show_expression("wave")
 
         bar = QHBoxLayout()
-        self.entry = QLineEdit()
-        self.entry.setPlaceholderText("Fala comigo, Kaizen...")
-        self.entry.setMaxLength(2000)
-        self.entry.returnPressed.connect(self.send)
+        self.entry = LongMessageInput()
+        self.entry.setPlaceholderText("Conversa comigo, Kaizen... (Shift+Enter: nova linha)")
+        self.entry.setFixedHeight(72)
+        self.entry.submitRequested.connect(self.send)
         self.entry.setStyleSheet(
-            "QLineEdit {background:#1c1730;color:#fff;border:1px solid #8462a8;"
-            "border-radius:12px;padding:11px;font-size:13px}"
+            "QPlainTextEdit {background:#1c1730;color:#fff;border:1px solid #8462a8;"
+            "border-radius:12px;padding:9px;font-size:13px}"
         )
         bar.addWidget(self.entry, 1)
         self.send_button = QPushButton("Enviar")
@@ -763,7 +776,7 @@ class YunaOverlay(QWidget):
             self.thinking or self.voice_busy or self.voice_confirm_pending
             or self.screen_confirm_pending or self.diary_pending
             or self.diary_typing_timer.isActive()
-            or bool(self.entry.text().strip())
+            or bool(self.entry.toPlainText().strip())
             or bool(self.diary_window and self.diary_window.isVisible())
             or not self.isVisible()
         )
@@ -777,7 +790,7 @@ class YunaOverlay(QWidget):
 
     def display_spontaneous(self, message):
         if (self.thinking or self.voice_busy or self.voice_confirm_pending
-                or self.screen_confirm_pending or self.entry.text().strip()):
+                or self.screen_confirm_pending or self.entry.toPlainText().strip()):
             return
         self.show_message(message)
         self.status.setText("Yuna tomou iniciativa · diga 'pode fazer' ou 'agora não'")
@@ -812,7 +825,7 @@ class YunaOverlay(QWidget):
             self.entry.setFocus()
 
     def send(self):
-        text = self.entry.text().strip()
+        text = self.entry.toPlainText().strip()
         if not text or self.thinking:
             return
         self.entry.clear()

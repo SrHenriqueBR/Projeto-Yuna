@@ -799,8 +799,6 @@ def main():
                     print('Yuna:', handle_message(memory, text, computer))
                 elif text.startswith('/'):
                     print('Comando desconhecido. Digite /ajuda.')
-                elif len(text) > 4000:
-                    print('Envie até 4000 caracteres por mensagem.')
                 else:
                     print('Yuna está pensando…')
                     # Um estado conversacional muda apenas por interação explícita.
