@@ -1,5 +1,6 @@
 """Yuna 0.19: avatar 2D leve, personalização local e limites de intenção."""
 import ast
+import importlib.util
 import tempfile
 from pathlib import Path
 import unittest
@@ -107,6 +108,7 @@ class AvatarStateTests(unittest.TestCase):
         self.assertIn("self.avatar_window.reload_appearance()", gui)
         self.assertIn("parse_avatar_request(content)", gui)
 
+    @unittest.skipUnless(importlib.util.find_spec('PySide6'), 'PySide6 optional')
     def test_gui_offscreen_actual_avatar_widget(self):
         from PySide6.QtWidgets import QApplication
         from yuna_avatar import YunaAvatar
