@@ -10,6 +10,7 @@ import urllib.error
 import urllib.request
 from urllib.parse import urlencode, quote
 from office_agent import folded
+from natural_interaction import classify_public_request
 
 USER_AGENT = "Projeto-Yuna/0.16 (cliente educacional pessoal)"
 MAX_RESPONSE = 90_000
@@ -174,7 +175,7 @@ def ai_providers_status():
     for name, env in AI_KEYS.items():
         status = "chave configurada" if os.environ.get(env, "").strip() else "sem chave"
         lines.append(f"- {name}: {status}; modelo fixo {AI_MODELS[name]}")
-    lines.append("Use: /ia gemini ASSUNTO, /ia groq ASSUNTO, /ia openrouter ASSUNTO.")
+    lines.append("Basta dizer: 'Yuna, pergunte ao Gemini o que é Python'.")
     lines.append("Cotas gratuitas e cobrança dependem do plano de cada provedor.")
     return "\n".join(lines)
 
@@ -237,15 +238,17 @@ def ask_external_ai(provider, question):
 
 def hub_help():
     return (
-        "Central de APIs Yuna 0.16:\n"
-        "/clima CIDADE — Open-Meteo, sem chave\n"
-        "/livros TEMA — Open Library, sem chave\n"
-        "/cep 12345678 — BrasilAPI, envia CEP externamente\n"
-        "/ias — mostra chaves opcionais configuradas (nunca as exibe)\n"
-        "/ia gemini PERGUNTA — Gemini, chave GEMINI_API_KEY\n"
-        "/ia groq PERGUNTA — Groq, chave GROQ_API_KEY\n"
-        "/ia openrouter PERGUNTA — OpenRouter, chave OPENROUTER_API_KEY\n"
-        "Consultas só ocorrem por pedidos explícitos e não trocam o modelo principal Ollama."
+        "Eu consigo pesquisar sem você decorar comandos, Kaizen! 🖤\n\n"
+        "Experimente conversar assim:\n"
+        "• Yuna, como está o tempo em Uberlândia?\n"
+        "• Procure livros sobre inteligência artificial.\n"
+        "• Consulte o CEP 01310930.\n"
+        "• Pergunte ao Gemini o que é programação funcional.\n"
+        "• Pergunte ao Groq como organizar código Python.\n"
+        "• Pergunte ao OpenRouter o que são redes neurais.\n\n"
+        "Clima, livros e CEP usam serviços públicos. "
+        "Gemini, Groq e OpenRouter são opcionais e exigem chaves próprias. "
+        "Não consulto modelos online sem seu pedido nem envio minhas memórias."
     )
 
 
@@ -266,7 +269,18 @@ def handle_hub(message):
     match = re.fullmatch(r"/ia\s+(gemini|groq|openrouter)\s+(.+)", message, flags=re.I | re.S)
     if match:
         return ask_external_ai(match[1].lower(), match[2])
-    # Natural sem risco de confundir com textos hipotéticos.
+    intent = classify_public_request(message)
+    if intent is not None:
+        if intent.operation == "weather":
+            return weather(intent.argument)
+        if intent.operation == "books":
+            return books(intent.argument)
+        if intent.operation == "cep":
+            return cep_lookup(intent.argument)
+        if intent.operation == "external_ai":
+            return ask_external_ai(intent.provider, intent.argument)
+
+    # Compatibilidade com pedidos antigos, sem exigir comandos visíveis.
     natural = re.sub(r"^(?:ei|oi|ola|opa)\s+", "", low)
     natural = re.sub(r"^yuna[, ]+", "", natural)
     w = re.fullmatch(r"(?:qual (?:e|esta) o )?clima (?:em|de|para) ([a-z0-9À-ÿ ,.-]{2,75})\??", natural)
