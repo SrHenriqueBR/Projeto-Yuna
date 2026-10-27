@@ -78,7 +78,8 @@ class YunaAvatar(QWidget):
 
     def set_pose(self, pose, seconds=4, phrase=""):
         if pose not in ("idle", "walk", "sit", "angry", "happy", "talk",
-                        "wave", "pose", "surprised"):
+                        "wave", "pose", "surprised",
+                        "wink", "laugh", "shy", "sleepy"):
             return
         self.pose = pose
         self.pose_until = time.monotonic() + max(0, float(seconds))
@@ -96,8 +97,11 @@ class YunaAvatar(QWidget):
         self.update()
 
     def visible_pose(self):
-        if time.monotonic() < self.pose_until and self.pose == "angry":
-            return "angry"
+        # Expressões solicitadas prevalecem sobre o TTS por poucos segundos.
+        # A fala permanece sincronizada pelo flag 'speaking' no frame_at.
+        if (time.monotonic() < self.pose_until
+                and self.pose in ("angry", "wink", "laugh", "shy", "sleepy")):
+            return self.pose
         if self.speaking:
             return "talk"
         if time.monotonic() < self.pose_until:
@@ -132,7 +136,7 @@ class YunaAvatar(QWidget):
         self.update()
 
     def enterEvent(self, event):
-        if self.drag_start is None:
+        if self.drag_start is None and self.visible_pose() in ("idle", "walk", "sit"):
             self.set_pose("idle", seconds=1.1, phrase="Opa, Kaizen!")
         super().enterEvent(event)
 
@@ -177,6 +181,11 @@ class YunaAvatar(QWidget):
         stand = menu.addAction("Levantar")
         wave_action = menu.addAction("Acenar 👋")
         pose_action = menu.addAction("Fazer pose ✨")
+        wink_action = menu.addAction("Dar piscadinha 😉")
+        laugh_action = menu.addAction("Dar risada")
+        shy_action = menu.addAction("Ficar tímida")
+        sleep_action = menu.addAction("Tirar soneca")
+        wake_action = menu.addAction("Acordar")
         pause = menu.addAction("Pausar caminhada" if self.appearance["walking"]
                                else "Permitir caminhada")
         menu.addSeparator()
@@ -225,6 +234,16 @@ class YunaAvatar(QWidget):
             self.set_pose("wave", seconds=5, phrase="Oieee! 👋")
         elif chosen == pose_action:
             self.set_pose("pose", seconds=5, phrase="Ta-dã! ✨")
+        elif chosen == wink_action:
+            self.set_pose("wink", seconds=4, phrase="Hihi! 😉")
+        elif chosen == laugh_action:
+            self.set_pose("laugh", seconds=5, phrase="Hahaha! 🖤")
+        elif chosen == shy_action:
+            self.set_pose("shy", seconds=7, phrase="E-ei! ✨")
+        elif chosen == sleep_action:
+            self.set_pose("sleepy", seconds=20, phrase="Zzz...")
+        elif chosen == wake_action:
+            self.set_pose("idle", seconds=4, phrase="Acordei! 🖤")
         elif chosen == pause:
             from avatar_state import save_style
             self.appearance["walking"] = not self.appearance["walking"]
@@ -272,7 +291,7 @@ class YunaAvatar(QWidget):
         painter.translate(0, sway)
         painter.rotate(motion.tilt)
 
-        sitting = pose == "sit"
+        sitting = pose in ("sit", "sleepy")
         vertical = 30 if sitting else 0
 
         # Cabelo atrás da cabeça: cortes realmente diferentes, não só cores.
@@ -442,7 +461,7 @@ class YunaAvatar(QWidget):
             painter.drawEllipse(QRectF(-5, 59 + vertical, 10, 10))
 
         # Pálpebras piscam; pupilas acompanham o cursor quando ele se aproxima.
-        if motion.blink > .9:
+        if motion.blink > .9 or pose in ("sleepy", "laugh"):
             painter.setPen(QPen(shadow, 3.4, Qt.PenStyle.SolidLine,
                                 Qt.PenCapStyle.RoundCap))
             painter.drawArc(QRectF(-35, 119 + vertical, 25, 12),
@@ -470,6 +489,15 @@ class YunaAvatar(QWidget):
                              QPointF(-31, 117 + vertical))
             painter.drawLine(QPointF(31, 117 + vertical),
                              QPointF(36, 121 + vertical))
+            if pose == "wink":
+                # Fecha apenas o olho esquerdo, preservando o direito aberto.
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.setBrush(skin)
+                painter.drawEllipse(QRectF(-37, 115 + vertical, 29, 30))
+                painter.setPen(QPen(shadow, 3.4, Qt.PenStyle.SolidLine,
+                                    Qt.PenCapStyle.RoundCap))
+                painter.drawArc(QRectF(-35, 119 + vertical, 25, 12),
+                                0, 180 * 16)
         painter.setPen(QPen(shadow, 3, Qt.PenStyle.SolidLine,
                             Qt.PenCapStyle.RoundCap))
         if pose == "angry":
@@ -493,7 +521,8 @@ class YunaAvatar(QWidget):
 
         # Bochechas e boca expressiva, sem atribuir sentimentos reais à IA.
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(233, 130, 153, 95))
+        painter.setBrush(QColor(233, 130, 153,
+                                190 if pose == "shy" else 95))
         painter.drawEllipse(QRectF(-43, 139 + vertical, 15, 6))
         painter.drawEllipse(QRectF(28, 139 + vertical, 15, 6))
         painter.setPen(QPen(QColor("#6e3c5c"), 2))
@@ -506,13 +535,26 @@ class YunaAvatar(QWidget):
         elif pose == "surprised":
             painter.setBrush(QColor("#9b5774"))
             painter.drawEllipse(QRectF(-6, 148 + vertical, 12, 14))
-        elif pose in ("happy", "wave", "pose"):
+        elif pose == "laugh":
+            painter.setBrush(QColor("#a45b7e"))
+            painter.drawEllipse(QRectF(-10, 146 + vertical, 20, 15))
+        elif pose in ("happy", "wave", "pose", "wink", "shy"):
             painter.drawArc(QRectF(-9, 146 + vertical, 18, 13),
                             180 * 16, 180 * 16)
         else:
             painter.drawArc(QRectF(-8, 147 + vertical, 16, 9),
                             190 * 16, 155 * 16)
         painter.restore()
+
+        # Efeitos vetoriais leves: sem imagens, captura da tela ou animação 3D.
+        if pose == "sleepy":
+            painter.setPen(QColor("#b89ae6"))
+            painter.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
+            painter.drawText(QRectF(143, 70, 44, 28), "Zzz")
+        elif pose == "wink":
+            painter.setPen(QColor("#f2c8fa"))
+            painter.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
+            painter.drawText(QRectF(141, 120, 35, 31), "✦")
 
         # Balão opcional; o avatar não lê arquivos, microfone ou janela de terceiros.
         if self.bubble and now < self.bubble_until:
