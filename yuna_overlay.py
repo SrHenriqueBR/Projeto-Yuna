@@ -170,6 +170,10 @@ class DialogueThread(Thread):
                     # Também não transmitir caminhos completos à voz online.
                     if message.strip().casefold() in ("/versao", "/diagnostico"):
                         pass
+                    elif message.strip().casefold().startswith(("/github", "/melhorar", "/openai")):
+                        # Código e resultados de integrações ficam só na interface;
+                        # não repassar conteúdos e caminhos ao serviço online de voz.
+                        self.output.speech.emit("Concluí sua consulta. Confira a resposta no balão.")
                     elif answer.startswith("✅ Plano concluído"):
                         self.output.speech.emit("Concluí seu plano e verifiquei o arquivo. Confira o resultado na janela.")
                     elif file_intent(message):
