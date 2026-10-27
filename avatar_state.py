@@ -14,7 +14,14 @@ HAIR = {"preto": "#181428", "branco": "#eae5f6",
 EYES = {"vermelhos": "#d9566b", "azuis": "#5eb0e8",
         "dourados": "#e9b75e", "roxos": "#ab85df"}
 OUTFITS = {"escura": "#40304f", "clara": "#b39acd"}
+HAIR_STYLES = {"longo": "Cabelo longo", "curto": "Cabelo curto",
+               "marias": "Maria-chiquinhas", "rabo": "Rabo de cavalo"}
+COSTUMES = {"vestido": "Vestido gótico", "casual": "Roupa casual",
+            "casaco": "Casaco de inverno"}
+ACCESSORIES = {"laco": "Laço", "tiara": "Tiara", "oculos": "Óculos",
+               "nenhum": "Sem acessório"}
 DEFAULTS = {"hair": "preto", "eyes": "vermelhos", "outfit": "escura",
+            "hair_style": "longo", "costume": "vestido", "accessory": "laco",
             "walking": True}
 
 
@@ -27,7 +34,9 @@ def validated(data):
     if not isinstance(data, dict):
         return dict(DEFAULTS)
     result = dict(DEFAULTS)
-    for key, choices in (("hair", HAIR), ("eyes", EYES), ("outfit", OUTFITS)):
+    for key, choices in (("hair", HAIR), ("eyes", EYES), ("outfit", OUTFITS),
+                         ("hair_style", HAIR_STYLES), ("costume", COSTUMES),
+                         ("accessory", ACCESSORIES)):
         choice = data.get(key)
         if isinstance(choice, str) and choice in choices:
             result[key] = choice
@@ -80,9 +89,54 @@ def parse_avatar_request(message):
         "pode andar pela tela": "walk", "comeca a andar": "walk",
         "pare de andar": "stop", "para de andar": "stop",
         "fique parada": "stop",
+        "acena": "wave", "acene": "wave", "da tchau": "wave",
+        "de tchau": "wave", "acena para mim": "wave",
+        "acena pra mim": "wave", "me da tchau": "wave",
+        "faz pose": "pose", "faca pose": "pose",
+        "faz uma pose": "pose", "faca uma pose": "pose",
+        "fica surpresa": "surprised", "fique surpresa": "surprised",
     }
     if value in movement:
         return ("pose", movement[value])
+
+    # Mudanças explícitas de estilo: não confundir cor do cabelo com corte.
+    if re.fullmatch(r"(?:faz|faca|coloca|coloque) (?:duas )?"
+                    r"(?:maria-chiquinhas|maria chiquinhas|marias chiquinhas)",
+                    value):
+        return ("appearance", "hair_style", "marias")
+    if re.fullmatch(r"(?:prende|prenda|muda|mude|coloca|coloque|deixa|deixe) "
+                    r"(?:o |seu )?cabelo (?:em |num |no |pra |para )?"
+                    r"(?:um )?rabo de cavalo", value):
+        return ("appearance", "hair_style", "rabo")
+    cut = re.fullmatch(
+        r"(?:muda|mude|deixa|deixe|corta|corte|troca|troque) "
+        r"(?:o |seu )?cabelo (?:para |pra |bem |mais )?"
+        r"(curto|longo)", value)
+    if cut:
+        return ("appearance", "hair_style", cut[1])
+    garment = re.fullmatch(
+        r"(?:usa|use|veste|vista|coloca|coloque|troca|troque|muda|mude) "
+        r"(?:a |uma |o |um |sua |seu |roupa para |roupa pra )?"
+        r"(vestido(?: gotico)?|casaco(?: de inverno)?|roupa casual|"
+        r"visual casual|jaqueta)", value)
+    if garment:
+        item = garment[1]
+        style = ("casaco" if "casaco" in item or item == "jaqueta" else
+                 "casual" if "casual" in item else "vestido")
+        return ("appearance", "costume", style)
+    add = re.fullmatch(
+        r"(?:coloca|coloque|usa|use|bota|ponha|poe) "
+        r"(?:um |uma |o |a )?(laco|tiara|oculos)", value
+    )
+    if add:
+        return ("appearance", "accessory", add[1])
+    remove = re.fullmatch(
+        r"(?:tira|tire|remove|remova) "
+        r"(?:o |a |os |as )?(?:laco|tiara|oculos|acessorio|acessorios)", value
+    )
+    if remove:
+        return ("appearance", "accessory", "nenhum")
+
     match = re.fullmatch(
         r"(?:muda|mude|troca|troque|deixa|deixe|coloca|coloque|"
         r"pinta|pinte)\s+(?:seu|o seu|os seus|sua|a sua|as suas|o|a|os|as)?\s*"
@@ -127,6 +181,14 @@ def apply_avatar_request(root, request):
         _, name, chosen = request
         style[name] = chosen
         save_style(root, style)
+        if name == "hair_style":
+            return f"Prontinho! Meu cabelo agora está no estilo {HAIR_STYLES[chosen].lower()}. 🖤"
+        if name == "costume":
+            return f"Troquei de roupa! Agora estou com {COSTUMES[chosen].lower()}. 🖤"
+        if name == "accessory":
+            return ("Tirei o acessório do cabelo e do rosto. 🖤"
+                    if chosen == "nenhum" else
+                    f"Coloquei {ACCESSORIES[chosen].lower()} no meu visual. 🖤")
         thing = {"hair": "cabelo", "eyes": "olhos", "outfit": "roupa"}[name]
         return f"Feito, Kaizen! Mudei meu {thing} para {chosen}. 🖤"
     action = request[1]
@@ -140,4 +202,7 @@ def apply_avatar_request(root, request):
         "stand": "Levantei! Estou pronta para conversar.",
         "angry": "Grrr! Ativei minha expressão brava. 😤",
         "happy": "Hehe! Ativei minha expressão feliz! 🖤",
+        "wave": "Oieee! Estou acenando para você! 👋",
+        "pose": "Ta-dã! Fiz uma pose de anime! ✨",
+        "surprised": "Uau! Ativei minha expressão de surpresa! ✨",
     }[action]

@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.20
+# Projeto Yuna · Base 0.21
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -713,3 +713,22 @@ Os comandos são reconhecidos apenas em pedidos explícitos, não em perguntas h
 **Como atualizar:** feche a Yuna, copie sua pasta `data/` para backup e preserve `assets/`. Baixe o ZIP do repositório atualizado, copie os novos arquivos `.py` da raiz (principalmente `avatar_motion.py`, `yuna_avatar.py`, `yuna_desktop.py` e `self_model.py`) para sua instalação e execute `iniciar_yuna.bat`. No chat, clique **Mostrar Yuna viva**, ative ou não a voz e observe as novas expressões. Verifique **Yuna 0.20** na janela.
 
 **Próximos aprimoramentos possíveis:** refinar o visual com sprites de autoria própria em camadas, novas roupas/acessórios, animações de braços e pernas mais detalhadas e, posteriormente, rigging 3D. Esse passo é uma melhoria 2D funcional, não uma personagem 3D pronta.
+
+## Yuna 0.21 — etapa 3: estilos, acessórios e gestos do avatar
+
+Essa etapa mantém o cérebro local e a janela profissional e melhora **o avatar chibi vetorial 2D** existente. Agora as opções de aparência são geometria realmente distinta no desenho, não somente mudanças de cor:
+
+- **Cabelos:** longo, curto, duas maria-chiquinhas, rabo de cavalo; cada modelo balança conforme a animação.
+- **Roupas:** vestido gótico, traje casual (camiseta e bermuda), casaco de inverno com lapelas e botões; as cores escura ou clara permanecem independentes.
+- **Acessórios:** laço, tiara, óculos ou nenhum. A escolha anterior fica guardada.
+- **Gestos:** acenar com a mão, fazer pose e expressão surpresa. Os gestos são temporários, e não estados emocionais reais.
+
+**Fale naturalmente:** “Yuna, deixa o cabelo curto”, “Yuna, faz duas maria-chiquinhas”, “Yuna, prende o cabelo em um rabo de cavalo”, “Yuna, coloca uma tiara”, “Yuna, usa óculos”, “Yuna, tira os óculos”, “Yuna, coloca um casaco”, “Yuna, coloca a roupa casual”, “Yuna, acena pra mim” ou “Yuna, faz uma pose”. Perguntas hipotéticas e negações não aplicam alterações.
+
+**Menu do avatar:** clique com o botão direito sobre o bonequinho para acessar submenus de estilo de cabelo, tipo de roupa, acessórios e os gestos de acenar ou fazer pose. A posição do personagem, as vozes e a biblioteca documental continuam funcionando como antes.
+
+**Compatibilidade e segurança:** as preferências novas aparecem em `data/avatar_yuna.json`, e um arquivo antigo da Yuna 0.19/0.20 recebe valores padrão para os novos campos, preservando as cores e o caminhar já configurados. Não há instalação de Godot, chamada de API, leitura de aplicativos/arquivos ou execução de comandos a partir dos gestos.
+
+**Atualizar:** feche a Yuna, faça backup das pastas `data/` e `assets/`, baixe o ZIP atualizado do repositório, copie todos os arquivos Python atualizados e abra `iniciar_yuna.bat`. No menu profissional, clique em **Mostrar Yuna viva**. A versão deverá indicar **0.21**. Se ocorrer uma falha no Windows, compartilhe a mensagem ou o log local gerado pelo launcher, sem expor senhas.
+
+Essa ainda é uma personagem desenhada com Qt: não é um modelo 3D pronto nem arte anime final. A etapa futura poderá substituir o desenho por sprites em camadas sem recriar a memória do projeto.

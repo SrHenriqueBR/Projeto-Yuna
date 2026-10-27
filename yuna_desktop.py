@@ -466,10 +466,13 @@ class YunaDesktop(QMainWindow):
             if request is not None:
                 if request[0] == "pose":
                     pose = request[1]
-                    if pose in ("sit", "stand", "angry", "happy", "walk", "stop"):
+                    if pose in ("sit", "stand", "angry", "happy", "walk", "stop",
+                                "wave", "pose", "surprised"):
                         chosen_pose = {"stand": "idle", "stop": "idle"}.get(pose, pose)
                         self.avatar_window.set_pose(
-                            chosen_pose, 20 if pose == "sit" else 4
+                            chosen_pose, 20 if pose == "sit" else 5,
+                            "Oieee! 👋" if pose == "wave" else
+                            "Ta-dã! ✨" if pose == "pose" else ""
                         )
                 else:
                     self.avatar_window.set_pose(
