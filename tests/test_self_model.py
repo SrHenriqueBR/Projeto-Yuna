@@ -31,7 +31,7 @@ class SelfModelTests(unittest.TestCase):
     def test_about_is_verified_without_model_or_actions(self):
         with patch("yuna.ask_model", side_effect=AssertionError("Não deve usar modelo")):
             result = yuna.handle_message(self.memory, "como esta seu codigo", Mock())
-        self.assertIn("Yuna 0.18", result)
+        self.assertIn("Yuna 0.19", result)
         self.assertIn("Ollama", result)
         self.assertIn("não", result.lower())
         self.assertIn("memória", result.lower())
