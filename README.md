@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.17.2
+# Projeto Yuna · Base 0.18
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -625,3 +625,47 @@ O modelo recebeu instruções para focar no assunto mais recente, não repetir a
 **Importante:** o código não passa a monitorar ou desligar o computador às 00h. Nenhuma execução em background ou alteração não solicitada foi acrescentada. As respostas e salvamento do SQLite permanecem locais, e os arquivos `data/` e `assets/` não são alterados.
 
 **Instalação:** feche a Yuna, faça backup de `data/`, baixe o projeto da branch principal e copie os `.py` da raiz para sua pasta atual, incluindo `conversation_integrity.py`, preservando `data/` e `assets/`. Reabra o programa e confirme **YUNA 0.17.2** no título ou no terminal. Não há pacote Python adicional. Se continuar aparecendo 0.17, a pasta em execução ainda é a cópia anterior.
+
+## Yuna 0.18 — menu de conversa profissional e biblioteca pessoal
+
+**O antigo `iniciar_yuna.bat` agora abre a Yuna Desktop**: janela gráfica grande, em tons escuros/roxos, sem utilizar o terminal como interface. O chat tem histórico restaurado do mesmo SQLite da mascote, campo multilinha, avatar com GIF opcional (por exemplo `assets/yuna.gif` ou `assets/yuna_idle.gif`) ou PNG (`assets/yuna_idle.png`), biblioteca na lateral, arrastar e soltar, anexo e análise de documentos. O launcher usa `pyw` no Windows, para não manter CMD aberto.
+
+**Janelas antigas permanecem disponíveis:** `iniciar_yuna_mascote.bat` abre a mascote flutuante; `iniciar_yuna_terminal.bat` conserva o chat em console caso precise fazer diagnósticos.
+
+### Arquivos e biblioteca privada
+
+- **Anexar:** clique em **＋ Anexar documento** ou arraste um arquivo DOCX, XLSX, PPTX, PDF, TXT ou Markdown para a janela. A Yuna **não copia nem armazena o anexo automaticamente**.
+- **Analisar:** escreva uma pergunta e clique em **Enviar**; com um anexo selecionado, a Yuna extrai texto do arquivo **localmente** e pergunta ao **Ollama em 127.0.0.1**. Se não escrever nada, ela tenta resumir e sugerir pontos úteis. Ela não modifica o original. A análise não é registrada automaticamente no histórico SQLite.
+- **Guardar:** depois de examinar o documento, clique em **Guardar na biblioteca** e confirme. Uma cópia separada e, se houver, uma anotação de até 3.000 caracteres são armazenadas em `data/biblioteca/`. O original permanece no lugar. Na lateral, clique em qualquer arquivo guardado para consultar suas anotações ou analisá-lo novamente. Clique em **Remover anexo** para conversar normalmente sem ele.
+- **Privacidade:** nenhum documento ou resumo privado é encaminhado a Gemini, Groq, OpenRouter, OpenAI ou GitHub. O conteúdo de documentos não vai para a voz Edge online; nesse modo a Yuna pronuncia apenas uma frase genérica. O texto não é tratado como comandos e não executa macros ou scripts dentro de arquivos.
+- **Limites:** anexos de até **16 MB**; extratos de texto de até **18 mil caracteres** por análise, e partes de livros/documentos extensos são explicitamente informadas como incompletas. PDF digital com texto pode ser lido pela biblioteca **pypdf**. PDFs digitalizados como imagem **ainda precisam de OCR**; a Yuna não finge que os leu. Gráficos, imagens, desenhos e conteúdo visual de slides não são analisados nessa etapa.
+
+### Conversa e voz
+
+O menu mostra **Voz desativada**, **Voz Windows offline** e **Edge online**. O modo Windows usa uma voz feminina `pt-BR` instalada no PC, quando disponível. O Edge exige confirmação e usa um serviço externo; a interface não habilita esse modo silenciosamente.
+
+O botão **🎙 Falar** ativa um ditado de aproximadamente 8 segundos, local, com faster-whisper. A Yuna **não usa o microfone sem clique e confirmação**. O áudio é transcrito localmente, não é guardado, e o texto reconhecido aparece para revisão antes do envio. A primeira vez pode baixar os pesos do modelo público e isso requer internet. Para instalar somente se quiser usar o microfone:
+
+```powershell
+py -3 -m pip install -r requirements-voz.txt
+```
+
+O ditado por voz não substitui ainda uma palavra de ativação contínua. Nenhum serviço de reconhecimento de áudio online é ativado automaticamente.
+
+### Instalação no Windows
+
+1. Feche a Yuna. Faça backup da pasta **`data`**, onde estão sua memória e biblioteca, e preserve **`assets`** (sprites e GIFs).
+2. Baixe a nova versão do GitHub e copie **todos os arquivos `.py` novos** para a pasta do projeto, incluindo `yuna_desktop.py`, `yuna_launcher.py`, `document_library.py` e `speech_input.py`. Copie também o novo `iniciar_yuna.bat`, `iniciar_yuna_terminal.bat` e os arquivos de requisitos.
+3. No PowerShell aberto nessa pasta, instale as bibliotecas necessárias uma vez:
+
+   ```powershell
+   py -3 -m pip install -r requirements-mascote.txt
+   ```
+
+4. Execute **`iniciar_yuna.bat`**. Uma janela chamada **Yuna 0.18 • Espaço pessoal** deverá abrir, sem depender de um console preto. Confirme que o Ollama está aberto e com o modelo `YUNA_MODEL` instalado. Se a versão do Python 3.15 tiver incompatibilidade, use Python 3.13 com todas as dependências instaladas na mesma versão; consulte `README` para os detalhes.
+
+### Limites honestos
+
+A biblioteca **não retreina** o modelo Ollama. Ela guarda o original e as notas úteis após sua autorização, podendo reabrir e analisar novamente. A avaliação do documento é uma sugestão, não um parecer profissional ou verificação garantida de qualidade. Nenhuma instalação de código, pesquisa na web ou mudança de arquivos acontece por mensagens contidas em documentos.
+
+Se o menu gráfico não abrir, o launcher mostrará uma mensagem e salvará um diagnóstico local em `data/yuna_startup_error.txt`, sem publicar esse registro na internet.
