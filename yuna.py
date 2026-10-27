@@ -74,7 +74,25 @@ A conversa, sozinha, não executa essas ações. Só relate uma execução se ho
 Admita o que não sabe. Não prometa controlar qualquer programa ou aprender sozinha pela web.
 """
 
-HELP = '''Converse comigo normalmente; não precisa digitar códigos!
+HELP = """Converse comigo normalmente, Kaizen! Não precisa digitar códigos. 🖤
+
+Eu entendo pedidos como:
+• Yuna, como está o tempo em Uberlândia?
+• Procure livros sobre Python.
+• Consulte o CEP 01310930.
+• Lembre que eu prefiro explicações mais simples.
+• O que você lembra de mim?
+• Pergunte ao Gemini o que é programação.
+• Pesquise sobre astronomia e crie um Word nos Documentos.
+• Yuna, revise seu código e proponha uma melhoria.
+
+Eu escolho apenas ferramentas disponíveis para o pedido atual.
+Guardo preferências simples e informações que você pedir para lembrar.
+Não envio automaticamente suas memórias a serviços externos.
+Comandos técnicos continuam disponíveis para diagnóstico, mas são opcionais.
+"""
+
+TECH_HELP = '''Converse comigo normalmente; não precisa digitar códigos!
 Exemplos: "Yuna, como está o tempo em Uberlândia?",
 "Procure livros sobre Python", "Lembre que eu prefiro respostas curtas",
 "O que você lembra de mim?", "Pergunte ao Gemini como funciona um algoritmo".
@@ -364,6 +382,10 @@ def action_intent(text):
 
 def handle_message(memory, text, computer=None, progress=None):
     requested = text.strip().casefold()
+    if requested in ("/ajuda", "/help"):
+        return HELP
+    if requested == "/comandos":
+        return TECH_HELP
     # Uma lembrança só pode nascer da fala atual do usuário, nunca do modelo,
     # de pesquisas web, dos resultados do GitHub ou de prompts recuperados.
     memo = parse_memory_intent(text)
@@ -668,6 +690,8 @@ def main():
                     break
                 if command == '/ajuda':
                     print(HELP)
+                elif command == '/comandos':
+                    print(TECH_HELP)
                 elif command == '/lembrar':
                     memory.remember(argument)
                     print('Yuna: Memória guardada.')
