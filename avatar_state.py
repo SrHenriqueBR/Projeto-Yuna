@@ -20,9 +20,10 @@ COSTUMES = {"vestido": "Vestido gótico", "casual": "Roupa casual",
             "casaco": "Casaco de inverno"}
 ACCESSORIES = {"laco": "Laço", "tiara": "Tiara", "oculos": "Óculos",
                "nenhum": "Sem acessório"}
+SIZES = {"pequena": 0.75, "normal": 1.0, "grande": 1.30}
 DEFAULTS = {"hair": "preto", "eyes": "vermelhos", "outfit": "escura",
             "hair_style": "longo", "costume": "vestido", "accessory": "laco",
-            "walking": True}
+            "size": "normal", "walking": True}
 
 
 def simplified(value):
@@ -36,7 +37,7 @@ def validated(data):
     result = dict(DEFAULTS)
     for key, choices in (("hair", HAIR), ("eyes", EYES), ("outfit", OUTFITS),
                          ("hair_style", HAIR_STYLES), ("costume", COSTUMES),
-                         ("accessory", ACCESSORIES)):
+                         ("accessory", ACCESSORIES), ("size", SIZES)):
         choice = data.get(key)
         if isinstance(choice, str) and choice in choices:
             result[key] = choice
@@ -98,6 +99,20 @@ def parse_avatar_request(message):
     }
     if value in movement:
         return ("pose", movement[value])
+
+    # Tamanho do avatar: opções explícitas, sem confundir com a janela de chat.
+    if re.fullmatch(
+            r"(?:fica|fique|deixa|deixe|torna|torne) (?:voce |vc |o avatar )?"
+            r"(pequena|pequeno|normal|grande)", value):
+        chosen = value.rsplit(" ", 1)[1]
+        return ("appearance", "size", {"pequeno": "pequena"}.get(chosen, chosen))
+    size = re.fullmatch(
+        r"(?:muda|mude|ajusta|ajuste|troca|troque|coloca|coloque|deixa|deixe) "
+        r"(?:o |seu )?(?:tamanho|avatar) (?:para|pra|em) "
+        r"(pequeno|pequena|normal|grande)", value
+    )
+    if size:
+        return ("appearance", "size", {"pequeno": "pequena"}.get(size[1], size[1]))
 
     # Mudanças explícitas de estilo: não confundir cor do cabelo com corte.
     if re.fullmatch(r"(?:faz|faca|coloca|coloque) (?:duas )?"
@@ -181,6 +196,12 @@ def apply_avatar_request(root, request):
         _, name, chosen = request
         style[name] = chosen
         save_style(root, style)
+        if name == "size":
+            return {
+                "pequena": "Prontinho! Agora fiquei menorzinha. 🖤",
+                "normal": "Voltei para meu tamanho normal. 🖤",
+                "grande": "Pronto, Kaizen! Agora estou maior na tela. 🖤",
+            }[chosen]
         if name == "hair_style":
             return f"Prontinho! Meu cabelo agora está no estilo {HAIR_STYLES[chosen].lower()}. 🖤"
         if name == "costume":
