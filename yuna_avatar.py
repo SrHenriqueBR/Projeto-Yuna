@@ -550,11 +550,11 @@ class YunaAvatar(QWidget):
         if pose == "sleepy":
             painter.setPen(QColor("#b89ae6"))
             painter.setFont(QFont("Segoe UI", 11, QFont.Weight.Bold))
-            painter.drawText(QRectF(143, 70, 44, 28), "Zzz")
+            painter.drawText(QRectF(143, 70, 44, 28), Qt.AlignmentFlag.AlignCenter, "Zzz")
         elif pose == "wink":
             painter.setPen(QColor("#f2c8fa"))
             painter.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
-            painter.drawText(QRectF(141, 120, 35, 31), "✦")
+            painter.drawText(QRectF(141, 120, 35, 31), Qt.AlignmentFlag.AlignCenter, "✦")
 
         # Balão opcional; o avatar não lê arquivos, microfone ou janela de terceiros.
         if self.bubble and now < self.bubble_until:
