@@ -11,7 +11,7 @@ from PySide6.QtGui import QColor, QCursor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QApplication, QMenu, QWidget
 
 from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
-                          ACCESSORIES, load_style)
+                          ACCESSORIES, SIZES, load_style)
 from avatar_motion import frame_at
 
 
@@ -25,8 +25,8 @@ class YunaAvatar(QWidget):
         self.setWindowTitle("Yuna • Avatar 2D")
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setMouseTracking(True)
-        self.setFixedSize(190, 277)
         self.appearance = load_style(root)
+        self._apply_size()
         self.pose = "idle"
         self.pose_until = 0.0
         self.speaking = False
@@ -42,6 +42,24 @@ class YunaAvatar(QWidget):
         self.animation.timeout.connect(self.advance)
         self.animation.start()
 
+    def _apply_size(self):
+        """Redimensiona o desenho vetorial sem exigir imagens ou modelos 3D."""
+        factor = SIZES[self.appearance["size"]]
+        self.setFixedSize(round(190 * factor), round(277 * factor))
+
+    def _keep_on_screen(self):
+        """Evita perder o avatar fora da área visível após mudar de tamanho."""
+        screen = QApplication.screenAt(self.geometry().center())
+        if screen is None:
+            screen = QApplication.primaryScreen()
+        if screen is None:
+            return
+        rect = screen.availableGeometry()
+        x = min(max(self.x(), rect.left()), max(rect.left(), rect.right() - self.width() + 1))
+        y = min(max(self.y(), rect.top()), max(rect.top(), rect.bottom() - self.height() + 1))
+        self.move(x, y)
+        self.x_coordinate = float(x)
+
     def _position_initial(self):
         screen = QApplication.primaryScreen()
         if screen is None:
@@ -54,6 +72,8 @@ class YunaAvatar(QWidget):
 
     def reload_appearance(self):
         self.appearance = load_style(self.root)
+        self._apply_size()
+        self._keep_on_screen()
         self.update()
 
     def set_pose(self, pose, seconds=4, phrase=""):
@@ -142,6 +162,7 @@ class YunaAvatar(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             self.drag_start = None
+            self._keep_on_screen()
             event.accept()
             return
         super().mouseReleaseEvent(event)
@@ -177,17 +198,23 @@ class YunaAvatar(QWidget):
         accessory_menu = menu.addMenu("Acessórios")
         accessory_choices = {accessory_menu.addAction(label): ("accessory", name)
                              for name, label in ACCESSORIES.items()}
+        size_menu = menu.addMenu("Tamanho do avatar")
+        size_choices = {size_menu.addAction(label): ("size", name)
+                        for name, label in (("pequena", "Pequena (75%)"),
+                                            ("normal", "Normal (100%)"),
+                                            ("grande", "Grande (130%)"))}
         menu.addSeparator()
         hide = menu.addAction("Esconder avatar")
         chosen = menu.exec(point)
         chosen_style = (hair_choices | eye_choices | outfit_choices
                         | hairstyle_choices | costume_choices
-                        | accessory_choices).get(chosen)
+                        | accessory_choices | size_choices).get(chosen)
         if chosen_style is not None:
             from avatar_state import save_style
             key, color = chosen_style
             self.appearance[key] = color
             save_style(self.root, self.appearance)
+            self.reload_appearance()
             self.set_pose("happy", seconds=2, phrase="Visual novo! 🖤")
             return
         if chosen == sit:
@@ -210,14 +237,17 @@ class YunaAvatar(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        # Canvas original 190x277: escala uniforme, sem recortar o balão de fala.
+        factor = SIZES[self.appearance["size"]]
+        painter.scale(factor, factor)
 
         pose = self.visible_pose()
         now = time.monotonic()
         wave = math.sin(self.tick_count * 0.23)
         local_cursor = self.mapFromGlobal(QCursor.pos())
-        gaze = (local_cursor.x(), local_cursor.y()) if (
-            -90 <= local_cursor.x() <= self.width() + 90
-            and -90 <= local_cursor.y() <= self.height() + 90
+        gaze = (local_cursor.x() / factor, local_cursor.y() / factor) if (
+            -90 * factor <= local_cursor.x() <= 190 * factor + 90 * factor
+            and -90 * factor <= local_cursor.y() <= 277 * factor + 90 * factor
         ) else None
         motion = frame_at(self.tick_count, pose, gaze, self.speaking)
         sway = motion.body_bob
