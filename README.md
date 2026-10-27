@@ -1,6 +1,6 @@
-# Projeto Yuna · Base 0.21
+# Projeto Yuna · Base 0.22
 
-Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
+Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, a ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
 
 ## Atualizar uma instalação existente
 
@@ -732,3 +732,20 @@ Essa etapa mantém o cérebro local e a janela profissional e melhora **o avatar
 **Atualizar:** feche a Yuna, faça backup das pastas `data/` e `assets/`, baixe o ZIP atualizado do repositório, copie todos os arquivos Python atualizados e abra `iniciar_yuna.bat`. No menu profissional, clique em **Mostrar Yuna viva**. A versão deverá indicar **0.21**. Se ocorrer uma falha no Windows, compartilhe a mensagem ou o log local gerado pelo launcher, sem expor senhas.
 
 Essa ainda é uma personagem desenhada com Qt: não é um modelo 3D pronto nem arte anime final. A etapa futura poderá substituir o desenho por sprites em camadas sem recriar a memória do projeto.
+
+
+## Yuna 0.22 — Ajustar o tamanho do avatar
+
+O avatar 2D agora tem **três tamanhos**: pequena (75%), normal (100%) e grande (130%), inclusive no monitor do notebook. O corpo, os olhos, os gestos e o balão de fala aumentam ou diminuem juntos. Se a mudança o deixar fora da área visível, ele volta para a área útil do monitor.
+
+É possível pedir no chat (não precisa escrever barras):
+
+```text
+Yuna fica pequena
+Yuna, muda seu tamanho pra grande
+Yuna, deixa o avatar normal
+```
+
+Também funciona com **clique direito sobre o avatar → Tamanho do avatar**. A escolha é guardada em `data/avatar_yuna.json` e volta quando a Yuna abre novamente; não altera o modelo de IA, o histórico, os arquivos pessoais ou a aparência previamente escolhida. A personagem continua sendo **2D vetorial**, não um corpo 3D ainda. Nesta versão não existe arrasto para alterar a escala livremente ou gestos por câmera.
+
+**Atualização:** baixe os arquivos novos e substitua os arquivos `.py`, especialmente `avatar_state.py`, `yuna_avatar.py` e `self_model.py`, preservando a pasta `data/`. Feche o programa antes de substituir os arquivos.
