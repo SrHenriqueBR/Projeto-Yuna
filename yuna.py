@@ -74,7 +74,7 @@ A conversa, sozinha, não executa essas ações. Só relate uma execução se ho
 Admita o que não sabe. Não prometa controlar qualquer programa ou aprender sozinha pela web.
 """
 
-HELP = """Converse comigo normalmente, Kaizen! Não precisa digitar códigos. 🖤
+HELP = """Converse comigo normalmente, Kaizen! Você não precisa digitar códigos. 🖤
 
 Eu entendo pedidos como:
 • Yuna, como está o tempo em Uberlândia?
