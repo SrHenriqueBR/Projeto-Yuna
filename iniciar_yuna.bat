@@ -1,18 +1,28 @@
 @echo off
+chcp 65001 >nul
 cd /d "%~dp0"
-for %%F in (yuna.py computer.py desktop.py local_agent.py initiative.py affect.py self_model.py vision.py conversation_integrity.py) do (
-    if not exist "%%F" (
-        echo Falta %%F. Copie todos os arquivos .py da pasta nova para esta pasta.
-        echo Preserve a pasta data com suas memorias.
-        pause
-        exit /b 1
-    )
-)
-where py >nul 2>nul
-if errorlevel 1 (
-    echo Instale o Python 3.10 ou superior com o Python Launcher.
+if not exist "yuna_desktop.py" (
+    echo A interface grafica da Yuna nao foi encontrada. Atualize todos os arquivos.
     pause
     exit /b 1
 )
-py -3 yuna.py
-pause
+if not exist "document_library.py" (
+    echo Falta document_library.py. Atualize os arquivos .py do projeto.
+    pause
+    exit /b 1
+)
+where pyw >nul 2>nul
+if errorlevel 1 (
+    echo O launcher grafico pyw nao foi encontrado. Instale o Python Launcher.
+    pause
+    exit /b 1
+)
+py -3 -c "import PySide6, docx, openpyxl, pptx, pypdf" >nul 2>nul
+if errorlevel 1 (
+    echo A Yuna precisa das bibliotecas do menu e dos documentos.
+    echo Execute: py -3 -m pip install -r requirements-mascote.txt
+    pause
+    exit /b 1
+)
+start "" pyw -3 "%~dp0yuna_desktop.py"
+exit /b 0
