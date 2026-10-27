@@ -106,6 +106,6 @@ def fallback_for_bad_grammar(message):
             "preferências, mas não tenho consciência humana nem modifico meu "
             "próprio código sem revisão."
         )
-    return ("Entendi sua mensagem, Kaizen. Fiquei confusa na "
+    return ("Entendi sua mensagem, Kaizen. Desculpe, fiquei confusa na "
             "formulação; ainda estou trabalhando para conversar de maneira "
             "mais natural, sem inventar ações ou promessas.")
