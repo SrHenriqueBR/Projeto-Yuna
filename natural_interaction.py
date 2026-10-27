@@ -29,7 +29,7 @@ def classify_public_request(message):
     value = clean(message)
     if not value or value.startswith("/"):
         return None
-    if re.match(r"^(?:como|por que|porque|se eu|e se|imagine|suponha|"
+    if re.match(r"^(?:por que|porque|se eu|e se|imagine|suponha|"
                 r"nao|nunca|talvez|eu vou|pensei em|o que e uma api)\b", value):
         return None
     if re.search(r"\b(?:nao|nunca)\s+(?:pesquise|procure|consulte|busque|pergunte)\b", value):
