@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.17.1
+# Projeto Yuna · Base 0.17.2
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -611,3 +611,17 @@ O usuário recebeu `Pedido muito longo: máximo de 600 caracteres` ao compartilh
 **Limite físico do modelo:** nenhum modelo de linguagem processa entradas literalmente infinitas. O Ollama ainda utiliza uma janela de contexto configurada em **8.192 tokens**, que inclui instruções, memórias e a mensagem. Um texto muito extenso poderá ficar além dessa capacidade e ter partes antigas omitidas pelo modelo, ficar lento ou resultar em erro; aceitar a mensagem não garante que todos os detalhes sejam considerados. Mensagens de comprimento normal (inclusive parágrafos com mais de 600 caracteres) deixam de ser rejeitadas. Não foram alterados limites de segurança dos serviços externos, de criação de arquivos ou de memória sensível.
 
 **Atualização:** feche a Yuna, faça backup de `data/` e preserve `assets/`. Baixe a versão nova do GitHub e copie os arquivos atualizados `.py` da raiz, especialmente `agent_brain.py`, `yuna.py`, `yuna_overlay.py` e `self_model.py`, para a mesma pasta que executa a Yuna. Abra `iniciar_yuna_mascote.bat` ou `iniciar_yuna.bat` e confirme **YUNA 0.17.1**. Teste colando a mensagem longa anterior sem cortá-la.
+
+## Yuna 0.17.2 — respostas honestas, português mais natural e contexto de jogos
+
+Uma avaliação de um diálogo completo revelou que a Yuna confundia FRIDAY de Tony Stark com informação obscura, tratava Kratos como figura mitológica mesmo quando o usuário jogava God of War, insistia em perguntas repetidas e, mais grave, **prometeu monitorar a hora e desligar o computador à meia-noite sem nenhuma rotina real de agendamento**.
+
+Esta atualização acrescenta `conversation_integrity.py`, um controle de respostas para pedidos específicos em que o modelo não pode inventar capacidades. Em particular, pedidos de desligamento agendado recebem a resposta correta: **nenhum desligamento foi programado**. Para oferecer desligamento agendado no futuro, será necessária uma ferramenta específica com consentimento e opção de cancelamento. Autorizações genéricas para pesquisar a noite inteira ou modificar o código também não liberam execução automática.
+
+A Yuna passa a reconhecer a referência cultural à IA FRIDAY, diferenciando-a do dia da semana. Se Kaizen perguntar se ela quer jogar, ela demonstra curiosidade sem fingir que consegue controlar God of War. Um pedido explícito de consulta pública `Tente procurar sobre Kratos` aciona a pesquisa limitada à Wikipédia; a resposta só diz que encontrou informações se a ferramenta realmente retornar fontes. Perguntas relativas como `Quem ele é?` não pesquisam a palavra `ele` descontextualizada.
+
+O modelo recebeu instruções para focar no assunto mais recente, não repetir a pergunta `Como estou hoje?`, não oferecer tarefas aleatórias após cada elogio e não prometer recursos sem suporte. O detector também identifica erros adicionais como `vou gostaria`, `estou tão bom` e `estou se sentindo`. Caso duas tentativas de correção falhem, há resposta coerente sem exigir que a pessoa reformule toda sua mensagem.
+
+**Importante:** o código não passa a monitorar ou desligar o computador às 00h. Nenhuma execução em background ou alteração não solicitada foi acrescentada. As respostas e salvamento do SQLite permanecem locais, e os arquivos `data/` e `assets/` não são alterados.
+
+**Instalação:** feche a Yuna, faça backup de `data/`, baixe o projeto da branch principal e copie os `.py` da raiz para sua pasta atual, incluindo `conversation_integrity.py`, preservando `data/` e `assets/`. Reabra o programa e confirme **YUNA 0.17.2** no título ou no terminal. Não há pacote Python adicional. Se continuar aparecendo 0.17, a pasta em execução ainda é a cópia anterior.
