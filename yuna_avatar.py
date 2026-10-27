@@ -10,7 +10,8 @@ from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QCursor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QApplication, QMenu, QWidget
 
-from avatar_state import HAIR, EYES, OUTFITS, load_style
+from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
+                          ACCESSORIES, load_style)
 from avatar_motion import frame_at
 
 
@@ -56,7 +57,8 @@ class YunaAvatar(QWidget):
         self.update()
 
     def set_pose(self, pose, seconds=4, phrase=""):
-        if pose not in ("idle", "walk", "sit", "angry", "happy", "talk"):
+        if pose not in ("idle", "walk", "sit", "angry", "happy", "talk",
+                        "wave", "pose", "surprised"):
             return
         self.pose = pose
         self.pose_until = time.monotonic() + max(0, float(seconds))
@@ -152,6 +154,8 @@ class YunaAvatar(QWidget):
         )
         sit = menu.addAction("Sentar")
         stand = menu.addAction("Levantar")
+        wave_action = menu.addAction("Acenar 👋")
+        pose_action = menu.addAction("Fazer pose ✨")
         pause = menu.addAction("Pausar caminhada" if self.appearance["walking"]
                                else "Permitir caminhada")
         menu.addSeparator()
@@ -164,10 +168,21 @@ class YunaAvatar(QWidget):
         outfit_menu = menu.addMenu("Roupa")
         outfit_choices = {outfit_menu.addAction(name.title()): ("outfit", name)
                           for name in OUTFITS}
+        hairstyle_menu = menu.addMenu("Estilo do cabelo")
+        hairstyle_choices = {hairstyle_menu.addAction(label): ("hair_style", name)
+                             for name, label in HAIR_STYLES.items()}
+        costume_menu = menu.addMenu("Modelo da roupa")
+        costume_choices = {costume_menu.addAction(label): ("costume", name)
+                           for name, label in COSTUMES.items()}
+        accessory_menu = menu.addMenu("Acessórios")
+        accessory_choices = {accessory_menu.addAction(label): ("accessory", name)
+                             for name, label in ACCESSORIES.items()}
         menu.addSeparator()
         hide = menu.addAction("Esconder avatar")
         chosen = menu.exec(point)
-        chosen_style = (hair_choices | eye_choices | outfit_choices).get(chosen)
+        chosen_style = (hair_choices | eye_choices | outfit_choices
+                        | hairstyle_choices | costume_choices
+                        | accessory_choices).get(chosen)
         if chosen_style is not None:
             from avatar_state import save_style
             key, color = chosen_style
@@ -179,6 +194,10 @@ class YunaAvatar(QWidget):
             self.set_pose("sit", seconds=25, phrase="Uma pausa... 🖤")
         elif chosen == stand:
             self.set_pose("idle", seconds=7)
+        elif chosen == wave_action:
+            self.set_pose("wave", seconds=5, phrase="Oieee! 👋")
+        elif chosen == pose_action:
+            self.set_pose("pose", seconds=5, phrase="Ta-dã! ✨")
         elif chosen == pause:
             from avatar_state import save_style
             self.appearance["walking"] = not self.appearance["walking"]
@@ -205,6 +224,9 @@ class YunaAvatar(QWidget):
         hair = QColor(HAIR[self.appearance["hair"]])
         eyes = QColor(EYES[self.appearance["eyes"]])
         dress = QColor(OUTFITS[self.appearance["outfit"]])
+        hair_style = self.appearance["hair_style"]
+        costume = self.appearance["costume"]
+        accessory = self.appearance["accessory"]
         shadow = QColor("#171125")
         skin = QColor("#f5d8d8")
 
@@ -223,18 +245,44 @@ class YunaAvatar(QWidget):
         sitting = pose == "sit"
         vertical = 30 if sitting else 0
 
-        # Cabelos de trás, incluindo duas mechas longas e laterais.
+        # Cabelo atrás da cabeça: cortes realmente diferentes, não só cores.
         painter.setPen(QPen(shadow, 2.2))
         painter.setBrush(hair)
-        painter.drawRoundedRect(QRectF(-57, 63 + vertical, 114, 133), 43, 34)
-        # Os fios longos balançam de forma independente do corpo.
-        painter.drawEllipse(QRectF(-62 + motion.hair_sway, 95 + vertical, 26, 111))
-        painter.drawEllipse(QRectF(37 - motion.hair_sway, 95 + vertical, 26, 111))
-        painter.setPen(QPen(hair.lighter(138), 2.0))
-        painter.drawArc(QRectF(-58 + motion.hair_sway, 98 + vertical, 20, 99),
-                        80 * 16, 130 * 16)
-        painter.drawArc(QRectF(38 - motion.hair_sway, 98 + vertical, 20, 99),
-                        320 * 16, 130 * 16)
+        if hair_style == "longo":
+            painter.drawRoundedRect(QRectF(-57, 63 + vertical, 114, 133), 43, 34)
+            painter.drawEllipse(QRectF(-62 + motion.hair_sway,
+                                       95 + vertical, 26, 111))
+            painter.drawEllipse(QRectF(37 - motion.hair_sway,
+                                       95 + vertical, 26, 111))
+            painter.setPen(QPen(hair.lighter(138), 2.0))
+            painter.drawArc(QRectF(-58 + motion.hair_sway,
+                                   98 + vertical, 20, 99), 80 * 16, 130 * 16)
+            painter.drawArc(QRectF(38 - motion.hair_sway,
+                                   98 + vertical, 20, 99), 320 * 16, 130 * 16)
+        elif hair_style == "curto":
+            painter.drawRoundedRect(QRectF(-56, 64 + vertical, 112, 101), 41, 33)
+            painter.drawEllipse(QRectF(-58, 101 + vertical, 25, 57))
+            painter.drawEllipse(QRectF(33, 101 + vertical, 25, 57))
+        elif hair_style == "marias":
+            painter.drawRoundedRect(QRectF(-53, 65 + vertical, 106, 95), 39, 34)
+            painter.drawEllipse(QRectF(-74 - motion.hair_sway, 101 + vertical, 31, 86))
+            painter.drawEllipse(QRectF(43 + motion.hair_sway, 101 + vertical, 31, 86))
+            painter.setBrush(QColor("#cc9be9"))
+            painter.drawRoundedRect(QRectF(-61, 106 + vertical, 14, 13), 4, 4)
+            painter.drawRoundedRect(QRectF(47, 106 + vertical, 14, 13), 4, 4)
+        else:  # rabo de cavalo
+            painter.drawRoundedRect(QRectF(-53, 64 + vertical, 106, 95), 42, 35)
+            ponytail = QPainterPath()
+            ponytail.moveTo(45, 93 + vertical)
+            ponytail.cubicTo(86 + motion.hair_sway, 87 + vertical,
+                            74 + motion.hair_sway, 174 + vertical,
+                            53 + motion.hair_sway, 198 + vertical)
+            ponytail.cubicTo(66 + motion.hair_sway, 152 + vertical,
+                            55, 129 + vertical, 43, 114 + vertical)
+            ponytail.closeSubpath()
+            painter.drawPath(ponytail)
+            painter.setBrush(QColor("#bd91d6"))
+            painter.drawEllipse(QRectF(42, 99 + vertical, 16, 16))
 
         # Pernas, sapatinhos e caminhada alternada.
         if sitting:
@@ -253,30 +301,77 @@ class YunaAvatar(QWidget):
         painter.drawEllipse(QRectF(-37, 241, 33, 12))
         painter.drawEllipse(QRectF(4, 241, 33, 12))
 
-        # Vestido em camadas com detalhes discretos.
-        hem = QPainterPath()
-        hem.moveTo(-23, 163 + vertical)
-        hem.lineTo(23, 163 + vertical)
-        hem.lineTo(48 + motion.breath, 220 + vertical)
-        hem.quadTo(0, 230 + vertical, -48 - motion.breath, 220 + vertical)
-        hem.closeSubpath()
+        # Roupa em 3 modelagens, preservando a paleta escolhida.
         painter.setPen(QPen(shadow, 2.3))
         painter.setBrush(dress)
-        painter.drawPath(hem)
-        painter.setPen(QPen(QColor("#b39bd1"), 2))
-        painter.drawLine(QPointF(-43, 213 + vertical), QPointF(43, 213 + vertical))
-        painter.setPen(QPen(QColor("#e7c6ec"), 1.8))
-        painter.drawLine(QPointF(0, 165 + vertical), QPointF(0, 201 + vertical))
-        painter.setBrush(QColor("#bda2d7"))
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(QRectF(-5, 185 + vertical, 10, 10))
+        if costume == "vestido":
+            hem = QPainterPath()
+            hem.moveTo(-23, 163 + vertical)
+            hem.lineTo(23, 163 + vertical)
+            hem.lineTo(48 + motion.breath, 220 + vertical)
+            hem.quadTo(0, 230 + vertical, -48 - motion.breath, 220 + vertical)
+            hem.closeSubpath()
+            painter.drawPath(hem)
+            painter.setPen(QPen(QColor("#b39bd1"), 2))
+            painter.drawLine(QPointF(-43, 213 + vertical), QPointF(43, 213 + vertical))
+            painter.setPen(QPen(QColor("#e7c6ec"), 1.8))
+            painter.drawLine(QPointF(0, 165 + vertical), QPointF(0, 201 + vertical))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor("#bda2d7"))
+            painter.drawEllipse(QRectF(-5, 185 + vertical, 10, 10))
+        elif costume == "casual":
+            # Camiseta e bermuda com faixa cruzada.
+            painter.drawRoundedRect(QRectF(-36, 164 + vertical, 72, 50), 12, 12)
+            painter.setBrush(dress.darker(135))
+            painter.drawRoundedRect(QRectF(-35, 207 + vertical, 32, 18), 4, 4)
+            painter.drawRoundedRect(QRectF(3, 207 + vertical, 32, 18), 4, 4)
+            painter.setPen(QPen(QColor("#d3b6e9"), 3))
+            painter.drawLine(QPointF(-21, 170 + vertical), QPointF(23, 205 + vertical))
+            painter.setBrush(QColor("#bb87d8"))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QRectF(-4, 186 + vertical, 8, 8))
+        else:  # casaco
+            painter.drawRoundedRect(QRectF(-38, 160 + vertical, 76, 66), 12, 13)
+            painter.setBrush(dress.lighter(155))
+            left_lapel = QPainterPath()
+            left_lapel.moveTo(-30, 165 + vertical)
+            left_lapel.lineTo(0, 189 + vertical)
+            left_lapel.lineTo(-13, 208 + vertical)
+            left_lapel.closeSubpath()
+            right_lapel = QPainterPath()
+            right_lapel.moveTo(30, 165 + vertical)
+            right_lapel.lineTo(0, 189 + vertical)
+            right_lapel.lineTo(13, 208 + vertical)
+            right_lapel.closeSubpath()
+            painter.drawPath(left_lapel)
+            painter.drawPath(right_lapel)
+            painter.setPen(QPen(QColor("#e7c6ec"), 2))
+            painter.drawLine(QPointF(0, 192 + vertical), QPointF(0, 219 + vertical))
+            painter.setBrush(QColor("#c9a5da"))
+            painter.setPen(Qt.PenStyle.NoPen)
+            for y in (197, 209, 220):
+                painter.drawEllipse(QRectF(3, y + vertical, 5, 5))
 
-        # Braços (em estado bravo, os dois apoiam na cintura).
+        # Braços em gestos explícitos: aceno, pose e surpresa.
         painter.setPen(QPen(skin, 11, Qt.PenStyle.SolidLine,
                             Qt.PenCapStyle.RoundCap))
         if pose == "angry":
             painter.drawLine(QPointF(-23, 171 + vertical), QPointF(-40, 185 + vertical))
             painter.drawLine(QPointF(23, 171 + vertical), QPointF(40, 185 + vertical))
+        elif pose == "wave":
+            painter.drawLine(QPointF(-25, 169 + vertical), QPointF(-43, 196 + vertical))
+            painter.drawLine(QPointF(25, 169 + vertical),
+                             QPointF(45 + wave * 6, 118 + vertical + abs(wave * 9)))
+            painter.setBrush(skin)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QRectF(38 + wave * 6,
+                                       110 + vertical + abs(wave * 9), 15, 15))
+        elif pose == "pose":
+            painter.drawLine(QPointF(-23, 171 + vertical), QPointF(-53, 150 + vertical))
+            painter.drawLine(QPointF(23, 171 + vertical), QPointF(53, 150 + vertical))
+        elif pose == "surprised":
+            painter.drawLine(QPointF(-23, 172 + vertical), QPointF(-39, 141 + vertical))
+            painter.drawLine(QPointF(23, 172 + vertical), QPointF(39, 141 + vertical))
         else:
             painter.drawLine(QPointF(-25, 169 + vertical),
                              QPointF(-47, 193 + vertical + wave * 3))
@@ -301,11 +396,20 @@ class YunaAvatar(QWidget):
         painter.setPen(QPen(hair.lighter(156), 2.0))
         painter.drawArc(QRectF(-39, 64 + vertical, 67, 40),
                         42 * 16, 112 * 16)
-        painter.setPen(QPen(shadow, 1.4))
-        painter.setBrush(QColor("#9874bf"))
-        painter.drawEllipse(QRectF(35, 77 + vertical, 19, 15))
-        painter.setBrush(QColor("#d7b6ef"))
-        painter.drawEllipse(QRectF(40, 81 + vertical, 8, 7))
+        # Adornos aparecem ou desaparecem conforme a escolha no menu.
+        if accessory == "laco":
+            painter.setPen(QPen(shadow, 1.4))
+            painter.setBrush(QColor("#9874bf"))
+            painter.drawEllipse(QRectF(35, 77 + vertical, 19, 15))
+            painter.setBrush(QColor("#d7b6ef"))
+            painter.drawEllipse(QRectF(40, 81 + vertical, 8, 7))
+        elif accessory == "tiara":
+            painter.setPen(QPen(QColor("#d0a5ec"), 6))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawArc(QRectF(-46, 55 + vertical, 93, 49), 17 * 16, 150 * 16)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QColor("#f1c6ff"))
+            painter.drawEllipse(QRectF(-5, 59 + vertical, 10, 10))
 
         # Pálpebras piscam; pupilas acompanham o cursor quando ele se aproxima.
         if motion.blink > .9:
@@ -345,6 +449,18 @@ class YunaAvatar(QWidget):
             painter.drawLine(-35, 112 + vertical, -14, 111 + vertical)
             painter.drawLine(14, 111 + vertical, 35, 112 + vertical)
 
+        if accessory == "oculos":
+            painter.setPen(QPen(QColor("#9c80be"), 2.5))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.drawRoundedRect(QRectF(-40, 116 + vertical, 34, 30), 8, 7)
+            painter.drawRoundedRect(QRectF(6, 116 + vertical, 34, 30), 8, 7)
+            painter.drawLine(QPointF(-6, 123 + vertical),
+                             QPointF(6, 123 + vertical))
+            painter.drawLine(QPointF(-40, 121 + vertical),
+                             QPointF(-51, 115 + vertical))
+            painter.drawLine(QPointF(40, 121 + vertical),
+                             QPointF(51, 115 + vertical))
+
         # Bochechas e boca expressiva, sem atribuir sentimentos reais à IA.
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QColor(233, 130, 153, 95))
@@ -357,7 +473,10 @@ class YunaAvatar(QWidget):
             painter.setBrush(QColor("#a45b7e"))
             painter.drawEllipse(QRectF(-8, 149 + vertical,
                                        16, motion.mouth_open + 3))
-        elif pose == "happy":
+        elif pose == "surprised":
+            painter.setBrush(QColor("#9b5774"))
+            painter.drawEllipse(QRectF(-6, 148 + vertical, 12, 14))
+        elif pose in ("happy", "wave", "pose"):
             painter.drawArc(QRectF(-9, 146 + vertical, 18, 13),
                             180 * 16, 180 * 16)
         else:
