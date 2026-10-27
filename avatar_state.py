@@ -23,7 +23,7 @@ ACCESSORIES = {"laco": "Laço", "tiara": "Tiara", "oculos": "Óculos",
 SIZES = {"pequena": 0.75, "normal": 1.0, "grande": 1.30}
 DEFAULTS = {"hair": "preto", "eyes": "vermelhos", "outfit": "escura",
             "hair_style": "longo", "costume": "vestido", "accessory": "laco",
-            "size": "normal", "walking": True}
+            "size": "normal", "walking": True, "reduced_motion": False}
 
 
 def simplified(value):
@@ -41,8 +41,9 @@ def validated(data):
         choice = data.get(key)
         if isinstance(choice, str) and choice in choices:
             result[key] = choice
-    if type(data.get("walking")) is bool:
-        result["walking"] = data["walking"]
+    for setting in ("walking", "reduced_motion"):
+        if type(data.get(setting)) is bool:
+            result[setting] = data[setting]
     return result
 
 
@@ -108,6 +109,27 @@ def parse_avatar_request(message):
     }
     if value in movement:
         return ("pose", movement[value])
+
+    # Preferência de acessibilidade; somente ordens curtas e explícitas.
+    motion_settings = {
+        "reduz as animacoes": True,
+        "reduza as animacoes": True,
+        "diminui as animacoes": True,
+        "diminua as animacoes": True,
+        "ativa movimento reduzido": True,
+        "ative movimento reduzido": True,
+        "desliga as animacoes": True,
+        "desligue as animacoes": True,
+        "volta com as animacoes": False,
+        "retoma as animacoes": False,
+        "retome as animacoes": False,
+        "ativa as animacoes": False,
+        "ative as animacoes": False,
+        "permite movimentos": False,
+        "permita movimentos": False,
+    }
+    if value in motion_settings:
+        return ("motion", motion_settings[value])
 
     # Tamanho do avatar: opções explícitas, sem confundir com a janela de chat.
     if re.fullmatch(
@@ -201,6 +223,12 @@ def apply_avatar_request(root, request):
     if request is None:
         return None
     style = load_style(root)
+    if request[0] == "motion":
+        style["reduced_motion"] = request[1]
+        save_style(root, style)
+        return ("Vou ficar mais paradinha e reduzir as animações. 🖤"
+                if request[1] else
+                "Voltei a animar meus movimentos suaves! 🖤")
     if request[0] == "appearance":
         _, name, chosen = request
         style[name] = chosen

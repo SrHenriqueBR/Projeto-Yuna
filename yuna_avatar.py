@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QWidget
 
 from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
                           ACCESSORIES, SIZES, load_style)
-from avatar_motion import frame_at
+from avatar_motion import ambient_pose, ease_gaze, frame_at
 
 
 class YunaAvatar(QWidget):
@@ -36,6 +36,8 @@ class YunaAvatar(QWidget):
         self.tick_count = 0
         self.step = 1
         self.x_coordinate = 0.0
+        self._eye_cursor = (95.0, 135.0)
+        self._walk_speed = 0.0
         self._position_initial()
         self.animation = QTimer(self)
         self.animation.setInterval(80)
@@ -106,28 +108,44 @@ class YunaAvatar(QWidget):
             return "talk"
         if time.monotonic() < self.pose_until:
             return self.pose
-        if self.appearance["walking"]:
-            # Intervalos de descanso, sem inferir emoções reais.
-            return "sit" if self.tick_count % 700 >= 510 else "walk"
-        return "idle"
+        return ambient_pose(
+            self.tick_count,
+            self.appearance["walking"],
+            self.appearance["reduced_motion"],
+        )
+
+    def _update_gaze(self):
+        """Segue o cursor aos poucos; nenhuma posição é salva nem compartilhada."""
+        factor = SIZES[self.appearance["size"]]
+        cursor = self.mapFromGlobal(QCursor.pos())
+        if (-90 * factor <= cursor.x() <= 280 * factor
+                and -90 * factor <= cursor.y() <= 367 * factor):
+            target = (cursor.x() / factor, cursor.y() / factor)
+        else:
+            target = (95.0, 135.0)
+        self._eye_cursor = ease_gaze(self._eye_cursor, target)
 
     def advance(self):
-        self.tick_count += 1
         if not self.isVisible():
             return
-        if self.drag_start is None and self.visible_pose() == "walk":
+        self.tick_count += 1
+        self._update_gaze()
+        walking = self.drag_start is None and self.visible_pose() == "walk"
+        self._walk_speed += ((1.0 if walking else 0.0) - self._walk_speed) * 0.18
+        if walking:
             screen = QApplication.screenAt(self.geometry().center())
             if screen is None:
                 screen = QApplication.primaryScreen()
             if screen is not None:
                 rect = screen.availableGeometry()
                 cursor = QCursor.pos()
+                factor = SIZES[self.appearance["size"]]
                 close_cursor = (
-                    abs(cursor.x() - self.geometry().center().x()) < 105
-                    and abs(cursor.y() - self.geometry().center().y()) < 155
+                    abs(cursor.x() - self.geometry().center().x()) < 105 * factor
+                    and abs(cursor.y() - self.geometry().center().y()) < 155 * factor
                 )
                 if not close_cursor:
-                    self.x_coordinate += self.step * 0.45
+                    self.x_coordinate += self.step * 0.72 * self._walk_speed
                     low, high = rect.left(), rect.right() - self.width() + 1
                     if self.x_coordinate < low or self.x_coordinate > high:
                         self.step *= -1
@@ -188,6 +206,10 @@ class YunaAvatar(QWidget):
         wake_action = menu.addAction("Acordar")
         pause = menu.addAction("Pausar caminhada" if self.appearance["walking"]
                                else "Permitir caminhada")
+        reduce_motion = menu.addAction(
+            "Restaurar animações" if self.appearance["reduced_motion"]
+            else "Reduzir animações"
+        )
         menu.addSeparator()
         hair_menu = menu.addMenu("Cabelo")
         hair_choices = {hair_menu.addAction(name.title()): ("hair", name)
@@ -244,6 +266,14 @@ class YunaAvatar(QWidget):
             self.set_pose("sleepy", seconds=20, phrase="Zzz...")
         elif chosen == wake_action:
             self.set_pose("idle", seconds=4, phrase="Acordei! 🖤")
+        elif chosen == reduce_motion:
+            from avatar_state import save_style
+            self.appearance["reduced_motion"] = not self.appearance["reduced_motion"]
+            save_style(self.root, self.appearance)
+            self.reload_appearance()
+            self.set_pose("idle", seconds=1,
+                          phrase="Movimentos reduzidos" if self.appearance["reduced_motion"]
+                          else "Movimentos restaurados")
         elif chosen == pause:
             from avatar_state import save_style
             self.appearance["walking"] = not self.appearance["walking"]
@@ -263,12 +293,10 @@ class YunaAvatar(QWidget):
         pose = self.visible_pose()
         now = time.monotonic()
         wave = math.sin(self.tick_count * 0.23)
-        local_cursor = self.mapFromGlobal(QCursor.pos())
-        gaze = (local_cursor.x() / factor, local_cursor.y() / factor) if (
-            -90 * factor <= local_cursor.x() <= 190 * factor + 90 * factor
-            and -90 * factor <= local_cursor.y() <= 277 * factor + 90 * factor
-        ) else None
-        motion = frame_at(self.tick_count, pose, gaze, self.speaking)
+        motion = frame_at(
+            self.tick_count, pose, self._eye_cursor, self.speaking,
+            reduced_motion=self.appearance["reduced_motion"],
+        )
         sway = motion.body_bob
         hair = QColor(HAIR[self.appearance["hair"]])
         eyes = QColor(EYES[self.appearance["eyes"]])
