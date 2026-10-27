@@ -319,3 +319,16 @@ class YunaAvatar(QWidget):
                              Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap,
                              self.bubble)
         painter.end()
+
+
+def main():
+    import sys
+    from pathlib import Path
+    app = QApplication(sys.argv)
+    avatar = YunaAvatar(Path(__file__).resolve().parent)
+    avatar.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
