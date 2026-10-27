@@ -11,6 +11,11 @@ if not exist "file_diagnostics.py" (
     pause
     exit /b 1
 )
+if not exist "avatar_state.py" (
+    echo Falta avatar_state.py. Atualize o projeto para Yuna 0.19.
+    pause
+    exit /b 1
+)
 if not exist "conversation_integrity.py" (
     echo Falta conversation_integrity.py. Atualize todos os arquivos para Yuna 0.17.2.
     pause
