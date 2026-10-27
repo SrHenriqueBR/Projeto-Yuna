@@ -11,6 +11,7 @@ from PySide6.QtGui import QColor, QCursor, QFont, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QApplication, QMenu, QWidget
 
 from avatar_state import HAIR, EYES, OUTFITS, load_style
+from avatar_motion import frame_at
 
 
 class YunaAvatar(QWidget):
@@ -27,6 +28,7 @@ class YunaAvatar(QWidget):
         self.appearance = load_style(root)
         self.pose = "idle"
         self.pose_until = 0.0
+        self.speaking = False
         self.bubble = ""
         self.bubble_until = 0.0
         self.drag_start = None
@@ -63,7 +65,16 @@ class YunaAvatar(QWidget):
             self.bubble_until = self.pose_until
         self.update()
 
+    def set_speaking(self, active):
+        """Ligada ao ciclo real de áudio; não presume microfone nem vê a tela."""
+        self.speaking = bool(active)
+        self.update()
+
     def visible_pose(self):
+        if time.monotonic() < self.pose_until and self.pose == "angry":
+            return "angry"
+        if self.speaking:
+            return "talk"
         if time.monotonic() < self.pose_until:
             return self.pose
         if self.appearance["walking"]:
@@ -181,7 +192,13 @@ class YunaAvatar(QWidget):
         pose = self.visible_pose()
         now = time.monotonic()
         wave = math.sin(self.tick_count * 0.23)
-        sway = 2.0 * wave if pose in ("walk", "happy", "talk") else 0.0
+        local_cursor = self.mapFromGlobal(QCursor.pos())
+        gaze = (local_cursor.x(), local_cursor.y()) if (
+            -90 <= local_cursor.x() <= self.width() + 90
+            and -90 <= local_cursor.y() <= self.height() + 90
+        ) else None
+        motion = frame_at(self.tick_count, pose, gaze, self.speaking)
+        sway = motion.body_bob
         hair = QColor(HAIR[self.appearance["hair"]])
         eyes = QColor(EYES[self.appearance["eyes"]])
         dress = QColor(OUTFITS[self.appearance["outfit"]])
@@ -198,6 +215,7 @@ class YunaAvatar(QWidget):
         if self.step < 0 and pose == "walk":
             painter.scale(-1, 1)
         painter.translate(0, sway)
+        painter.rotate(motion.tilt)
 
         sitting = pose == "sit"
         vertical = 30 if sitting else 0
@@ -206,8 +224,14 @@ class YunaAvatar(QWidget):
         painter.setPen(QPen(shadow, 2.2))
         painter.setBrush(hair)
         painter.drawRoundedRect(QRectF(-57, 63 + vertical, 114, 133), 43, 34)
-        painter.drawEllipse(QRectF(-62, 95 + vertical, 26, 111))
-        painter.drawEllipse(QRectF(37, 95 + vertical, 26, 111))
+        # Os fios longos balançam de forma independente do corpo.
+        painter.drawEllipse(QRectF(-62 + motion.hair_sway, 95 + vertical, 26, 111))
+        painter.drawEllipse(QRectF(37 - motion.hair_sway, 95 + vertical, 26, 111))
+        painter.setPen(QPen(hair.lighter(138), 2.0))
+        painter.drawArc(QRectF(-58 + motion.hair_sway, 98 + vertical, 20, 99),
+                        80 * 16, 130 * 16)
+        painter.drawArc(QRectF(38 - motion.hair_sway, 98 + vertical, 20, 99),
+                        320 * 16, 130 * 16)
 
         # Pernas, sapatinhos e caminhada alternada.
         if sitting:
@@ -230,8 +254,8 @@ class YunaAvatar(QWidget):
         hem = QPainterPath()
         hem.moveTo(-23, 163 + vertical)
         hem.lineTo(23, 163 + vertical)
-        hem.lineTo(48, 220 + vertical)
-        hem.quadTo(0, 230 + vertical, -48, 220 + vertical)
+        hem.lineTo(48 + motion.breath, 220 + vertical)
+        hem.quadTo(0, 230 + vertical, -48 - motion.breath, 220 + vertical)
         hem.closeSubpath()
         painter.setPen(QPen(shadow, 2.3))
         painter.setBrush(dress)
@@ -270,19 +294,45 @@ class YunaAvatar(QWidget):
         crown.quadTo(-10, 111 + vertical, -16, 92 + vertical)
         crown.quadTo(-32, 111 + vertical, -53, 112 + vertical)
         painter.drawPath(crown)
+        # Brilho da franja e pequeno laço decorativo estilo anime.
+        painter.setPen(QPen(hair.lighter(156), 2.0))
+        painter.drawArc(QRectF(-39, 64 + vertical, 67, 40),
+                        42 * 16, 112 * 16)
+        painter.setPen(QPen(shadow, 1.4))
+        painter.setBrush(QColor("#9874bf"))
+        painter.drawEllipse(QRectF(35, 77 + vertical, 19, 15))
+        painter.setBrush(QColor("#d7b6ef"))
+        painter.drawEllipse(QRectF(40, 81 + vertical, 8, 7))
 
-        # Olhos e sobrancelhas mudam com a reação ao clique.
-        painter.setBrush(QColor("#fff8f8"))
-        painter.setPen(QPen(shadow, 2))
-        painter.drawEllipse(QRectF(-35, 117 + vertical, 25, 25))
-        painter.drawEllipse(QRectF(10, 117 + vertical, 25, 25))
-        painter.setBrush(eyes)
-        painter.setPen(Qt.PenStyle.NoPen)
-        painter.drawEllipse(QRectF(-27, 122 + vertical, 13, 16))
-        painter.drawEllipse(QRectF(14, 122 + vertical, 13, 16))
-        painter.setBrush(QColor("#ffffff"))
-        painter.drawEllipse(QRectF(-23, 125 + vertical, 5, 5))
-        painter.drawEllipse(QRectF(18, 125 + vertical, 5, 5))
+        # Pálpebras piscam; pupilas acompanham o cursor quando ele se aproxima.
+        if motion.blink > .9:
+            painter.setPen(QPen(shadow, 3.4, Qt.PenStyle.SolidLine,
+                                Qt.PenCapStyle.RoundCap))
+            painter.drawArc(QRectF(-35, 119 + vertical, 25, 12),
+                            0, 180 * 16)
+            painter.drawArc(QRectF(10, 119 + vertical, 25, 12),
+                            0, 180 * 16)
+        else:
+            painter.setBrush(QColor("#fff8fa"))
+            painter.setPen(QPen(shadow, 2))
+            painter.drawEllipse(QRectF(-35, 117 + vertical, 25, 25))
+            painter.drawEllipse(QRectF(10, 117 + vertical, 25, 25))
+            painter.setBrush(eyes)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QRectF(-27 + motion.eye_dx,
+                                       122 + vertical + motion.eye_dy, 13, 16))
+            painter.drawEllipse(QRectF(14 + motion.eye_dx,
+                                       122 + vertical + motion.eye_dy, 13, 16))
+            painter.setBrush(QColor("#ffffff"))
+            painter.drawEllipse(QRectF(-23 + motion.eye_dx,
+                                       125 + vertical + motion.eye_dy, 5, 5))
+            painter.drawEllipse(QRectF(18 + motion.eye_dx,
+                                       125 + vertical + motion.eye_dy, 5, 5))
+            painter.setPen(QPen(shadow, 2))
+            painter.drawLine(QPointF(-36, 121 + vertical),
+                             QPointF(-31, 117 + vertical))
+            painter.drawLine(QPointF(31, 117 + vertical),
+                             QPointF(36, 121 + vertical))
         painter.setPen(QPen(shadow, 3, Qt.PenStyle.SolidLine,
                             Qt.PenCapStyle.RoundCap))
         if pose == "angry":
@@ -300,7 +350,11 @@ class YunaAvatar(QWidget):
         painter.setPen(QPen(QColor("#6e3c5c"), 2))
         if pose == "angry":
             painter.drawArc(QRectF(-8, 153 + vertical, 16, 10), 0, 180 * 16)
-        elif pose in ("happy", "talk"):
+        elif motion.mouth_open > 0:
+            painter.setBrush(QColor("#a45b7e"))
+            painter.drawEllipse(QRectF(-8, 149 + vertical,
+                                       16, motion.mouth_open + 3))
+        elif pose == "happy":
             painter.drawArc(QRectF(-9, 146 + vertical, 18, 13),
                             180 * 16, 180 * 16)
         else:
