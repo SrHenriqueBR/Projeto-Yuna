@@ -96,6 +96,15 @@ def parse_avatar_request(message):
         "faz pose": "pose", "faca pose": "pose",
         "faz uma pose": "pose", "faca uma pose": "pose",
         "fica surpresa": "surprised", "fique surpresa": "surprised",
+        "pisca": "wink", "pisca pra mim": "wink", "pisca para mim": "wink",
+        "da uma piscadinha": "wink", "me da uma piscadinha": "wink",
+        "da risada": "laugh", "de risada": "laugh", "ri pra mim": "laugh",
+        "ri para mim": "laugh",
+        "fica timida": "shy", "fique timida": "shy",
+        "fica envergonhada": "shy", "fique envergonhada": "shy",
+        "dorme": "sleepy", "vai dormir": "sleepy",
+        "tira uma soneca": "sleepy", "faca uma soneca": "sleepy",
+        "acorda": "wake", "acorde": "wake", "desperta": "wake",
     }
     if value in movement:
         return ("pose", movement[value])
@@ -226,4 +235,9 @@ def apply_avatar_request(root, request):
         "wave": "Oieee! Estou acenando para você! 👋",
         "pose": "Ta-dã! Fiz uma pose de anime! ✨",
         "surprised": "Uau! Ativei minha expressão de surpresa! ✨",
+        "wink": "Hihi! Uma piscadinha de anime pra você, Kaizen! 😉",
+        "laugh": "Hahaha! Olha só minha risada! 🖤",
+        "shy": "E-ei! Ativei meu jeitinho tímido... ✨",
+        "sleepy": "Vou tirar uma sonequinha aqui na tela... Zzz 🖤",
+        "wake": "Acordei! Já estou prontinha de novo. 🖤",
     }[action]
