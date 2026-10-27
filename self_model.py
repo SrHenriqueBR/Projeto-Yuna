@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.17.2"
+VERSION = "0.18"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -63,6 +63,8 @@ def about(memory, model):
             "consultar Gemini, Groq e OpenRouter opcionalmente sem mudar o Ollama principal",
             "identificar pedidos comuns em português sem comandos técnicos visíveis",
             "guardar preferências simples declaradas e recuperar memórias permanentes pela conversa",
+            "abrir janela de chat profissional, anexar e analisar documentos locais sob pedido",
+            "guardar cópias autorizadas de documentos em biblioteca pessoal",
             "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
             "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
             "lembrar preferências e perguntas respondidas",
@@ -77,7 +79,8 @@ def about(memory, model):
             "programação e instalação automática de código",
             "controle irrestrito do computador ou todos os programas sem uma ferramenta autorizada",
             "microfone e escuta contínua (a mascote tem voz opcional, inclusive Amanda Kelly mediante acesso à API)",
-            "leitura direta do próprio código-fonte ou de documentos",
+            "leitura direta do próprio código-fonte sem a ferramenta de GitHub",
+            "OCR para PDF escaneado sem texto extraível",
             "pesquisa contínua com a Yuna fechada ou leitura de pensamentos",
         ],
     }
