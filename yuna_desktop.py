@@ -492,7 +492,7 @@ class YunaDesktop(QMainWindow):
 
     def toggle_avatar(self):
         if self.avatar_window is None:
-            self.avatar_window = YunaAvatar(ROOT, self)
+            self.avatar_window = YunaAvatar(ROOT)
         if self.avatar_window.isVisible():
             self.avatar_window.hide()
             self.avatar_button.setText("✦  Mostrar Yuna viva")
