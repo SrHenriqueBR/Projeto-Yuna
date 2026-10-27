@@ -19,6 +19,12 @@ Máximo de 140 caracteres, terminando com '?'. A pessoa pode optar por não resp
 def looks_like_command(text):
     """Não interpretar ordens ao computador como respostas para uma pergunta."""
     from computer import command_text
+    from natural_interaction import classify_public_request
+    from natural_memory import parse_memory_intent
+    # A resposta sobre clima/livros ou uma lembrança não é resposta
+    # a perguntas antigas da Yuna, nem deve gerar nova pergunta aleatória.
+    if classify_public_request(text) is not None or parse_memory_intent(text) is not None:
+        return True
     value = command_text(text)
     return bool(re.match(
         r"^(?:/|abra\b|abre\b|abrir\b|inicie\b|iniciar\b|execute\b|executar\b|"
