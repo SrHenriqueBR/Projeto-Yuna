@@ -20,6 +20,9 @@ from web_actions import handle_web_command, public_question_to_query, wikipedia_
 from file_diagnostics import runtime_report, create_test_file
 from agent_brain import plan_request, describe_plan, execute_plan
 from language_quality import has_language_problem, identity_conversation_reply
+from conversation_integrity import (
+    grounded_reply, explicit_public_lookup, fallback_for_bad_grammar
+)
 from own_initiative import (
     is_asking_yuna_to_choose, is_authorization, is_rejection,
     propose_own_activity, pending_own_activity, clear_own_activity
@@ -45,6 +48,18 @@ Usuário: "Oi, Yuna, tudo bem?" Assistente: "Oi, Kaizen! Tudo bem por aqui. E vo
 Usuário: "E o seu nome?" Assistente: "Meu nome é Yuna, sua assistente."
 Usuário: "Você é minha criação." Assistente: "Sou sim, Kaizen. Você criou o Projeto Yuna!"
 Use "eu posso", "você pode", "vou ajudar" e "me chamo" corretamente.
+Responda ao assunto MAIS RECENTE. Quando o usuário estiver contando algo,
+comentando, elogiando ou se despedindo, responda naturalmente sem transformar
+a conversa numa lista de tarefas. NÃO termine toda resposta com uma pergunta
+e jamais repita "Como estou hoje?" ou "Vou gostaria?".
+"FRIDAY" (Sexta-Feira) é uma IA fictícia associada ao Tony Stark. Se o usuário
+fala que está jogando como Kratos, ele se refere ao protagonista de God of War,
+não à figura mitológica homônima. Atena não é filha de Kratos.
+Quando o usuário pergunta se você quer jogar, responda com curiosidade amigável,
+mas não afirme jogar ou ter acesso a controle sem ferramenta existente.
+Nunca prometa desligar o computador mais tarde, pesquisar enquanto o usuário
+dorme ou editar seu código por conta própria: não existe agendador autônomo
+para essas ações. Não invente jogos, referências ou fontes.
 Responda primeiro ao pedido; só faça uma pergunta quando ela ajudar a conversa.
 Se Kaizen não pedir nada por um tempo, o programa poderá sugerir uma atividade
 pequena. Não diga que você monitorou a tela, viu jogos, acessou arquivos ou
@@ -397,6 +412,22 @@ def handle_message(memory, text, computer=None, progress=None):
     api_result = handle_hub(text)
     if api_result is not None:
         return api_result
+    # As perguntas abaixo já causaram falsas promessas sobre o Windows.
+    # Priorizar o estado verdadeiro da ferramenta antes da criatividade do LLM.
+    grounded = grounded_reply(text)
+    if grounded is not None:
+        if memory is not None:
+            memory.save_turn(text, grounded)
+        return grounded
+    term = explicit_public_lookup(text)
+    if term is not None:
+        source = wikipedia_lookup(term)
+        result = ("Consultei a Wikipédia agora sobre " + term + ":\n" + source
+                  if "Fonte:" in source else
+                  "Não encontrei fontes verificáveis nesta consulta: " + source)
+        if memory is not None:
+            memory.save_turn(text, result)
+        return result
     # Um pedido de revisão também pode ser feito em linguagem natural,
     # sempre preparando PROPOSTA, jamais alterando código ou fazendo push.
     natural = folded(text.strip())
@@ -602,7 +633,7 @@ def respond(memory, message):
         except RuntimeError:
             corrected = ''
         answer = corrected if corrected.strip() and not speech_issue(corrected) else (
-            'Desculpe, fiquei confusa ao formular essa resposta. Pode reformular o pedido?')
+            fallback_for_bad_grammar(message))
     memory.save_turn(message, answer)
     return answer
 
