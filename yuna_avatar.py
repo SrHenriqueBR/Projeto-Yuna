@@ -68,6 +68,9 @@ class YunaAvatar(QWidget):
     def set_speaking(self, active):
         """Ligada ao ciclo real de áudio; não presume microfone nem vê a tela."""
         self.speaking = bool(active)
+        if not active and self.pose == "talk":
+            # A voz terminou: não manter boca animada por um prazo antigo.
+            self.pose_until = 0.0
         self.update()
 
     def visible_pose(self):
