@@ -246,7 +246,7 @@ def hub_help():
         "• Pergunte ao Gemini o que é programação funcional.\n"
         "• Pergunte ao Groq como organizar código Python.\n"
         "• Pergunte ao OpenRouter o que são redes neurais.\n\n"
-        "Clima, livros e CEP usam serviços públicos. "
+        "Clima usa o Open-Meteo; livros usam a Open Library; CEP usa a BrasilAPI. "
         "Gemini, Groq e OpenRouter são opcionais e exigem chaves próprias. "
         "Não consulto modelos online sem seu pedido nem envio minhas memórias."
     )
