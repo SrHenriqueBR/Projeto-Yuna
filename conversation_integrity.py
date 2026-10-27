@@ -20,7 +20,7 @@ def grounded_reply(message):
             "Posso ajudar a configurar essa função com confirmação e opção de cancelar."
         )
     if (re.search(r"\b(?:ficar|fique|continua|continue)\s+ativa\b", value)
-            and re.search(r"\b(?:internet|net|web|pesquis|busc)\w*\b", value)):
+            and re.search(r"\b(?:internet|net|web|pesquis|busc|procur)\w*\b", value)):
         return (
             "Posso sugerir ideias enquanto minha mascote estiver aberta. "
             "Para pesquisar na internet, preciso de um pedido específico e de "
