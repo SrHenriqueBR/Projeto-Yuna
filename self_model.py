@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.17.1"
+VERSION = "0.17.2"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,

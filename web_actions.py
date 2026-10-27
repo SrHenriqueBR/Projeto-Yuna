@@ -153,4 +153,8 @@ def public_question_to_query(message):
     if not match:
         return None
     query = match[1].strip(" ?!.")
+    # Referências como "ele" dependem da conversa; pesquisá-las na Wikipédia
+    # troca o assunto e pode gerar uma resposta incorreta.
+    if query in {"ele", "ela", "isso", "aquilo", "esse", "essa", "este", "esta"}:
+        return None
     return query if len(query) >= 3 else None
