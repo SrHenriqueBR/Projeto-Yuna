@@ -11,6 +11,11 @@ if not exist "file_diagnostics.py" (
     pause
     exit /b 1
 )
+if not exist "integrations.py" (
+    echo Falta integrations.py. Atualize todos os arquivos para Yuna 0.15.
+    pause
+    exit /b 1
+)
 if not exist "proactive.py" (
     echo Falta proactive.py. Atualize todos os arquivos Python da Yuna.
     pause
