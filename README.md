@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.19
+# Projeto Yuna · Base 0.20
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -699,3 +699,17 @@ Os comandos são reconhecidos apenas em pedidos explícitos, não em perguntas h
 **Atualização no Windows:** feche a Yuna, faça backup de `data/` e preserve `assets/`. Baixe o ZIP novo do repositório e copie os arquivos `.py` (especialmente `avatar_state.py` e `yuna_avatar.py`), os `.bat` e o README. Abra `iniciar_yuna.bat` e confira **Yuna 0.19**. Não precisa de biblioteca Python nova se o menu profissional 0.18 já funciona.
 
 **Futuro:** esta primeira etapa é uma personagem chibi vetorial funcional, não um rig 3D completo. Podemos evoluir para sprites em camadas e animações detalhadas, depois Godot + modelo VRM/3D mantendo cérebro local e memória.
+
+## Yuna 0.20 — segunda etapa: corpo expressivo em movimento
+
+**Evolução do avatar 2D anterior**, mantendo a aparência alterável e a interface profissional. O arquivo novo `avatar_motion.py` calcula animações independentes do Qt: piscar automaticamente, respiração sutil, balançar fios de cabelo, olhar com as pupilas para o mouse próximo e movimento corporal distinto ao caminhar ou ficar em repouso. Também há um brilho na franja e acessório no cabelo para um acabamento mais anime/chibi.
+
+**Integração com fala:** com a voz Windows offline ou Edge online já habilitada, a boca faz um movimento visual **aproximado enquanto o áudio está em execução**. O movimento para quando termina a fala ou quando a síntese falha. Quando a voz está desligada, a Yuna ainda mostra uma reação curta à própria resposta no menu principal. Isso **não é lip-sync fonema a fonema** nem captação de áudio do microfone.
+
+**Gestos anteriores continuam:** reação brava ao clique, sentar, levantar, mover por arraste, passear pela área de trabalho e trocar cabelo/olhos/roupa pela conversa ou botão direito. A Yuna lê apenas a posição do cursor do Windows necessária ao movimento dos olhos; **não faz capturas de tela, leitura de janelas nem vigilância** por essa função. Não existe física 3D.
+
+**Arquivos:** o avatar continua em `yuna_avatar.py` e o sistema de cores em `avatar_state.py`. O estado visual persiste em `data/avatar_yuna.json`; as animações novas são calculadas em `avatar_motion.py`, **sem gravar observações do cursor, áudio, histórico ou imagens**. Nenhum aplicativo novo é instalado.
+
+**Como atualizar:** feche a Yuna, copie sua pasta `data/` para backup e preserve `assets/`. Baixe o ZIP do repositório atualizado, copie os novos arquivos `.py` da raiz (principalmente `avatar_motion.py`, `yuna_avatar.py`, `yuna_desktop.py` e `self_model.py`) para sua instalação e execute `iniciar_yuna.bat`. No chat, clique **Mostrar Yuna viva**, ative ou não a voz e observe as novas expressões. Verifique **Yuna 0.20** na janela.
+
+**Próximos aprimoramentos possíveis:** refinar o visual com sprites de autoria própria em camadas, novas roupas/acessórios, animações de braços e pernas mais detalhadas e, posteriormente, rigging 3D. Esse passo é uma melhoria 2D funcional, não uma personagem 3D pronta.
