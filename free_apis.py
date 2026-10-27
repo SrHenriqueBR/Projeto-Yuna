@@ -248,7 +248,7 @@ def hub_help():
         "• Pergunte ao OpenRouter o que são redes neurais.\n\n"
         "Clima usa o Open-Meteo; livros usam a Open Library; CEP usa a BrasilAPI. "
         "Gemini, Groq e OpenRouter são opcionais e exigem chaves próprias. "
-        "Não consulto modelos online sem seu pedido nem envio minhas memórias."
+        "Ollama continua sendo meu modelo local principal; não consulto modelos online sem seu pedido nem envio minhas memórias."
     )
 
 
