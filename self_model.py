@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.21"
+VERSION = "0.22"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -69,6 +69,7 @@ def about(memory, model):
             "trocar visual do avatar por pedidos naturais e salvar cabelo, olhos e roupa localmente",
             "animar olhos, respiração, cabelo e boca do avatar chibi enquanto fala",
             "mudar cortes de cabelo, trajes e acessórios do avatar em camadas",
+            "ajustar o tamanho do avatar em três escalas e manter a personagem visível",
             "executar gestos visuais de acenar, fazer pose e surpresa por pedido natural",
             "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
             "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
