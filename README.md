@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.16
+# Projeto Yuna · Base 0.17
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -574,3 +574,30 @@ Variáveis adicionais suportadas: `GEMINI_API_KEY`, `OPENROUTER_API_KEY`. Consul
 **Por que não integrar todos os serviços da lista de uma vez?** Várias APIs exigem contas, políticas específicas, cotas mutáveis ou autenticação distinta. Esta entrega implementa três fontes públicas e três provedores de IA com uma estrutura simples e testável. YouTube, Wikipédia, GitHub e a OpenAI opcional das versões anteriores continuam disponíveis. Integrações extras (TMDB, IBGE, YouTube Data, mapas, notícias e outras) poderão ser acrescentadas gradualmente após validar esta versão.
 
 **Atualizar:** feche a Yuna, faça backup de `data/`, copie os novos `.py` do ZIP para a pasta do projeto, **incluindo `free_apis.py`**, e preserve `data/` e `assets/`. Não é necessário novo `pip install` se a versão 0.15 funciona. Reabra `iniciar_yuna_mascote.bat`, confirme **YUNA 0.16** e digite `/apis`.
+
+## Yuna 0.17 — conversar naturalmente, pesquisar e lembrar sem decorar comandos
+
+A Yuna agora entende pedidos **em português cotidiano**, sem exigir atalhos como `/livros`, `/clima` ou `/ia`. O próprio texto do pedido define a ferramenta apropriada; comandos antigos continuam apenas para diagnóstico avançado.
+
+```text
+Yuna, como está o tempo em Uberlândia?
+Procure livros sobre Python.
+Consulte o CEP 01310930.
+Pergunte ao Gemini o que é programação funcional.
+Yuna, lembra que eu prefiro respostas curtas.
+Eu prefiro explicações objetivas.
+O que você lembra de mim?
+Yuna, esqueça que eu prefiro respostas curtas.
+```
+
+**Pesquisa:** a Yuna reconhece pedidos explícitos de clima, livros, CEP e de consultar Gemini, Groq ou OpenRouter. Consultas à internet acontecem somente quando você pediu informação da fonte correspondente; o Ollama não dispara APIs externas por conta própria. Os serviços de IA online continuam **opcionais** e exigem que você configure suas próprias chaves. Nenhuma falha no serviço provoca fallback pago silencioso. O controle do microfone ainda não está implementado: o processamento natural funciona no chat digitado ou no terminal.
+
+**Memória seletiva:** quando você diz `lembra que ...`, `anota que ...`, `guarda que ...` ou uma preferência simples como `Eu prefiro explicações curtas`, a Yuna registra no banco local **SQLite**, sem pedir comandos. A informação permanece disponível depois de reiniciar. Ela pode listar as lembranças, recuperar as relacionadas a um tema e excluir uma lembrança claramente identificada. Não inventa fatos sobre o usuário nem grava automaticamente tudo que lê ou pesquisa. Existe um limite de 20 lembranças permanentes; o histórico normal segue em separado.
+
+**Dados sensíveis:** a gravação automática de preferências rejeita assuntos financeiros, médicos, credenciais, identificadores e outros dados privados. Dados de ferramentas, textos externos, e respostas do próprio modelo nunca viram memórias permanentes automaticamente. A memória não treina os pesos do Ollama; é uma base local de informações confirmadas. Uma solicitação para esquecer um fato tira o item da **lista de memórias permanentes**, mas ele ainda pode existir no **histórico de conversas** até você apagar o histórico; faça isso separadamente se quiser remover os dois.
+
+**Ajuda sem códigos:** ao pedir ajuda, a Yuna agora mostra exemplos de conversas em linguagem natural. Quem quiser usar rotas técnicas antigas poderá encontrá-las em `/comandos`, mas não precisa decorá-las.
+
+**Segurança:** perguntas hipotéticas, negações e comentários cotidianos não deveriam disparar pesquisa externa. Para IA online, a pessoa precisa citar explicitamente o nome do provedor e solicitar uma pergunta; não há encaminhamento de histórico, arquivos ou memórias. Respostas das APIs e memórias guardadas não são repassadas automaticamente à voz online. O sistema mantém limites claros: não há acesso irrestrito a sites, não lê pensamentos e não aprende sozinho alterando pesos do modelo.
+
+**Atualização:** feche a Yuna, faça backup de `data/`, copie todos os novos `.py`, incluindo **`natural_interaction.py` e `natural_memory.py`**, e preserve `data/` e `assets/`. Reabra o launcher `iniciar_yuna_mascote.bat` e confira **YUNA 0.17**. Não é preciso instalar bibliotecas adicionais se a versão 0.16 já funciona. Comece digitando `Yuna, como está o tempo em Uberlândia?` ou `Yuna, lembra que eu prefiro respostas curtas.`
