@@ -16,6 +16,6 @@ jobs:
       - name: Verificar sintaxe
         run: python -m compileall -q .
       - name: Instalar criação de documentos Word
-        run: python -m pip install "python-docx>=1.2,<2" "openpyxl>=3.1,<4" "python-pptx>=1.0,<2" "reportlab>=4.2,<5"
+        run: python -m pip install "python-docx>=1.2,<2" "openpyxl>=3.1,<4" "python-pptx>=1.0,<2" "reportlab>=4.2,<5" "pypdf>=5,<7"
       - name: Executar testes locais
         run: python -m unittest discover -s tests -v
