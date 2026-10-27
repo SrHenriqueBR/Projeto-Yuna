@@ -141,8 +141,26 @@ class YunaAvatar(QWidget):
         pause = menu.addAction("Pausar caminhada" if self.appearance["walking"]
                                else "Permitir caminhada")
         menu.addSeparator()
+        hair_menu = menu.addMenu("Cabelo")
+        hair_choices = {hair_menu.addAction(name.title()): ("hair", name)
+                        for name in HAIR}
+        eye_menu = menu.addMenu("Olhos")
+        eye_choices = {eye_menu.addAction(name.title()): ("eyes", name)
+                       for name in EYES}
+        outfit_menu = menu.addMenu("Roupa")
+        outfit_choices = {outfit_menu.addAction(name.title()): ("outfit", name)
+                          for name in OUTFITS}
+        menu.addSeparator()
         hide = menu.addAction("Esconder avatar")
         chosen = menu.exec(point)
+        chosen_style = (hair_choices | eye_choices | outfit_choices).get(chosen)
+        if chosen_style is not None:
+            from avatar_state import save_style
+            key, color = chosen_style
+            self.appearance[key] = color
+            save_style(self.root, self.appearance)
+            self.set_pose("happy", seconds=2, phrase="Visual novo! 🖤")
+            return
         if chosen == sit:
             self.set_pose("sit", seconds=25, phrase="Uma pausa... 🖤")
         elif chosen == stand:
