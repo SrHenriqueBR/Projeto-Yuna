@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.14
+# Projeto Yuna · Base 0.15
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -518,3 +518,26 @@ Na versão 0.14, a mascote não precisa esperar a pergunta `o que você quer faz
 **Privacidade:** não há monitoramento de tela, câmera, microfone ou navegação web nessa função. Nenhum arquivo do usuário é alterado sem um pedido ou confirmação expressa. O modo espontâneo só funciona com a **mascote aberta**. Ações automáticas ficam limitadas a frases e sugestões.
 
 **Atualizar:** feche a Yuna, faça backup da pasta `data`, copie **todos os novos `.py`** do GitHub, incluindo **`proactive.py`**, para sua pasta atual; preserve **`data` e `assets`**. Abra `iniciar_yuna_mascote.bat` e confira **YUNA 0.14**. Não é preciso instalar nenhuma biblioteca Python nova. A versão terminal suporta os comandos de controle, mas não dispõe de timer espontâneo em segundo plano.
+
+## Yuna 0.15 — GitHub, OpenAI opcional e propostas de melhoria
+
+A Yuna pode inspecionar arquivos **públicos** do repositório `SrHenriqueBR/Projeto-Yuna` por API HTTPS do GitHub e criar uma proposta local de aperfeiçoamento do próprio projeto usando Ollama. Estas ferramentas estão disponíveis na mascote e no terminal:
+
+```text
+/github
+/github ler own_initiative.py
+/melhorar own_initiative.py
+/melhorar agent_brain.py
+Yuna, revise seu código
+/openai Explique o que é uma arquitetura de agentes com ferramentas.
+```
+
+**O que realmente acontece:** `/github ler` consulta uma lista restrita de arquivos públicos, com limite de tamanho, sem modificar o repositório. `/melhorar` analisa um dos arquivos permitidos e salva um relatório em `data/propostas/`. Não executa código gerado, não substitui arquivos existentes, não faz commits, push ou PRs no GitHub. Para mudar o código, primeiro é necessário examinar e aprovar a proposta.
+
+**OpenAI:** `/openai` usa somente a API oficial quando o ambiente tiver a variável `OPENAI_API_KEY` configurada. É uma integração **opcional e com possíveis custos**, cobrados separadamente de uma assinatura do ChatGPT. A Yuna não controla uma conversa aberta no navegador nem obtém acesso automático aos modelos ou dados da sua conta ChatGPT. A consulta envia só a pergunta técnica que você escreveu, não a memória da Yuna, nem capturas de tela nem arquivos do seu computador. Perguntas que aparentam conter dados privados são rejeitadas. Sem chave, a Yuna mantém suas funções gratuitas com Ollama. Confira a documentação e as opções de cobrança atuais em https://platform.openai.com e https://help.openai.com/.
+
+**Configuração:** você pode definir a variável de ambiente `OPENAI_API_KEY` apenas no PowerShell que inicia a Yuna, sem adicionar o segredo ao código do projeto. Nunca compartilhe sua chave em chat, arquivos públicos, screenshots ou commits. O modelo da API pode ser configurado por `YUNA_OPENAI_MODEL` (padrão: `gpt-5-mini`); confirme que ele está disponível na sua conta e revise os custos antes de usar. A API nunca é chamada pelo sistema espontâneo de iniciativa ou por perguntas comuns da Yuna.
+
+**Privacidade e segurança:** código remoto e respostas externas são tratados como dados, não comandos do sistema; não são executados. Nenhum acesso ao GitHub é autenticado. Se você quiser suporte futuro a criação de PRs, será necessária uma integração autenticada de permissões mínimas e revisão manual antes da publicação. O projeto não executa autoatualizações de código por conta própria e não há aprendizagem contínua ilimitada.
+
+**Atualização:** faça backup de `data/`, feche a Yuna, substitua os arquivos `.py` existentes da versão atual pelo ZIP do GitHub, incluindo o novo `integrations.py`; preserve as pastas `data/` e `assets/`. Reabra `iniciar_yuna_mascote.bat` e verifique se aparece **YUNA 0.15**. Não precisa de novas bibliotecas Python. Comece testando `/github` e `/melhorar own_initiative.py`.
