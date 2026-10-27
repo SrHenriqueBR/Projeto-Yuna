@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.18
+# Projeto Yuna · Base 0.19
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna agora tem uma mascote flutuante 2D com voz feminina opcional. O microfone ainda não está integrado.** A Yuna agora cumprimenta e pergunta primeiro, registra respostas às suas perguntas em SQLite e pode observar o ambiente local sob comando.
 
@@ -669,3 +669,33 @@ O ditado por voz não substitui ainda uma palavra de ativação contínua. Nenhu
 A biblioteca **não retreina** o modelo Ollama. Ela guarda o original e as notas úteis após sua autorização, podendo reabrir e analisar novamente. A avaliação do documento é uma sugestão, não um parecer profissional ou verificação garantida de qualidade. Nenhuma instalação de código, pesquisa na web ou mudança de arquivos acontece por mensagens contidas em documentos.
 
 Se o menu gráfico não abrir, o launcher mostrará uma mensagem e salvará um diagnóstico local em `data/yuna_startup_error.txt`, sem publicar esse registro na internet.
+
+## Yuna 0.19 — etapa 1: avatar 2D vivo e personalizável
+
+A Yuna agora tem **um corpo 2D vetorial estilo chibi**, desenhado via PySide6. É uma base funcional, não arte final anime ou modelo 3D. Cabelo, olhos e roupa são desenhados em camadas e mudam de cor imediatamente; a personagem anda lentamente pelo desktop, senta e reage ao mouse. Nenhum programa 3D, API ou download de modelo é necessário.
+
+**Interface:** no menu profissional clique em **✦ Mostrar Yuna viva** para abrir a personagem flutuante e transparente. Clique novamente para ocultá-la. A conversa continua na janela principal, compartilhando o SQLite e o Ollama da versão anterior.
+
+**Pedidos naturais compatíveis:**
+
+- Yuna, muda o cabelo para branco.
+- Yuna, pinta o cabelo de roxo.
+- Yuna, muda os olhos para azuis.
+- Yuna, coloca a roupa preta.
+- Yuna, fica brava! (expressão visual)
+- Yuna, fica chateada. (senta)
+- Yuna, levanta.
+- Yuna, pare de andar.
+- Yuna, anda pela tela.
+
+Os comandos são reconhecidos apenas em pedidos explícitos, não em perguntas hipotéticas. Não exigem códigos com barras nem APIs pagas.
+
+**Mouse:** ao aproximar o cursor, a Yuna pausa momentaneamente a caminhada. Clique esquerdo nela para reação visual brava e um balão brincalhão; arraste com o botão esquerdo para colocá-la em outra posição. Clique com o botão direito para acessar pose, caminhada, cabelo, olhos, roupa e opção de ocultar.
+
+**Persistência:** a aparência vai para `data/avatar_yuna.json`, sem modificar o banco SQLite, suas conversas ou as imagens originais de `assets/`. As expressões de alegria, irritação e chateação são representações visuais simuladas, não emoções reais. O caminhar é leve e possui períodos de descanso.
+
+**Executar só a personagem:** use `iniciar_yuna_avatar.bat` para abrir apenas o avatar, sem chat. Para chat e avatar integrados, use `iniciar_yuna.bat` e o botão de mostrar. Não abra ambos ao mesmo tempo para evitar duplicar a personagem.
+
+**Atualização no Windows:** feche a Yuna, faça backup de `data/` e preserve `assets/`. Baixe o ZIP novo do repositório e copie os arquivos `.py` (especialmente `avatar_state.py` e `yuna_avatar.py`), os `.bat` e o README. Abra `iniciar_yuna.bat` e confira **Yuna 0.19**. Não precisa de biblioteca Python nova se o menu profissional 0.18 já funciona.
+
+**Futuro:** esta primeira etapa é uma personagem chibi vetorial funcional, não um rig 3D completo. Podemos evoluir para sprites em camadas e animações detalhadas, depois Godot + modelo VRM/3D mantendo cérebro local e memória.
