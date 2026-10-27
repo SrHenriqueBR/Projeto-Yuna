@@ -14,6 +14,9 @@ class AvatarStateTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
+        self.project_root_patch = patch.object(yuna, "ROOT", self.root)
+        self.project_root_patch.start()
+        self.addCleanup(self.project_root_patch.stop)
         self.memory = yuna.Memory(self.root / "data" / "yuna.db")
 
     def tearDown(self):
