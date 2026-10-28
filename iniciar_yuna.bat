@@ -41,7 +41,8 @@ if errorlevel 1 (
 py -3 -c "import PySide6, docx, openpyxl, pptx, pypdf" >nul 2>nul
 if errorlevel 1 (
     echo A Yuna precisa das bibliotecas do menu e dos documentos.
-    echo Execute: py -3 -m pip install -r requirements-mascote.txt
+    echo Para configurar, abra instalar_yuna.bat nesta pasta.
+    echo Alternativa manual: py -3 -m pip install -r requirements-mascote.txt
     pause
     exit /b 1
 )
