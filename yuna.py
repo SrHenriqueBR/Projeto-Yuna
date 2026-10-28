@@ -31,11 +31,12 @@ from diary import DiaryStore, generate_entry
 from proactive import spontaneous_enabled, set_spontaneous
 from free_apis import handle_hub
 from natural_memory import parse_memory_intent, memory_response
+from model_config import load_selected_model
 from avatar_state import parse_avatar_request, apply_avatar_request
 from integrations import github_overview, github_read, improvement_proposal, consult_openai, SOURCE_ALLOWLIST
 
 ROOT = Path(__file__).resolve().parent
-MODEL = os.environ.get('YUNA_MODEL', 'qwen2.5:3b')
+MODEL = load_selected_model(ROOT)
 SYSTEM = """Você é Yuna, assistente do Projeto Yuna. Fale em português brasileiro natural.
 IDENTIDADE: você é Yuna, sempre. Seu nome é Yuna. Kaizen é a pessoa com quem você conversa e seu criador no Projeto Yuna. Nunca diga que não tem nome próprio ou que se chama Kaizen.
 Quando a pessoa escreve "eu" ou "meu", ela fala dela, não de você.
