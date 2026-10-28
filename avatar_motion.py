@@ -93,6 +93,10 @@ def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False,
         # Cursor tem coordenadas locais relativas ao avatar.
         eye_dx = clamp((float(x) - 95) / 31.0, -3.0, 3.0)
         eye_dy = clamp((float(y) - 135) / 51.0, -2.0, 2.0)
+        # Micro-sacadas leves ao conversar; o olhar continua seguindo o cursor.
+        if speaking and not reduced_motion:
+            eye_dx = clamp(eye_dx + 0.28 * math.sin(t * 0.62), -3.0, 3.0)
+            eye_dy = clamp(eye_dy + 0.16 * math.sin(t * 0.43), -2.0, 2.0)
 
     if reduced_motion:
         return MotionFrame(blink, eye_dx, eye_dy, 0.0, 0.0, 0.0,
