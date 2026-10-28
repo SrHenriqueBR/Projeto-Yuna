@@ -50,5 +50,32 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(c.snapshot.mouth_level, 0.0)
 
 
+    def test_desktop_audio_events_drive_controller(self):
+        import os
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+        try:
+            from PySide6.QtWidgets import QApplication
+            from PySide6.QtMultimedia import QMediaPlayer
+            from yuna_desktop import YunaDesktop
+            from unittest.mock import patch
+        except ImportError:
+            self.skipTest("Qt opcional")
+        app = QApplication.instance() or QApplication([])
+        with patch("yuna_desktop.DesktopWorker.start"):
+            window = YunaDesktop()
+        try:
+            window.voice_busy = True
+            window.playback_state_changed(QMediaPlayer.PlaybackState.PlayingState)
+            self.assertTrue(window.avatar_controller.snapshot.speaking)
+            active = window.avatar_controller.snapshot.speech_id
+            window._stop_avatar_speech()
+            self.assertFalse(window.avatar_controller.snapshot.speaking)
+            self.assertFalse(window._avatar_event(
+                "speech.level", speech_id=active, position_ms=100, amplitude=0.8))
+        finally:
+            window.close()
+            app.processEvents()
+
+
 if __name__ == "__main__":
     unittest.main()
