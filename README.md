@@ -128,6 +128,10 @@ Além das conversas locais, o modo de mascote/terminal mantém comandos como:
 
 Serviços externos têm políticas, disponibilidade e limites próprios. Use variáveis de ambiente como **GEMINI_API_KEY**, **GROQ_API_KEY**, **OPENROUTER_API_KEY**, **OPENAI_API_KEY** ou **ELEVENLABS_API_KEY** só quando precisar, nunca como texto no repositório ou no banco.
 
+## Evolução VTuber (planejamento)
+
+Está disponível o [plano de arquitetura do avatar VTuber](docs/PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **Esses renderizadores novos ainda não estão implementados.** O modo leve permanecerá disponível para máquinas de 8 GB.
+
 ## Estrutura do código
 
 | Parte | Arquivos centrais |
