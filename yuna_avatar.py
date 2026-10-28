@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QWidget
 
 from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
                           ACCESSORIES, SIZES, load_style)
-from avatar_motion import ambient_pose, ease_gaze, frame_at
+from avatar_motion import ambient_pose, ease_gaze, frame_at, blend_frames
 
 
 class YunaAvatar(QWidget):
@@ -35,6 +35,10 @@ class YunaAvatar(QWidget):
         self.bubble_until = 0.0
         self.drag_start = None
         self.tick_count = 0
+        self._previous_motion = None
+        self._last_render_pose = None
+        self._transition_start = 0.0
+        self._transition_from = None
         self.step = 1
         self.x_coordinate = 0.0
         self._eye_cursor = (95.0, 135.0)
@@ -308,6 +312,18 @@ class YunaAvatar(QWidget):
             reduced_motion=self.appearance["reduced_motion"],
             mouth_level=self.mouth_level,
         )
+        # Uma transição de ~240 ms suaviza mudanças bruscas entre gestos.
+        if self._last_render_pose != pose:
+            self._transition_from = self._previous_motion
+            self._transition_start = now
+            self._last_render_pose = pose
+        if self._transition_from is not None and not self.appearance["reduced_motion"]:
+            progress = (now - self._transition_start) / 0.24
+            if progress < 1.0:
+                motion = blend_frames(self._transition_from, motion, progress)
+            else:
+                self._transition_from = None
+        self._previous_motion = motion
         sway = motion.body_bob
         hair = QColor(HAIR[self.appearance["hair"]])
         eyes = QColor(EYES[self.appearance["eyes"]])

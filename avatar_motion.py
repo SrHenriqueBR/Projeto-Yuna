@@ -53,6 +53,22 @@ def ease_gaze(current, target, strength=0.18):
         float(current[1]) + (float(target[1]) - float(current[1])) * alpha,
     )
 
+def smoothstep(value):
+    """Interpolação sem saltos de velocidade, para transições visuais."""
+    x = clamp(float(value), 0.0, 1.0)
+    return x * x * (3.0 - 2.0 * x)
+
+
+def blend_frames(previous, current, progress):
+    """Mistura quadros de animação sem tocar no estado do avatar."""
+    weight = smoothstep(progress)
+    return MotionFrame(**{
+        name: getattr(previous, name) * (1.0 - weight)
+              + getattr(current, name) * weight
+        for name in MotionFrame.__dataclass_fields__
+    })
+
+
 def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False,
              mouth_level=None):
     """Retorna deslocamentos em pixels apropriados para um widget 190x277."""
