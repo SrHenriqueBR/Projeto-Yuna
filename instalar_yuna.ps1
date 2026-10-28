@@ -5,7 +5,9 @@ Pip e Ollama pull somente após confirmação explícita. Não altera PATH globa
 #>
 param([switch]$Diagnostico)
 
-$ErrorActionPreference = "Stop"
+# Native commands such as pip return exit codes; we verify those explicitly.
+# Do not treat their stderr progress/warnings as terminating exceptions on PS 5.1.
+$ErrorActionPreference = "Continue"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $Root
 
