@@ -52,6 +52,19 @@ class MotionTests(unittest.TestCase):
         self.assertLessEqual(abs(walk.hair_sway), 5)
         self.assertTrue(math.isfinite(walk.breath))
 
+    def test_speaking_adds_subtle_head_motion(self):
+        quiet = frame_at(25, "idle", speaking=False)
+        talking = frame_at(25, "idle", speaking=True, mouth_level=0.5)
+        self.assertNotEqual(quiet.tilt, talking.tilt)
+        self.assertLess(abs(talking.tilt - quiet.tilt), 0.56)
+        self.assertNotEqual(quiet.hair_sway, talking.hair_sway)
+
+    def test_reduced_motion_still_disables_microgestures(self):
+        still = frame_at(25, "wave", speaking=True,
+                         reduced_motion=True, mouth_level=0.9)
+        self.assertEqual(still.tilt, 0.0)
+        self.assertEqual(still.hair_sway, 0.0)
+
     def test_optional_reduced_motion_stops_oscillation(self):
         state = frame_at(7, "talk", cursor=(999, 0),
                          speaking=True, reduced_motion=True)
