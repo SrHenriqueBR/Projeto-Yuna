@@ -23,7 +23,7 @@ from document_library import DocumentLibrary, analyze_document, check_source
 from avatar_state import parse_avatar_request
 from yuna_avatar import YunaAvatar
 from self_model import VERSION
-from voice import speak_windows, synthesize_edge, speech_text
+from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -173,9 +173,11 @@ class YunaDesktop(QMainWindow):
         self.from_library = False
         self.last_analysis_path = None
         self.last_analysis = ""
-        self.voice_index = 0
+        # Fala offline por padrão; nunca ativa serviços online sem consentimento.
+        self.voice_index = 1
         self.voice_busy = False
         self.audio_file = None
+        self._audio_levels = []
         self._changing_voice = False
         self._edge_consent = False
         self.microphone_busy = False
@@ -190,6 +192,8 @@ class YunaDesktop(QMainWindow):
         self.player.setAudioOutput(self.audio_output)
         self.audio_output.setVolume(0.85)
         self.player.mediaStatusChanged.connect(self.playback_status)
+        self.player.playbackStateChanged.connect(self.playback_state_changed)
+        self.player.positionChanged.connect(self.playback_position)
         self.player.errorOccurred.connect(self.playback_error)
 
         self.worker.start()
@@ -299,7 +303,11 @@ class YunaDesktop(QMainWindow):
         )
         self.voice_selector.setMinimumWidth(160)
         self.voice_selector.setToolTip("Escolha como a Yuna fala as respostas.")
+        self.voice_selector.setCurrentIndex(1)
         top.addWidget(self.voice_selector)
+        self.voice_test = QPushButton("▶ Testar voz")
+        self.voice_test.setToolTip("Escute um teste e confira a boca da personagem.")
+        top.addWidget(self.voice_test)
         self.microphone_button = QPushButton("🎙  Falar")
         self.microphone_button.setToolTip(
             "Ditado por microfone local, se faster-whisper e sounddevice estiverem instalados."
@@ -381,6 +389,7 @@ class YunaDesktop(QMainWindow):
         self.save_attachment.clicked.connect(self.archive_document)
         self.files_list.itemClicked.connect(self.use_library_document)
         self.voice_selector.currentIndexChanged.connect(self.voice_changed)
+        self.voice_test.clicked.connect(self.test_voice)
         self.microphone_button.clicked.connect(self.request_microphone)
         self.setAcceptDrops(True)
 
@@ -489,9 +498,8 @@ class YunaDesktop(QMainWindow):
                     self.avatar_window.set_pose(
                         "happy", 3, "Visual atualizado! 🖤"
                     )
-            elif not is_document and self.avatar_window.isVisible():
-                # Mostra uma reação curta mesmo sem áudio habilitado.
-                self.avatar_window.set_pose("talk", seconds=2.5)
+            # A personagem só anima a boca quando a reprodução começa de verdade.
+            # Não simular "talk" se a voz estiver desativada ou falhar.
         if not is_document:
             self.last_avatar_request = None
         if is_document:
@@ -662,6 +670,17 @@ class YunaDesktop(QMainWindow):
              "Voz Edge • serviço externo autorizado"][index]
         )
 
+    def test_voice(self):
+        if self.voice_index == 0:
+            self.status.setText("Escolha uma voz acima para iniciar o teste.")
+            return
+        if self.voice_busy:
+            self.status.setText("A Yuna já está falando.")
+            return
+        if self.avatar_window is None:
+            self.toggle_avatar()
+        self.say("Opa, Kaizen! Agora minha voz e minha boca estão juntas. Hehe!")
+
     def say(self, text, private=False):
         if self.voice_index == 0 or self.voice_busy:
             return
@@ -672,14 +691,17 @@ class YunaDesktop(QMainWindow):
         if not speech_text(text):
             return
         self.voice_busy = True
-        if self.avatar_window is not None and self.avatar_window.isVisible():
-            self.avatar_window.set_speaking(True)
+        self.status.setText("Preparando a voz...")
+        # A boca permanece parada durante a síntese; só começa com o player.
 
         def speak():
             try:
                 if mode == 1:
-                    speak_windows(text)
-                    self.signals.audio_error.emit("")
+                    result = synthesize_windows(text)
+                    if result:
+                        self.signals.audio_ready.emit(str(result))
+                    else:
+                        self.signals.audio_error.emit("")
                 elif mode == 2:
                     result = synthesize_edge(text)
                     if result:
@@ -692,9 +714,30 @@ class YunaDesktop(QMainWindow):
 
     def play_audio(self, path):
         self.audio_file = Path(path)
+        self._audio_levels = (
+            wave_envelope(self.audio_file)
+            if self.audio_file.suffix.lower() == ".wav" else []
+        )
         self.player.setSource(QUrl.fromLocalFile(str(self.audio_file)))
         self.player.play()
-        self.status.setText("Yuna está falando...")
+        self.status.setText("Iniciando reprodução da voz...")
+
+    def playback_state_changed(self, state):
+        playing = (state == QMediaPlayer.PlaybackState.PlayingState
+                   and self.voice_busy)
+        if self.avatar_window is not None:
+            self.avatar_window.set_speaking(playing)
+        if playing:
+            self.status.setText("Yuna está falando...")
+
+    def playback_position(self, position):
+        if (self.player.playbackState() !=
+                QMediaPlayer.PlaybackState.PlayingState):
+            return
+        if self.avatar_window is not None and self.avatar_window.isVisible():
+            self.avatar_window.set_mouth_level(
+                mouth_level_at(self._audio_levels, position)
+            )
 
     def playback_status(self, value):
         if value == QMediaPlayer.MediaStatus.EndOfMedia:
@@ -713,6 +756,7 @@ class YunaDesktop(QMainWindow):
         self.voice_error(detail or "A reprodução de voz falhou.")
 
     def cleanup_audio(self):
+        self._audio_levels = []
         if self.audio_file:
             try:
                 self.audio_file.unlink(missing_ok=True)
@@ -722,6 +766,7 @@ class YunaDesktop(QMainWindow):
 
     def voice_error(self, error):
         self.voice_busy = False
+        self._audio_levels = []
         if self.avatar_window is not None:
             self.avatar_window.set_speaking(False)
         if error:
