@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.24"
+VERSION = "0.25"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -74,6 +74,7 @@ def about(memory, model):
             "exibir piscadinha, risada, timidez e soneca com expressões 2D temporárias",
             "intercalar passeio, pausa e descanso em ciclos determinísticos sem rede",
             "suavizar o olhar em direção ao cursor e permitir animações reduzidas",
+            "sincronizar o movimento da boca com reprodução real da voz, usando amplitude do WAV offline",
             "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
             "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
             "lembrar preferências e perguntas respondidas",

@@ -1,4 +1,4 @@
-# Projeto Yuna · Base 0.24
+# Projeto Yuna · Base 0.25
 
 Assistente pessoal local para Windows: conversa em português, memória persistente, busca de arquivos, abertura de aplicativos e consultas do computador. O modelo local agora pode interpretar pedidos e escolher uma ferramenta implementada. **A Yuna tem um avatar flutuante 2D, interface de chat e voz feminina opcional. No Yuna Desktop, o ditado por microfone é opcional e iniciado manualmente.** A Yuna pode iniciar a conversa, memorizar respostas autorizadas e consultar o ambiente local sob comando.
 
@@ -791,3 +791,21 @@ Quando reduzidas, a personagem não passeia pela tela nem oscila o corpo, cabelo
 ### Separação de responsabilidades
 
 O código de comportamento e movimento permanece em `avatar_motion.py`, independente de PySide6. O módulo calcula poses ambientais e interpolação do olhar. `yuna_avatar.py` continua responsável por desenhar e mover a janela. Isso prepara uma futura troca de renderizador (por exemplo, um avatar 3D) sem afirmar que o sistema já suporta 3D. Os testes do GitHub não substituem a verificação visual no notebook Windows.
+
+## Yuna 0.25 — A personagem fala com a boca acompanhando a voz
+
+No **Yuna Desktop**, a opção inicial agora é **🔊 Windows offline** (sem internet). O menu superior também oferece **▶ Testar voz**, para ouvir uma frase curta e ver o movimento da boca na mascote. A interface principal deve ficar aberta; apenas o avatar flutuante não é uma janela de chat.
+
+As frases respondidas são sintetizadas em um **WAV temporário local** pelo sistema de voz do Windows. A interface reproduz esse WAV com `QMediaPlayer`, extrai níveis de volume (RMS) para movimentar a boca e **só inicia a expressão de fala quando a reprodução realmente começar**, encerrando-a quando terminar ou ocorrer um erro. Durante a preparação do áudio, a boca permanece parada. A intensidade do WAV acompanha o ritmo da voz, incluindo silêncios, mas ainda **não distingue fonemas nem faz lip-sync 3D**.
+
+Ao selecionar **🔊 Edge online**, mediante confirmação explícita, a Yuna usa `edge-tts` para gerar MP3. Nesse caso, a boca acompanha o período em que o MP3 está tocando, com ritmo aproximado; não há extração de amplitude para MP3 nesta etapa. Para instalar o Edge TTS opcional, na pasta do projeto:
+
+```powershell
+py -3 -m pip install edge-tts
+```
+
+A síntese online envia o texto falado a um serviço externo, somente com consentimento. **Sem voz** continua disponível. Se não existir uma voz feminina pt-BR acessível via System.Speech no Windows, a Yuna mostra um aviso de voz indisponível no topo; instale uma voz compatível no Windows ou, se aceitar enviar o texto ao serviço, escolha Edge online. A seleção offline padrão não instala vozes automaticamente nem transfere texto para servidores.
+
+O arquivo WAV temporário é removido ao terminar a reprodução ou ao fechar a interface. Não há gravação do microfone para sincronizar lábios, nem leitura da tela ou das janelas de outros programas.
+
+**Para atualizar:** feche a Yuna, faça backup privado de `data/`, substitua todos os arquivos `.py` da instalação com os do ZIP novo (em especial `yuna_desktop.py`, `yuna_avatar.py`, `avatar_motion.py`, `voice.py`, `self_model.py`) e mantenha a sua pasta `data/` original. Abra `iniciar_yuna.bat`; na janela de conversa, clique em **▶ Testar voz**.

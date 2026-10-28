@@ -5,13 +5,16 @@ Edge usa edge-tts (serviço online), com ritmo e tom um pouco mais jovens.
 Nenhum texto é enviado a um provedor externo sem ativar o modo online.
 """
 import asyncio
+from array import array
 import json
+import math
 import os
 from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+import wave
 import tempfile
 import urllib.error
 import urllib.request
@@ -77,6 +80,107 @@ def speak_windows(text):
         raise RuntimeError(f"Não consegui reproduzir a voz offline: {exc}") from exc
     if result.returncode:
         raise RuntimeError(result.stderr.strip()[:300] or "Voz offline indisponível.")
+
+
+# O modo Yuna Desktop gera WAV local para sincronizar boca e reprodução
+# no mesmo player. O Speak() original permanece para usos antigos da mascote.
+WINDOWS_WAV_SCRIPT = WINDOWS_SCRIPT.replace(
+    'if (-not [string]::IsNullOrWhiteSpace($text)) { $speaker.Speak($text) }',
+    """if (-not [string]::IsNullOrWhiteSpace($text)) {
+    $destination = [Environment]::GetEnvironmentVariable('YUNA_LOCAL_WAV_PATH')
+    if ([string]::IsNullOrWhiteSpace($destination)) { throw 'Destino WAV ausente.' }
+    try {
+        $speaker.SetOutputToWaveFile($destination)
+        $speaker.Speak($text)
+    } finally {
+        $speaker.SetOutputToNull()
+    }
+}"""
+)
+
+
+def synthesize_windows(text):
+    """Voz local em WAV temporário; não exige rede nem outra biblioteca."""
+    clean = speech_text(text)
+    if not clean:
+        return None
+    if os.name != "nt":
+        raise RuntimeError("A voz offline exige Windows.")
+    ps = Path(os.environ.get("SystemRoot", r"C:\Windows")) / (
+        "System32/WindowsPowerShell/v1.0/powershell.exe"
+    )
+    with tempfile.NamedTemporaryFile(
+            prefix="yuna_local_", suffix=".wav", delete=False) as fp:
+        path = Path(fp.name)
+    try:
+        env = os.environ.copy()
+        # O destino é passado apenas pelo ambiente, nunca interpolado em código.
+        env["YUNA_LOCAL_WAV_PATH"] = str(path)
+        result = subprocess.run(
+            [str(ps), "-NoLogo", "-NoProfile", "-NonInteractive",
+             "-Command", WINDOWS_WAV_SCRIPT],
+            input=clean, text=True, capture_output=True, encoding="utf-8",
+            errors="replace", timeout=90, shell=False, env=env,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if result.returncode:
+            raise RuntimeError(
+                result.stderr.strip()[:300] or "Voz offline indisponível."
+            )
+        if path.stat().st_size <= 44:
+            raise RuntimeError("A voz do Windows não gerou um áudio WAV válido.")
+        return path
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        path.unlink(missing_ok=True)
+        raise RuntimeError(f"Não consegui gerar a voz offline: {exc}") from exc
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+
+
+def wave_envelope(path, interval_ms=50):
+    """Níveis RMS aproximados do áudio PCM, usados só para mover a boca.
+
+    Não armazena o conteúdo falado ou transcreve o áudio. WAV de 16 bits
+    permite envelope fiel ao ritmo, sem dependências extras em máquinas de 8 GB.
+    Em outros formatos devolve [] e a interface usa animação rítmica.
+    """
+    levels = []
+    try:
+        with wave.open(str(path), "rb") as wav:
+            width = wav.getsampwidth()
+            channels = wav.getnchannels()
+            rate = wav.getframerate()
+            if width != 2 or not (1 <= channels <= 2) or rate <= 0:
+                return []
+            frames = max(1, int(rate * interval_ms / 1000))
+            for _ in range(3000):
+                chunk = wav.readframes(frames)
+                if not chunk:
+                    break
+                samples = array("h")
+                samples.frombytes(chunk[:len(chunk) - len(chunk) % 2])
+                if sys.byteorder != "little":
+                    samples.byteswap()
+                if not samples:
+                    levels.append(0.0)
+                    continue
+                subset = samples[::max(1, len(samples) // 160)]
+                rms = math.sqrt(sum(float(v) ** 2 for v in subset) / len(subset))
+                levels.append(min(1.0, max(0.0, (rms - 180) / 3500)))
+    except (OSError, ValueError, EOFError, wave.Error):
+        return []
+    return levels
+
+
+def mouth_level_at(levels, position_ms, interval_ms=50):
+    """Nível de abertura [0, 1] guiado pela posição real do player."""
+    if not levels or position_ms < 0:
+        return None
+    index = max(0, int(position_ms) // interval_ms)
+    if index >= len(levels):
+        return 0.0
+    return max(0.0, min(1.0, float(levels[index])))
 
 
 async def _edge_save(text, destination):

@@ -30,6 +30,7 @@ class YunaAvatar(QWidget):
         self.pose = "idle"
         self.pose_until = 0.0
         self.speaking = False
+        self.mouth_level = None
         self.bubble = ""
         self.bubble_until = 0.0
         self.drag_start = None
@@ -93,10 +94,19 @@ class YunaAvatar(QWidget):
     def set_speaking(self, active):
         """Ligada ao ciclo real de áudio; não presume microfone nem vê a tela."""
         self.speaking = bool(active)
+        if not active:
+            self.mouth_level = None
         if not active and self.pose == "talk":
             # A voz terminou: não manter boca animada por um prazo antigo.
             self.pose_until = 0.0
         self.update()
+
+    def set_mouth_level(self, level):
+        """Recebe nível de áudio apenas enquanto a mídia está tocando."""
+        if self.speaking:
+            self.mouth_level = None if level is None else max(
+                0.0, min(1.0, float(level)))
+            self.update()
 
     def visible_pose(self):
         # Expressões solicitadas prevalecem sobre o TTS por poucos segundos.
@@ -296,6 +306,7 @@ class YunaAvatar(QWidget):
         motion = frame_at(
             self.tick_count, pose, self._eye_cursor, self.speaking,
             reduced_motion=self.appearance["reduced_motion"],
+            mouth_level=self.mouth_level,
         )
         sway = motion.body_bob
         hair = QColor(HAIR[self.appearance["hair"]])

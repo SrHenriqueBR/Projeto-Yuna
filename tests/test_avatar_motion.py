@@ -97,12 +97,16 @@ class AvatarVisualTests(unittest.TestCase):
             window.toggle_avatar()
             self.app.processEvents()
             self.assertTrue(window.avatar_window.isVisible())
+            window.voice_index = 0  # Não animar lábios sem áudio.
             window.show_answer("Uma resposta de teste.", False)
-            self.assertEqual(window.avatar_window.visible_pose(), "talk")
+            self.assertFalse(window.avatar_window.speaking)
             window.voice_index = 1  # Windows offline TTS
             with patch("yuna_desktop.Thread") as thread:
                 window.say("Teste de sincronização.")
                 thread.return_value.start.assert_called_once()
+            self.assertFalse(window.avatar_window.speaking)
+            from PySide6.QtMultimedia import QMediaPlayer
+            window.playback_state_changed(QMediaPlayer.PlaybackState.PlayingState)
             self.assertTrue(window.avatar_window.speaking)
             window.voice_error("")
             self.assertFalse(window.avatar_window.speaking)
