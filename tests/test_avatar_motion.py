@@ -7,13 +7,24 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from avatar_motion import frame_at
+from avatar_motion import frame_at, blend_frames
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 QT = importlib.util.find_spec("PySide6") is not None
 
 
 class MotionTests(unittest.TestCase):
+    def test_blend_frames_has_smooth_endpoints(self):
+        idle = frame_at(10, "idle")
+        walking = frame_at(10, "walk")
+        self.assertEqual(blend_frames(idle, walking, 0), idle)
+        self.assertEqual(blend_frames(idle, walking, 1), walking)
+        halfway = blend_frames(idle, walking, 0.5)
+        self.assertAlmostEqual(halfway.body_bob,
+                               (idle.body_bob + walking.body_bob) / 2)
+        self.assertEqual(blend_frames(idle, walking, -2), idle)
+        self.assertEqual(blend_frames(idle, walking, 2), walking)
+
     def test_blinks_periodically_without_external_input(self):
         self.assertEqual(frame_at(1, "idle").blink, 1.0)
         self.assertEqual(frame_at(2, "idle").blink, 1.0)
