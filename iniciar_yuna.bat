@@ -7,7 +7,7 @@ if not exist "yuna_launcher.py" (
     exit /b 1
 )
 if not exist "avatar_state.py" (
-    echo Falta avatar_state.py. Atualize todos os arquivos para Yuna 0.19.
+    echo Falta avatar_state.py. Atualize todos os arquivos .py do Projeto Yuna.
     pause
     exit /b 1
 )
@@ -23,6 +23,12 @@ if not exist "yuna_desktop.py" (
 )
 if not exist "document_library.py" (
     echo Falta document_library.py. Atualize os arquivos .py do projeto.
+    pause
+    exit /b 1
+)
+where py >nul 2>nul
+if errorlevel 1 (
+    echo O comando py nao foi encontrado. Instale o Python com o Python Launcher.
     pause
     exit /b 1
 )
