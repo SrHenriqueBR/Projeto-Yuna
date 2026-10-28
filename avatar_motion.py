@@ -53,7 +53,8 @@ def ease_gaze(current, target, strength=0.18):
         float(current[1]) + (float(target[1]) - float(current[1])) * alpha,
     )
 
-def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False):
+def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False,
+             mouth_level=None):
     """Retorna deslocamentos em pixels apropriados para um widget 190x277."""
     tick = max(0, int(tick))
     t = tick * .08
@@ -93,9 +94,16 @@ def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False):
     if pose in ("sit", "sleepy"):
         body_bob = .2 * math.sin(t)
     mouth_open = 0.0
-    if speaking or pose == "talk":
-        # A abertura acompanha o ritmo de fala de forma aproximada,
-        # sem alegar sincronização fonética exata.
+    if speaking:
+        if mouth_level is None:
+            # MP3 sem amplitude decodificada: ritmo aproximado, mas só durante
+            # reprodução confirmada pelo player.
+            mouth_open = 2.0 + 3.0 * abs(math.sin(t * 13))
+        else:
+            mouth_open = max(0.0, min(1.0, float(mouth_level))) * 6.0
+    elif pose == "talk" and mouth_level is None:
+        # Compatibilidade de pré-visualização; a interface não solicita
+        # mais a pose 'talk' antes do áudio real.
         mouth_open = 2.0 + 3.0 * abs(math.sin(t * 13))
     tilt = (1.2 * math.sin(t * 0.8) + .4 * math.sin(t * .29)
             if pose in ("idle", "happy", "shy", "wink") else 0.0)
