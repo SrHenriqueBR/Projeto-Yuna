@@ -1,37 +1,41 @@
-# Projeto Yuna — versão 0.25
+# Projeto Yuna — versão 0.26
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador e avatar chibi **2D**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
-## Instalação do zero (Windows)
+## Instalação em outro Windows — assistente 0.26
 
-1. Instale o **Python 3.11 ou 3.12 de 64 bits**, incluindo **Python Launcher** e PATH: https://www.python.org/downloads/windows/
-2. Instale o **Ollama**: https://ollama.com/download/windows
-3. Abra o PowerShell e baixe o modelo:
+1. Instale o **Python 3.11 ou 3.12 de 64 bits** com o **Python Launcher**: https://www.python.org/downloads/windows/
+2. Instale e abra o **Ollama**: https://ollama.com/download/windows
+3. No GitHub, use **Code → Download ZIP**, extraia e execute **`instalar_yuna.bat`** com dois cliques, **sem abrir como administrador**.
+4. Siga o assistente. Ele verifica Python, bibliotecas, Ollama e memória RAM, pergunta antes de instalar pacotes ou baixar modelos, permite criar um atalho e pode iniciar a Yuna.
+5. Depois use **`iniciar_yuna.bat`** normalmente; a conversa ocorre na janela **Conversa com a Yuna** e o avatar é opcional.
 
-~~~powershell
-ollama pull qwen2.5:3b
-~~~
+O assistente é um **script de instalação guiada (.bat + PowerShell)**, ainda **não um instalador .exe ou MSI**. Não instala Python ou Ollama automaticamente nem exige elevação. Se faltar algum dos dois, mostra o endereço oficial e orienta a instalação. Pacotes Python são baixados do índice configurado no seu pip, somente após autorização. O download do modelo é feito pelo próprio Ollama, também com confirmação.
 
-4. Baixe o ZIP do repositório em **Code → Download ZIP**, extraia e abra o PowerShell **dentro da pasta extraída**.
-5. Instale as bibliotecas do menu e dos documentos:
+### Computador com 8 GB de RAM
+
+O instalador recomenda **`qwen2.5:1.5b`** para até 8 GB, mas você pode manter **`qwen2.5:3b`** se preferir melhor capacidade e aceitar mais uso de memória. O programa salva apenas essa escolha em **`data/modelo_yuna.txt`**, sem apagar o banco SQLite. Usuários avançados podem continuar definindo a variável **`YUNA_MODEL`**, que tem prioridade. Em instalações antigas, sem essa escolha, o padrão continua 3B.
+
+Para descobrir o que falta sem baixar nada, execute **`diagnosticar_yuna.bat`**. O diagnóstico consulta o ambiente e não instala bibliotecas, modelos ou atalhos.
+
+### Instalação manual (alternativa)
+
+Abra PowerShell **na pasta extraída**, não em `C:\Windows\System32`:
 
 ~~~powershell
 py -3 -m pip install -r requirements-mascote.txt
+ollama pull qwen2.5:3b
 ~~~
 
-6. Inicie **iniciar_yuna.bat**. O botão **Mostrar Yuna viva** abre a personagem; o chat fica na janela **Conversa com a Yuna**.
-
-Se a Yuna não se conectar ao modelo, verifique se o Ollama está aberto. Quando necessário, execute **ollama serve** em outra janela. Para testar o modelo isoladamente: **ollama run qwen2.5:3b**.
-
-**Computadores com 8 GB de RAM:** o modelo 3B pode ser lento, especialmente com muitos programas abertos. A interface e o avatar 2D são relativamente leves; não é necessário baixar um modelo maior. Alternativas menores exigem ajustar a variável YUNA_MODEL.
+Se o Ollama não responder, abra o aplicativo; se necessário, execute **`ollama serve`** em outro terminal. Para testar isoladamente: **`ollama run qwen2.5:3b`**. Se aparecer `py não reconhecido`, reinstale o Python com Python Launcher e abra um novo terminal.
 
 ## Como atualizar sem perder as memórias
 
 1. Feche todas as janelas da Yuna e copie sua pasta **data/** para um backup privado.
 2. Baixe e extraia a nova versão em outra pasta.
-3. Atualize **todos os arquivos .py**, os arquivos .bat mantidos e os arquivos requirements da instalação antiga. Não copie uma seleção de módulos de versões diferentes.
+3. Atualize **todos os arquivos .py**, os arquivos .bat, o novo **instalar_yuna.ps1** e os arquivos requirements da instalação antiga. Não copie uma seleção de módulos de versões diferentes.
 4. **Preserve data/ e assets/** da sua instalação; não as substitua pelo ZIP. Reabra **iniciar_yuna.bat**.
 
 A memória principal fica em **data/yuna.db**, e as preferências visuais ficam em **data/avatar_yuna.json**. A cópia **data/conhecimentos.json** não substitui o banco SQLite. **Não envie data/ para GitHub.**
@@ -40,6 +44,8 @@ A memória principal fica em **data/yuna.db**, e as preferências visuais ficam 
 
 | Arquivo | Quando usar |
 | --- | --- |
+| **instalar_yuna.bat** | Instalação assistida com diagnóstico, escolha de modelo e criação opcional de atalho |
+| **diagnosticar_yuna.bat** | Diagnóstico somente leitura, sem baixar nada |
 | **iniciar_yuna.bat** | **Padrão:** janela de conversa, biblioteca de documentos, voz e avatar 2D opcional |
 | **iniciar_yuna_mascote.bat** | Interface flutuante legada com funcionalidades específicas (diário, criação de arquivos, iniciativas e provedores opcionais) |
 | **iniciar_yuna_terminal.bat** | Modo de texto para diagnóstico, especialmente quando a interface gráfica falhar |

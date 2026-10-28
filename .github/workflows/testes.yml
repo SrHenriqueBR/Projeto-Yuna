@@ -15,6 +15,16 @@ jobs:
           python-version: '3.11'
       - name: Verificar sintaxe
         run: python -m compileall -q .
+      - name: Validar sintaxe do instalador Windows (PowerShell 5.1)
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD "instalar_yuna.ps1"), [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
       - name: Instalar bibliotecas de documentos e interface PySide6
         run: python -m pip install -r requirements-mascote.txt
       - name: Executar testes locais (Qt offscreen)
