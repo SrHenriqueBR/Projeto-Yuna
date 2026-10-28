@@ -121,8 +121,17 @@ def frame_at(tick, pose, cursor=None, speaking=False, reduced_motion=False,
         # Compatibilidade de pré-visualização; a interface não solicita
         # mais a pose 'talk' antes do áudio real.
         mouth_open = 2.0 + 3.0 * abs(math.sin(t * 13))
-    tilt = (1.2 * math.sin(t * 0.8) + .4 * math.sin(t * .29)
-            if pose in ("idle", "happy", "shy", "wink") else 0.0)
+    # Microgestos lentos e determinísticos: pequenos movimentos de cabeça
+    # enquanto fala e leve inclinação em reações, sem tremores rápidos.
+    if pose in ("idle", "happy", "shy", "wink"):
+        tilt = 1.2 * math.sin(t * 0.8) + .4 * math.sin(t * .29)
+    elif pose in ("surprised", "wave"):
+        tilt = 1.0 * math.sin(t * 0.55)
+    else:
+        tilt = 0.0
+    if speaking:
+        tilt += 0.55 * math.sin(t * 0.65)
+        hair_sway += 0.3 * math.sin(t * 1.2)
 
     return MotionFrame(blink, eye_dx, eye_dy, hair_sway, breath,
                        body_bob, mouth_open, tilt)
