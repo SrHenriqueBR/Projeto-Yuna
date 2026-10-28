@@ -25,6 +25,7 @@ from yuna_avatar import YunaAvatar
 from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from avatar_controller import AvatarController
+from avatar_reactions import reaction_for_text
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -507,6 +508,14 @@ class YunaDesktop(QMainWindow):
                     self.avatar_window.set_pose(
                         "happy", 3, "Visual atualizado! 🖤"
                     )
+            elif not is_document:
+                # Gesto leve e opcional, só quando não há comando explícito.
+                reaction = reaction_for_text(answer)
+                if reaction is not None:
+                    pose, emotion = reaction
+                    self._avatar_event("avatar.pose", pose=pose)
+                    self._avatar_event("avatar.emotion", emotion=emotion, intensity=0.65)
+                    self.avatar_window.set_pose(pose, 3.5)
             # A personagem só anima a boca quando a reprodução começa de verdade.
             # Não simular "talk" se a voz estiver desativada ou falhar.
         if not is_document:
