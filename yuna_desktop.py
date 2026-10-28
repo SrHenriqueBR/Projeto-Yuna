@@ -24,6 +24,7 @@ from avatar_state import parse_avatar_request
 from yuna_avatar import YunaAvatar
 from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
+from avatar_controller import AvatarController
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -169,6 +170,10 @@ class YunaDesktop(QMainWindow):
         self.setStyleSheet(STYLE)
         self.pending_path = None
         self.avatar_window = None
+        self.avatar_controller = AvatarController()
+        self._avatar_event_sequence = 0
+        self._speech_generation = 0
+        self._active_speech_id = None
         self.last_avatar_request = None
         self.from_library = False
         self.last_analysis_path = None
@@ -722,22 +727,44 @@ class YunaDesktop(QMainWindow):
         self.player.play()
         self.status.setText("Iniciando reprodução da voz...")
 
+    def _avatar_event(self, name, **payload):
+        self._avatar_event_sequence += 1
+        return self.avatar_controller.dispatch(
+            name, sequence=self._avatar_event_sequence, **payload
+        )
+
+    def _stop_avatar_speech(self):
+        if self._active_speech_id is not None:
+            self._avatar_event("speech.interrupted", speech_id=self._active_speech_id)
+            self._active_speech_id = None
+        if self.avatar_window is not None:
+            self.avatar_window.set_speaking(False)
+
     def playback_state_changed(self, state):
         playing = (state == QMediaPlayer.PlaybackState.PlayingState
                    and self.voice_busy)
-        if self.avatar_window is not None:
-            self.avatar_window.set_speaking(playing)
         if playing:
+            if self._active_speech_id is None:
+                self._speech_generation += 1
+                self._active_speech_id = str(self._speech_generation)
+                self._avatar_event("speech.started", speech_id=self._active_speech_id)
+            if self.avatar_window is not None:
+                self.avatar_window.set_speaking(True)
             self.status.setText("Yuna está falando...")
+        else:
+            self._stop_avatar_speech()
 
     def playback_position(self, position):
         if (self.player.playbackState() !=
                 QMediaPlayer.PlaybackState.PlayingState):
             return
-        if self.avatar_window is not None and self.avatar_window.isVisible():
-            self.avatar_window.set_mouth_level(
-                mouth_level_at(self._audio_levels, position)
-            )
+        if self._active_speech_id is None:
+            return
+        level = mouth_level_at(self._audio_levels, position)
+        if self._avatar_event("speech.level", speech_id=self._active_speech_id,
+                              position_ms=int(position), amplitude=level):
+            if self.avatar_window is not None and self.avatar_window.isVisible():
+                self.avatar_window.set_mouth_level(level)
 
     def playback_status(self, value):
         if value == QMediaPlayer.MediaStatus.EndOfMedia:
@@ -745,8 +772,7 @@ class YunaDesktop(QMainWindow):
             self.player.setSource(QUrl())
             self.cleanup_audio()
             self.voice_busy = False
-            if self.avatar_window is not None:
-                self.avatar_window.set_speaking(False)
+            self._stop_avatar_speech()
             self.status.setText("Pronta • conversa local")
 
     def playback_error(self, error, detail):
@@ -767,8 +793,7 @@ class YunaDesktop(QMainWindow):
     def voice_error(self, error):
         self.voice_busy = False
         self._audio_levels = []
-        if self.avatar_window is not None:
-            self.avatar_window.set_speaking(False)
+        self._stop_avatar_speech()
         if error:
             self.status.setText("Voz indisponível: " + error[:180])
         else:
