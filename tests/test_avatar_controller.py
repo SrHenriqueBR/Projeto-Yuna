@@ -50,6 +50,20 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(c.snapshot.mouth_level, 0.0)
 
 
+    def test_pose_and_emotion_are_independent_of_speech(self):
+        c = AvatarController()
+        self.assertTrue(c.dispatch("avatar.pose", sequence=1, pose="wave"))
+        self.assertTrue(c.dispatch("avatar.emotion", sequence=2,
+                                   emotion="happy", intensity=0.8))
+        self.assertEqual(c.snapshot.pose, "wave")
+        self.assertEqual(c.snapshot.emotion, "happy")
+        self.assertEqual(c.snapshot.intensity, 0.8)
+        self.assertFalse(c.snapshot.speaking)
+        c.dispatch("speech.started", sequence=3, speech_id="clip")
+        self.assertEqual(c.snapshot.pose, "wave")
+        c.dispatch("speech.ended", sequence=4, speech_id="clip")
+        self.assertEqual(c.snapshot.pose, "wave")
+
     def test_desktop_audio_events_drive_controller(self):
         import os
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
