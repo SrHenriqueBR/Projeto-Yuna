@@ -496,10 +496,14 @@ class YunaDesktop(QMainWindow):
                             "shy": "E-ei! ✨", "sleepy": "Zzz...",
                             "wake": "Acordei! 🖤",
                         }
+                        self._avatar_event("avatar.pose", pose=chosen_pose)
                         self.avatar_window.set_pose(
                             chosen_pose, seconds, phrases.get(pose, "")
                         )
                 else:
+                    self._avatar_event("avatar.pose", pose="happy")
+                    self._avatar_event("avatar.emotion", emotion="happy",
+                                       intensity=0.8)
                     self.avatar_window.set_pose(
                         "happy", 3, "Visual atualizado! 🖤"
                     )
