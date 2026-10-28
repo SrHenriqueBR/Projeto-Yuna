@@ -52,6 +52,17 @@ class MotionTests(unittest.TestCase):
         self.assertLessEqual(abs(walk.hair_sway), 5)
         self.assertTrue(math.isfinite(walk.breath))
 
+    def test_speaking_eye_attention_stays_bounded(self):
+        for tick in (0, 10, 35, 80, 120):
+            moving = frame_at(tick, "idle", cursor=(50000, -50000),
+                              speaking=True, mouth_level=0.5)
+            self.assertLessEqual(abs(moving.eye_dx), 3.0)
+            self.assertLessEqual(abs(moving.eye_dy), 2.0)
+        still = frame_at(35, "idle", cursor=(95, 135), speaking=True,
+                         reduced_motion=True)
+        self.assertEqual(still.eye_dx, 0.0)
+        self.assertEqual(still.eye_dy, 0.0)
+
     def test_speaking_adds_subtle_head_motion(self):
         quiet = frame_at(25, "idle", speaking=False)
         talking = frame_at(25, "idle", speaking=True, mouth_level=0.5)
