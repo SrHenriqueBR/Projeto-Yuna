@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#11101b" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Yuna 3D — VRM experimental</title>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="mark">✦</span><div><strong>YUNA <span class="accent">3D</span></strong><small>PROJETO YUNA · PROTÓTIPO VRM</small></div></div>
+      <div class="top-actions"><span class="pill" id="renderStatus">Prévia geométrica</span><label class="import" for="modelInput">Importar modelo .VRM</label><input type="file" id="modelInput" accept=".vrm" aria-label="Selecionar modelo VRM local" hidden></div>
+    </header>
+    <main>
+      <div id="stage" class="stage" aria-label="Visualização 3D do avatar"></div>
+      <div class="hint">Arraste o mouse para girar · Roda para aproximar · Mova o cursor para mudar o olhar</div>
+      <aside class="controls" aria-label="Controles do avatar">
+        <div class="eyebrow">ESTÚDIO EXPERIMENTAL</div>
+        <h1>Uma Yuna<br><em>com presença.</em></h1>
+        <p>Modelo VRM local, movimento suave e expressões. Nenhuma câmera ou microfone é ativado.</p>
+        <div class="section-label">EXPRESSÕES</div>
+        <div id="poses" class="pose-grid">
+          <button data-pose="idle" class="selected">Neutra</button>
+          <button data-pose="happy">Feliz</button>
+          <button data-pose="curious">Curiosa</button>
+          <button data-pose="surprised">Surpresa</button>
+          <button data-pose="shy">Tímida</button>
+          <button data-pose="wave">Acenar</button>
+        </div>
+        <div class="section-label">MOVIMENTOS</div>
+        <label class="setting"><span>Economizar movimento</span><input id="reducedMotion" type="checkbox"></label>
+        <label class="setting"><span>Limite de FPS</span><select id="fps"><option value="30">30 FPS</option><option value="60">60 FPS</option></select></label>
+        <label class="setting"><span>Prévia da fala <small>(demonstração)</small></span><input id="mouth" type="range" min="0" max="100" value="0" aria-label="Abertura de boca para demonstração"></label>
+        <button id="resetCamera" class="secondary">Redefinir câmera</button>
+        <div id="message" class="message" role="status" aria-live="polite">Carregue um arquivo VRM seu para testar com um personagem rigado.</div>
+      </aside>
+    </main>
+    <footer>VRM carregado apenas nesta aba · A Yuna 2D continua independente · Não inclua modelos sem licença</footer>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
