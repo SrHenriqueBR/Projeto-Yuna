@@ -217,6 +217,9 @@ class YunaAvatar(QWidget):
         wink_action = menu.addAction("Dar piscadinha 😉")
         laugh_action = menu.addAction("Dar risada")
         shy_action = menu.addAction("Ficar tímida")
+        curious_action = menu.addAction("Ficar curiosa 🤔")
+        surprised_action = menu.addAction("Mostrar surpresa 😮")
+        happy_action = menu.addAction("Sorrir 😊")
         sleep_action = menu.addAction("Tirar soneca")
         wake_action = menu.addAction("Acordar")
         pause = menu.addAction("Pausar caminhada" if self.appearance["walking"]
@@ -277,6 +280,12 @@ class YunaAvatar(QWidget):
             self.set_pose("laugh", seconds=5, phrase="Hahaha! 🖤")
         elif chosen == shy_action:
             self.set_pose("shy", seconds=7, phrase="E-ei! ✨")
+        elif chosen == curious_action:
+            self.set_pose("curious", seconds=6, phrase="Hmm... interessante! 🤔")
+        elif chosen == surprised_action:
+            self.set_pose("surprised", seconds=5, phrase="Uau! 😮")
+        elif chosen == happy_action:
+            self.set_pose("happy", seconds=5, phrase="Hehe! 🖤")
         elif chosen == sleep_action:
             self.set_pose("sleepy", seconds=20, phrase="Zzz...")
         elif chosen == wake_action:
