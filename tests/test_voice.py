@@ -18,7 +18,8 @@ class VoiceTests(unittest.TestCase):
 
     def test_female_voice_and_local_privacy(self):
         self.assertEqual(voice.EDGE_VOICE, "pt-BR-FranciscaNeural")
-        self.assertIn("YUNA_VOICE_GENDER", voice.WINDOWS_SCRIPT)\n        self.assertIn("VoiceInfo.Gender.ToString()", voice.WINDOWS_SCRIPT)
+        self.assertIn("YUNA_VOICE_GENDER", voice.WINDOWS_SCRIPT)
+        self.assertIn("VoiceInfo.Gender.ToString()", voice.WINDOWS_SCRIPT)
         self.assertIn("pt-BR", voice.WINDOWS_SCRIPT)
         self.assertIn("[Console]::In.ReadToEnd()", voice.WINDOWS_SCRIPT)
         self.assertNotIn("http", voice.WINDOWS_SCRIPT.lower())
