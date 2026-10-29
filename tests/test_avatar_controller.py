@@ -4,6 +4,11 @@ from avatar_controller import AvatarController
 
 
 class ControllerTests(unittest.TestCase):
+    def test_curiosity_is_a_valid_pose(self):
+        c = AvatarController()
+        self.assertTrue(c.dispatch("avatar.pose", sequence=1, pose="curious"))
+        self.assertEqual(c.snapshot.pose, "curious")
+
     def test_audio_only_animates_after_real_start(self):
         c = AvatarController()
         self.assertFalse(c.dispatch("speech.level", sequence=1, speech_id="a", position_ms=1, amplitude=0.7))
