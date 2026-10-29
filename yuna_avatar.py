@@ -558,6 +558,14 @@ class YunaAvatar(QWidget):
         if pose == "angry":
             painter.drawLine(-36, 111 + vertical, -12, 118 + vertical)
             painter.drawLine(12, 118 + vertical, 36, 111 + vertical)
+        elif pose == "surprised":
+            # Sobrancelhas elevadas e simétricas.
+            painter.drawArc(QRectF(-36, 105 + vertical, 24, 9), 0, 180 * 16)
+            painter.drawArc(QRectF(12, 105 + vertical, 24, 9), 0, 180 * 16)
+        elif pose == "shy":
+            # Sobrancelhas delicadamente inclinadas.
+            painter.drawLine(-35, 110 + vertical, -14, 113 + vertical)
+            painter.drawLine(14, 113 + vertical, 35, 110 + vertical)
         else:
             painter.drawLine(-35, 112 + vertical, -14, 111 + vertical)
             painter.drawLine(14, 111 + vertical, 35, 112 + vertical)
@@ -580,6 +588,11 @@ class YunaAvatar(QWidget):
                                 190 if pose == "shy" else 95))
         painter.drawEllipse(QRectF(-43, 139 + vertical, 15, 6))
         painter.drawEllipse(QRectF(28, 139 + vertical, 15, 6))
+        if pose in ("happy", "laugh", "shy"):
+            # Pequenos brilhos nas bochechas reforçam expressões sem assets.
+            painter.setBrush(QColor(255, 235, 242, 175))
+            painter.drawEllipse(QRectF(-40, 140 + vertical, 5, 2))
+            painter.drawEllipse(QRectF(35, 140 + vertical, 5, 2))
         painter.setPen(QPen(QColor("#6e3c5c"), 2))
         if pose == "angry":
             painter.drawArc(QRectF(-8, 153 + vertical, 16, 10), 0, 180 * 16)
