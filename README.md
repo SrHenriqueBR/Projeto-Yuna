@@ -95,6 +95,21 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Jogar junto com a Yuna — em preparação
+
+O primeiro módulo `game_sessions.py` **não manipula nenhum jogo**:
+é um contrato de autorização para futuros controles. Ele permite somente
+sessão individual/offline aprovada, executável local conhecido, comandos
+curtos, prazo limitado e interrupção por `Break080111` ou pelo botão Parar.
+
+**Ainda não há visão de jogo nem controle de teclado/gamepad instalado.**
+Ações propostas no módulo não são executadas; também não existe
+compatibilidade comprovada com The Last of Us. Próxima etapa: piloto
+supervisionado com captura consentida somente da janela selecionada,
+reconhecimento visual local e adaptador de controles com verificação real
+do processo em foco. Consulte
+[`docs/PLANO_JOGOS_COM_YUNA.md`](docs/PLANO_JOGOS_COM_YUNA.md).
+
 ### Energia ilustrativa da Yuna (bateria do notebook)
 
 Em notebooks Windows com sensor válido, a Yuna consulta **apenas a porcentagem
