@@ -28,11 +28,11 @@ export function frameAt(seconds, {
   const movement = reducedMotion ? 0 : 1;
   return {
     blink: blinkAt(time, reducedMotion),
-    headYaw: clamp(pointerX, -1, 1) * 0.16 * movement,
-    headPitch: -clamp(pointerY, -1, 1) * 0.10 * movement,
-    bodySway: Math.sin(time * 0.9) * 0.018 * movement,
-    breath: Math.sin(time * 1.65) * 0.012 * movement,
-    wave: activePose === "wave" ? Math.sin(time * 8) * 0.22 * movement : 0,
+    headYaw: movement ? clamp(pointerX, -1, 1) * 0.16 : 0,
+    headPitch: movement ? -clamp(pointerY, -1, 1) * 0.10 : 0,
+    bodySway: movement ? Math.sin(time * 0.9) * 0.018 : 0,
+    breath: movement ? Math.sin(time * 1.65) * 0.012 : 0,
+    wave: activePose === "wave" && movement ? Math.sin(time * 8) * 0.22 : 0,
     mouth: clamp(mouthLevel, 0, 1),
     emotion: activePose
   };
