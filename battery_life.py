@@ -69,7 +69,7 @@ def classify(status):
         return "unavailable"
     if not isinstance(status, BatteryStatus):
         raise TypeError("Estado de bateria não suportado")
-    if status.plugged and status.percent == 100:
+    if status.percent == 100:
         return "full"
     if status.plugged:
         return "charging"
