@@ -11,7 +11,7 @@ class HardwareDetectionTests(unittest.TestCase):
     @patch("hardware_detection.subprocess.run")
     def test_nvidia_smi_reports_eight_gib(self, run):
         from hardware_detection import detect_nvidia_vram
-        run.return_value.stdout = "8192\\n"
+        run.return_value.stdout = "8192\n"
         self.assertEqual(detect_nvidia_vram(), 8.0)
 
     @patch("hardware_detection.sys.platform", "win32")
