@@ -160,9 +160,9 @@ class AmbientQtTests(unittest.TestCase):
                 avatar.show()
                 self.app.processEvents()
                 from PySide6.QtCore import QPoint
-                with patch("yuna_avatar.QCursor") as cursor:
-                    cursor.pos.return_value = avatar.mapToGlobal(QPoint(170, 210))
-                    avatar._update_gaze()
+                # Não substituir a classe Qt nativa QCursor por MagicMock:
+                # isso pode provocar falhas no runner Windows/PySide6.
+                avatar._update_gaze(avatar.mapToGlobal(QPoint(170, 210)))
                 self.assertGreater(avatar._eye_cursor[0], 95)
                 self.assertLess(avatar._eye_cursor[0], 170)
             finally:
