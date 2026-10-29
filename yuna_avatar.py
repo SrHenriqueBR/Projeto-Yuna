@@ -506,6 +506,16 @@ class YunaAvatar(QWidget):
         crown.quadTo(-10, 111 + vertical, -16, 92 + vertical)
         crown.quadTo(-32, 111 + vertical, -53, 112 + vertical)
         painter.drawPath(crown)
+        # Mechas finas dão profundidade ao cabelo sem imagens ou GPU.
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.setPen(QPen(hair.lighter(125), 1.3))
+        painter.drawArc(QRectF(-47 + motion.hair_sway * 0.12,
+                               64 + vertical, 44, 72), 28 * 16, 115 * 16)
+        painter.drawArc(QRectF(5 - motion.hair_sway * 0.12,
+                               64 + vertical, 44, 72), 35 * 16, 110 * 16)
+        painter.setPen(QPen(hair.darker(118), 1.1))
+        painter.drawArc(QRectF(-23, 70 + vertical, 44, 54),
+                        190 * 16, 115 * 16)
         # Brilho da franja e pequeno laço decorativo estilo anime.
         painter.setPen(QPen(hair.lighter(156), 2.0))
         painter.drawArc(QRectF(-39, 64 + vertical, 67, 40),
