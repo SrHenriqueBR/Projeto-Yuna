@@ -30,4 +30,5 @@ jobs:
       - name: Executar testes locais (Qt offscreen)
         env:
           QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: "1"
         run: python -m unittest discover -s tests -v
