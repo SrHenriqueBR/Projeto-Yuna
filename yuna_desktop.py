@@ -10,7 +10,7 @@ import sys
 from threading import Thread
 
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QUrl
-from PySide6.QtGui import QMovie, QPixmap, QTextCursor
+from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel,
@@ -27,6 +27,7 @@ from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelop
 from avatar_controller import AvatarController
 from avatar_reactions import reaction_for_text
 from action_diagnostics import diagnose_failure
+from emergency_stop import is_stop_request
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -66,9 +67,17 @@ class DesktopWorker(Thread):
         super().__init__(daemon=True)
         self.signals = signals
         self.queue = Queue()
+        self._cancelled = False
 
     def submit(self, message):
+        self._cancelled = False
         self.queue.put(("chat", message))
+
+    def cancel_pending(self):
+        """Descarta respostas futuras e tarefas pendentes; não mata ações em curso."""
+        self._cancelled = True
+        with self.queue.mutex:
+            self.queue.queue.clear()
 
     def analyze(self, file_path, question):
         self.queue.put(("analyze", str(file_path), question))
@@ -108,14 +117,16 @@ class DesktopWorker(Thread):
                             continue
                         self.signals.status.emit("Yuna está pensando...")
                         answer = handle_message(memory, question, computer)
-                        self.signals.replied.emit(answer, False)
+                        if not self._cancelled:
+                            self.signals.replied.emit(answer, False)
                         self.signals.status.emit("Pronta • conversa local")
                     elif kind == "analyze":
                         source, question = task[1], task[2]
                         self.signals.status.emit("Lendo documento e analisando com Ollama...")
                         answer = analyze_document(source, ask_model, question)
                         # Nunca registrar texto do documento no histórico SQLite.
-                        self.signals.replied.emit(answer, True)
+                        if not self._cancelled:
+                            self.signals.replied.emit(answer, True)
                         self.signals.status.emit("Análise concluída • arquivo não guardado")
                     elif kind == "archive":
                         self.signals.status.emit("Guardando cópia com autorização...")
@@ -191,9 +202,12 @@ class YunaDesktop(QMainWindow):
 
         self.signals = DesktopSignals()
         self.worker = DesktopWorker(self.signals)
+        self._stop_requested = False
         self.setup_ui()
         self.attach_events()
 
+        self.stop_shortcut = QShortcut(QKeySequence("Ctrl+Shift+X"), self)
+        self.stop_shortcut.activated.connect(self.emergency_stop)
         self.player = QMediaPlayer(self)
         self.audio_output = QAudioOutput(self)
         self.player.setAudioOutput(self.audio_output)
@@ -358,6 +372,10 @@ class YunaDesktop(QMainWindow):
             "Converse naturalmente ou pergunte algo sobre o documento anexado..."
         )
         composer_row.addWidget(self.composer, 1)
+        self.stop_button = QPushButton("■ Parar")
+        self.stop_button.setToolTip("Interromper voz e descartar tarefas pendentes (Ctrl+Shift+X)")
+        self.stop_button.clicked.connect(self.emergency_stop)
+        composer_row.addWidget(self.stop_button)
         self.send_button = QPushButton("Enviar  ➤")
         self.send_button.setObjectName("primary")
         self.send_button.setMinimumHeight(51)
@@ -548,6 +566,10 @@ class YunaDesktop(QMainWindow):
 
     def send_message(self):
         content = self.composer.toPlainText().strip()
+        if is_stop_request(content):
+            self.composer.clear()
+            self.emergency_stop()
+            return
         if not content and not self.pending_path:
             return
         self.composer.clear()
@@ -567,6 +589,18 @@ class YunaDesktop(QMainWindow):
             self.add_message("Kaizen", content)
             self.worker.submit(content)
 
+
+    def emergency_stop(self):
+        """Interrompe áudio e ignora resposta em andamento, sem matar a thread."""
+        self.worker.cancel_pending()
+        self.player.stop()
+        self.voice_busy = False
+        self._stop_avatar_speech()
+        self.set_busy(False)
+        self.status.setText("Parada solicitada • operações externas em curso podem continuar")
+        self.add_message("Yuna", "Parei a voz e descartei as tarefas pendentes. "
+                         "Uma operação já iniciada pode precisar terminar; "
+                         "não vou afirmar que ela foi cancelada sem confirmação.")
 
     def clear_attachment(self):
         self.pending_path = None
