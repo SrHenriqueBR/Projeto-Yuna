@@ -89,7 +89,7 @@ class SafetyEvent:
 
 
 SAFETY_EVENTS = {
-    "sos": SafetyEvent("sos", "Pedido de ajuda manual no notebook"),
+    "sos": SafetyEvent("sos", "SOS manual acionado no notebook"),
     "som_alto": SafetyEvent(
         "som_alto", "Som alto detectado localmente; pode ser alarme falso"
     ),
