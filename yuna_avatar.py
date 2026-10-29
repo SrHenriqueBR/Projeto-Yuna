@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QWidget
 from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
                           ACCESSORIES, SIZES, load_style)
 from avatar_motion import ambient_pose, ease_gaze, frame_at, blend_frames
+from avatar_idle_life import idle_expression
 from hardware_profiles import select_profile
 from hardware_detection import detected_profile
 
@@ -133,6 +134,13 @@ class YunaAvatar(QWidget):
             return "talk"
         if time.monotonic() < self.pose_until:
             return self.pose
+        spontaneous = idle_expression(
+            self.tick_count, speaking=self.speaking,
+            reduced_motion=self.appearance["reduced_motion"],
+            busy=self.drag_start is not None,
+        )
+        if spontaneous is not None:
+            return spontaneous
         return ambient_pose(
             self.tick_count,
             self.appearance["walking"],
