@@ -27,6 +27,8 @@ from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelop
 from avatar_controller import AvatarController
 from avatar_reactions import reaction_for_text
 from action_diagnostics import diagnose_failure
+from persona_commands import parse_voice_preference
+from persona_store import load_preferences, save_preferences
 from emergency_stop import is_stop_request
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
@@ -193,6 +195,7 @@ class YunaDesktop(QMainWindow):
         self.last_analysis = ""
         # Fala offline por padrão; nunca ativa serviços online sem consentimento.
         self.voice_index = 1
+        self.persona = load_preferences(ROOT)
         self.voice_busy = False
         self.audio_file = None
         self._audio_levels = []
@@ -326,6 +329,13 @@ class YunaDesktop(QMainWindow):
         self.voice_selector.setToolTip("Escolha como a Yuna fala as respostas.")
         self.voice_selector.setCurrentIndex(1)
         top.addWidget(self.voice_selector)
+        self.presentation_selector = QComboBox()
+        self.presentation_selector.addItems(["♀ Feminina", "♂ Masculina", "◇ Neutra"])
+        self.presentation_selector.setToolTip(
+            "Como a voz deve soar; não identifica a pessoa pelo microfone.")
+        self.presentation_selector.setCurrentIndex(
+            {"feminina": 0, "masculina": 1, "neutra": 2}[self.persona.presentation])
+        top.addWidget(self.presentation_selector)
         self.voice_test = QPushButton("▶ Testar voz")
         self.voice_test.setToolTip("Escute um teste e confira a boca da personagem.")
         top.addWidget(self.voice_test)
@@ -414,13 +424,14 @@ class YunaDesktop(QMainWindow):
         self.save_attachment.clicked.connect(self.archive_document)
         self.files_list.itemClicked.connect(self.use_library_document)
         self.voice_selector.currentIndexChanged.connect(self.voice_changed)
+        self.presentation_selector.currentIndexChanged.connect(self.presentation_changed)
         self.voice_test.clicked.connect(self.test_voice)
         self.microphone_button.clicked.connect(self.request_microphone)
         self.setAcceptDrops(True)
 
     def add_message(self, author, content, *, accent=False):
         body = QFrame()
-        is_user = author == "Kaizen"
+        is_user = author in ("Kaizen", "Você")
         body.setMaximumWidth(760)
         border = "#7259b2" if is_user else "#36304f"
         background = "#41305d" if is_user else "#242132"
@@ -466,11 +477,11 @@ class YunaDesktop(QMainWindow):
     def load_history(self, history):
         if history:
             for role, content in history:
-                self.add_message("Kaizen" if role == "user" else "Yuna", content)
+                self.add_message("Você" if role == "user" else "Yuna", content)
         else:
             self.add_message(
                 "Yuna",
-                "Opa, Kaizen! 🖤 Estou pronta. Podemos conversar, "
+                "Olá! 🖤 Estou pronta. Podemos conversar, "
                 "analisar um documento ou trabalhar em uma ideia juntos."
             )
 
@@ -570,13 +581,19 @@ class YunaDesktop(QMainWindow):
             self.composer.clear()
             self.emergency_stop()
             return
+        request = parse_voice_preference(content) if not self.pending_path else None
+        if request:
+            self.composer.clear()
+            self.add_message("Você", content)
+            self.apply_voice_preferences(request)
+            return
         if not content and not self.pending_path:
             return
         self.composer.clear()
         self.set_busy(True)
         if self.pending_path:
             self.add_message(
-                "Kaizen", (content or "Analise este documento e destaque o mais útil.")
+                "Você", (content or "Analise este documento e destaque o mais útil.")
                 + "\n[Anexo: " + self.pending_path.name + "]"
             )
             self.worker.analyze(self.pending_path, content)
@@ -586,7 +603,7 @@ class YunaDesktop(QMainWindow):
                     and (self.avatar_window is None
                          or not self.avatar_window.isVisible())):
                 self.toggle_avatar()
-            self.add_message("Kaizen", content)
+            self.add_message("Você", content)
             self.worker.submit(content)
 
 
@@ -698,6 +715,41 @@ class YunaDesktop(QMainWindow):
             self.attach_document(paths[0])
             event.acceptProposedAction()
 
+    def apply_voice_preferences(self, fields, *, speak_confirmation=True):
+        """Aplica e salva preferências; não muda a aparência física do avatar."""
+        try:
+            updated = self.persona.updated(**fields)
+            save_preferences(ROOT, updated)
+        except (OSError, TypeError, ValueError):
+            self.add_message("Yuna", "Não consegui salvar a preferência de voz. "
+                             "Minhas configurações anteriores continuam válidas.")
+            return False
+        self.persona = updated
+        current_index = {"feminina": 0, "masculina": 1, "neutra": 2}[
+            updated.presentation]
+        self.presentation_selector.blockSignals(True)
+        self.presentation_selector.setCurrentIndex(current_index)
+        self.presentation_selector.blockSignals(False)
+        labels = {"feminina": "feminina", "masculina": "masculina",
+                  "neutra": "sem preferência de gênero"}
+        response = ("Salvei a preferência de voz " + labels[updated.presentation]
+                    + " com estilo " + updated.voice_style + ". "
+                    "Na opção Windows offline, a voz pt-BR correspondente "
+                    "precisa estar instalada. Caso não exista, vou avisar "
+                    "quando você testar. A aparência do avatar ainda "
+                    "não muda com essa configuração.")
+        self.status.setText("Preferência de voz salva • testar para ouvir")
+        self.add_message("Yuna", response)
+        if speak_confirmation:
+            self.say("Preferência de voz atualizada. Esta é minha nova voz.")
+        return True
+
+    def presentation_changed(self, index):
+        names = ("feminina", "masculina", "neutra")
+        if 0 <= index < len(names):
+            self.apply_voice_preferences(
+                {"presentation": names[index]}, speak_confirmation=False)
+
     def voice_changed(self, index):
         if self._changing_voice:
             return
@@ -719,7 +771,7 @@ class YunaDesktop(QMainWindow):
             self._edge_consent = True
         self.voice_index = index
         self.status.setText(
-            ["Respostas por texto", "Voz feminina Windows • offline",
+            ["Respostas por texto", "Voz Windows • offline",
              "Voz Edge • serviço externo autorizado"][index]
         )
 
@@ -732,12 +784,14 @@ class YunaDesktop(QMainWindow):
             return
         if self.avatar_window is None:
             self.toggle_avatar()
-        self.say("Opa, Kaizen! Agora minha voz e minha boca estão juntas. Hehe!")
+        self.say("Olá! Esta é minha voz atual, com a boca sincronizada. Hehe!")
 
     def say(self, text, private=False):
         if self.voice_index == 0 or self.voice_busy:
             return
         mode = self.voice_index
+        presentation = self.persona.presentation
+        voice_style = self.persona.voice_style
         if private and mode == 2:
             # Apenas aviso genérico, nunca trechos do documento anexado.
             text = "A análise está pronta para ser lida na janela."
@@ -750,13 +804,13 @@ class YunaDesktop(QMainWindow):
         def speak():
             try:
                 if mode == 1:
-                    result = synthesize_windows(text)
+                    result = synthesize_windows(text, presentation, voice_style)
                     if result:
                         self.signals.audio_ready.emit(str(result))
                     else:
                         self.signals.audio_error.emit("")
                 elif mode == 2:
-                    result = synthesize_edge(text)
+                    result = synthesize_edge(text, presentation, voice_style)
                     if result:
                         self.signals.audio_ready.emit(str(result))
                     else:
