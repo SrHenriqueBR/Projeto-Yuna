@@ -1,0 +1,32 @@
+name: Testes do avatar 3D
+
+on:
+  pull_request:
+    paths:
+      - 'avatar3d/**'
+      - 'iniciar_yuna_3d.bat'
+      - '.github/workflows/testes-avatar3d.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'avatar3d/**'
+      - 'iniciar_yuna_3d.bat'
+      - '.github/workflows/testes-avatar3d.yml'
+
+jobs:
+  avatar3d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias opcionais do renderer
+        working-directory: avatar3d
+        run: npm install --no-audit --no-fund
+      - name: Testar animacoes sem WebGL
+        working-directory: avatar3d
+        run: npm test
+      - name: Validar build Three.js + VRM
+        working-directory: avatar3d
+        run: npm run build
