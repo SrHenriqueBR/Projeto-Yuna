@@ -10,7 +10,7 @@ import struct
 import time
 from urllib.parse import quote
 
-from PySide6.QtCore import Qt, QTimer, QUrl
+from PySide6.QtCore import Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
@@ -50,6 +50,8 @@ def whatsapp_draft_url(contact, kind):
 
 
 class HomeSafetyDialog(QDialog):
+    state_changed = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self._session = SafetySession()
@@ -167,6 +169,9 @@ class HomeSafetyDialog(QDialog):
             )
             return
         self._update_indicator()
+        self.state_changed.emit(
+            "microfone ativo" if self._audio_mode else "SOS apenas"
+        )
 
     def _start_microphone(self):
         try:
@@ -289,6 +294,7 @@ class HomeSafetyDialog(QDialog):
         self.cancel_warning.setVisible(False)
         self.state.setText("DESLIGADO — nenhuma captura ativa")
         self.setWindowTitle("Yuna • Segurança doméstica DESLIGADA")
+        self.state_changed.emit("desligado")
 
     def closeEvent(self, event):
         self.stop_safety()
