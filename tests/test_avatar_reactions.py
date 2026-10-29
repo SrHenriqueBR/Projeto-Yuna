@@ -7,6 +7,10 @@ class ReactionTests(unittest.TestCase):
         self.assertEqual(reaction_for_text("Olá, Kaizen!"), ("wave", "happy"))
         self.assertEqual(reaction_for_text("Hahaha, boa!"), ("laugh", "happy"))
 
+    def test_curiosity_is_detected_without_user_profiling(self):
+        self.assertEqual(reaction_for_text("Vamos descobrir juntos!"),
+                         ("curious", "neutral"))
+
     def test_private_or_empty_does_not_trigger(self):
         self.assertIsNone(reaction_for_text("Olá", private=True))
         self.assertIsNone(reaction_for_text(""))

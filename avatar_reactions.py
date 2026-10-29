@@ -10,6 +10,7 @@ _RULES = (
     (re.compile(r"(?i)\b(?:opa|ol[aá]|oi|bom dia|boa noite|boa tarde)\b"), "wave", "happy"),
     (re.compile(r"(?i)\b(?:surpresa|incr[ií]vel|uau|nossa)\b"), "surprised", "surprised"),
     (re.compile(r"(?i)\b(?:desculp[ae]|sinto muito|infelizmente)\b"), "shy", "sad"),
+    (re.compile(r"(?i)\b(?:como funciona|ser[aá] que|me conta|vamos descobrir|que interessante)\b"), "curious", "neutral"),
 )
 
 

@@ -482,7 +482,7 @@ class YunaDesktop(QMainWindow):
                 if request[0] == "pose":
                     pose = request[1]
                     if pose in ("sit", "stand", "angry", "happy", "walk", "stop",
-                                "wave", "pose", "surprised", "wink", "laugh",
+                                "wave", "pose", "surprised", "curious", "wink", "laugh",
                                 "shy", "sleepy", "wake"):
                         chosen_pose = {
                             "stand": "idle", "stop": "idle", "wake": "idle"
