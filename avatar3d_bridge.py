@@ -11,6 +11,8 @@ import secrets
 import threading
 from urllib.parse import quote, urlsplit
 
+from avatar_state import HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES, ACCESSORIES
+
 ALLOWED_ORIGIN = "http://127.0.0.1:5173"
 RESOURCE_PATH = "/v1/avatar-state"
 MAX_SNAPSHOT_BYTES = 1024
@@ -34,8 +36,24 @@ def _safe_level(value):
     return number
 
 
+def _safe_appearance(value):
+    """Somente enums de aparência; nenhuma informação pessoal é exposta."""
+    if not isinstance(value, dict):
+        return {}
+    allowed = {
+        "hair": HAIR, "eyes": EYES, "outfit": OUTFITS,
+        "hair_style": HAIR_STYLES, "costume": COSTUMES,
+        "accessory": ACCESSORIES,
+    }
+    return {
+        name: value[name] for name, choices in allowed.items()
+        if isinstance(value.get(name), str) and value[name] in choices
+    }
+
+
 def public_snapshot(snapshot, *, revision=0, gesture_seq=0,
-                    has_amplitude=False):
+                    has_amplitude=False, appearance=None,
+                    appearance_revision=0):
     """Whitelisting explícito: nunca serializar uma dataclass arbitrária."""
     pose = getattr(snapshot, "pose", "idle")
     emotion = getattr(snapshot, "emotion", "neutral")
@@ -48,6 +66,8 @@ def public_snapshot(snapshot, *, revision=0, gesture_seq=0,
         "speaking": speaking,
         "mouth_level": _safe_level(getattr(snapshot, "mouth_level", 0)) if speaking else 0,
         "has_amplitude": bool(has_amplitude) if speaking else False,
+        "appearance": _safe_appearance(appearance),
+        "appearance_revision": int(appearance_revision),
     }
 
 
@@ -60,6 +80,8 @@ class Avatar3DBridge:
         self._lock = threading.Lock()
         self._revision = 0
         self._gesture_seq = 0
+        self._appearance = {}
+        self._appearance_revision = 0
         self._snapshot = public_snapshot(None)
         self._server = None
         self._thread = None
@@ -75,15 +97,23 @@ class Avatar3DBridge:
         return (self._origin + "/#bridgePort=" + str(self.port)
                 + "&bridgeToken=" + quote(self._token, safe=""))
 
-    def publish(self, snapshot, *, event=None, has_amplitude=False):
+    def publish(self, snapshot, *, event=None, has_amplitude=False,
+                appearance=None):
         """Chamado pelo thread principal Qt; o servidor só lê este estado."""
         with self._lock:
             self._revision += 1
             if event in ("avatar.pose", "avatar.emotion"):
                 self._gesture_seq += 1
+            if appearance is not None:
+                safe = _safe_appearance(appearance)
+                if safe != self._appearance:
+                    self._appearance = safe
+                    self._appearance_revision += 1
             self._snapshot = public_snapshot(
                 snapshot, revision=self._revision, gesture_seq=self._gesture_seq,
                 has_amplitude=has_amplitude,
+                appearance=self._appearance,
+                appearance_revision=self._appearance_revision,
             )
 
     def start(self):
