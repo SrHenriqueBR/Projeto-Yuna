@@ -26,6 +26,7 @@ from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from avatar_controller import AvatarController
 from avatar_reactions import reaction_for_text
+from action_diagnostics import diagnose_failure
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -125,7 +126,7 @@ class DesktopWorker(Thread):
                     elif kind == "refresh":
                         self.signals.library.emit(LIBRARY.entries())
                 except Exception as exc:
-                    self.signals.error.emit(str(exc))
+                    self.signals.error.emit(diagnose_failure(exc).message())
                     self.signals.status.emit("Operação não concluída")
         finally:
             memory.close()
