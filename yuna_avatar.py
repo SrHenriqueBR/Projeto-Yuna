@@ -562,6 +562,9 @@ class YunaAvatar(QWidget):
                                        122 + vertical + motion.eye_dy, 13, 16))
             painter.drawEllipse(QRectF(14 + motion.eye_dx,
                                        122 + vertical + motion.eye_dy, 13, 16))
+            painter.setBrush(eyes.darker(150))
+            painter.drawEllipse(QRectF(-23 + motion.eye_dx, 128 + vertical + motion.eye_dy, 5, 8))
+            painter.drawEllipse(QRectF(18 + motion.eye_dx, 128 + vertical + motion.eye_dy, 5, 8))
             painter.setBrush(QColor("#ffffff"))
             painter.drawEllipse(QRectF(-23 + motion.eye_dx,
                                        125 + vertical + motion.eye_dy, 5, 5))
