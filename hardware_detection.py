@@ -22,6 +22,24 @@ _PS_SCRIPT = (
 )
 
 
+def detect_nvidia_vram(timeout=3):
+    """Maior VRAM dedicada NVIDIA em GiB, quando nvidia-smi está disponível."""
+    if sys.platform != "win32":
+        return None
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=timeout, check=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        values = [float(line.strip()) / 1024 for line in result.stdout.splitlines()
+                  if line.strip()]
+        values = [value for value in values if 0 < value < 256]
+        return max(values) if values else None
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return None
+
+
 def detect_hardware(timeout=5):
     """Retorna RAM/VRAM estimadas ou None; VRAM do WMI pode ser limitada a 4 GB."""
     if sys.platform != "win32":
@@ -35,6 +53,9 @@ def detect_hardware(timeout=5):
         data = json.loads(result.stdout.strip())
         ram = float(data["ram_gb"])
         vram = float(data["vram_gb"])
+        nvidia_vram = detect_nvidia_vram(timeout=min(timeout, 3))
+        if nvidia_vram is not None:
+            vram = max(vram, nvidia_vram)
         if not (0 < ram < 2048 and 0 <= vram < 256):
             return None
         return {"ram_gb": ram, "vram_gb": vram}
