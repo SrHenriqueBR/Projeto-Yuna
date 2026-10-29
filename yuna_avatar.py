@@ -186,10 +186,12 @@ class YunaAvatar(QWidget):
             self.appearance["reduced_motion"],
         )
 
-    def _update_gaze(self):
-        """Segue o cursor aos poucos; nenhuma posição é salva nem compartilhada."""
+    def _update_gaze(self, global_position=None):
+        """Segue o cursor aos poucos; posição opcional facilita teste Qt sem mock nativo."""
         factor = SIZES[self.appearance["size"]]
-        cursor = self.mapFromGlobal(QCursor.pos())
+        cursor = self.mapFromGlobal(
+            QCursor.pos() if global_position is None else global_position
+        )
         if (-90 * factor <= cursor.x() <= 280 * factor
                 and -90 * factor <= cursor.y() <= 367 * factor):
             target = (cursor.x() / factor, cursor.y() / factor)
