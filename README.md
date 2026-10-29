@@ -95,6 +95,26 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Câmeras autorizadas — webcam e RTSP experimental
+
+A Yuna Desktop pode agora abrir uma **prévia temporária** de uma webcam
+local (índice `0`, `1` etc.) ou câmera RTSP da **rede local privada**
+cujo acesso você esteja autorizado a utilizar. A função é opt-in:
+clique em **◉ Ver câmera autorizada** ou peça **"Yuna, mostre a câmera"**
+para abrir a seleção. É exigida uma confirmação antes de acessar a fonte.
+
+Para instalar o decodificador opcional na mesma instalação Python da Yuna,
+execute `py -3 -m pip install opencv-python`. Não há instalação,
+ligação de câmera ou descoberta automática. O acesso termina em no máximo
+5 minutos, ao fechar a janela ou quando você usa **Break080111** / **Parar**.
+
+**Não é ainda vigilância com alertas:** não há gravação, monitoramento
+contínuo, reconhecimento facial, identificação de pessoas nem envio
+de imagens ao Ollama/nuvem. URLs RTSP/credenciais nunca são salvas;
+a URL completa fica visível enquanto digitada na caixa inicial. Consulte
+[`docs/CAMERAS_YUNA.md`](docs/CAMERAS_YUNA.md) para configurar e
+entender as limitações do piloto.
+
 ### Jogar junto com a Yuna — em preparação
 
 O primeiro módulo `game_sessions.py` **não manipula nenhum jogo**:
