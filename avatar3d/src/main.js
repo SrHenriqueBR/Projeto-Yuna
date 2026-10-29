@@ -4,6 +4,11 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
 import { frameAt, expressionValues, smooth, clamp, EMOTIONS } from "./motion.mjs";
 import { connectionFromFragment, normalizeRemoteState, reactionPose } from "./bridge_state.mjs";
+import { createAnimePreview } from "./preview_character.js";
+import {
+  validateAppearance, readAppearance, writeAppearance,
+  appearanceForPreset, PRESETS
+} from "./appearance.mjs";
 import "./style.css";
 
 // Renderização experimental isolada: nenhum acesso a Ollama, SQLite, shell, câmera ou microfone.
@@ -66,89 +71,80 @@ document.querySelector("#resetCamera").addEventListener("click", resetCamera);
 const lookAtTarget = new THREE.Object3D();
 camera.add(lookAtTarget);
 
-function addEllipsoid(parent, material, location, size, segments = 28) {
-  const object = new THREE.Mesh(
-    new THREE.SphereGeometry(1, segments, 20), material
-  );
-  object.position.set(...location);
-  object.scale.set(...size);
-  parent.add(object);
-  return object;
-}
-
-// Um personagem geométrico ORIGINAL permite testar a cena sem distribuir modelos de terceiros.
-// Não é um arquivo VRM, não substitui o futuro modelo artístico da Yuna.
-function createPreviewCharacter() {
-  const root = new THREE.Group();
-  const skin = new THREE.MeshToonMaterial({ color: 0xf5d7da });
-  const hair = new THREE.MeshToonMaterial({ color: 0x24132f });
-  const hairHighlight = new THREE.MeshToonMaterial({ color: 0x563670 });
-  const outfit = new THREE.MeshToonMaterial({ color: 0x33234a });
-  const lilac = new THREE.MeshToonMaterial({ color: 0xa884f7 });
-  const white = new THREE.MeshToonMaterial({ color: 0xfffafb });
-  const iris = new THREE.MeshToonMaterial({ color: 0x9356e1 });
-  const pupils = new THREE.MeshToonMaterial({ color: 0x251335 });
-  const blush = new THREE.MeshToonMaterial({ color: 0xe99bba, transparent: true, opacity: 0.52 });
-
-  addEllipsoid(root, outfit, [0, 0.73, 0], [0.23, 0.36, 0.16]);
-  addEllipsoid(root, lilac, [0, 0.95, 0.155], [0.16, 0.05, 0.028]);
-  const skirt = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.48, 32), outfit);
-  skirt.rotation.z = Math.PI;
-  skirt.position.set(0, 0.45, 0);
-  root.add(skirt);
-  for (const side of [-1, 1]) {
-    addEllipsoid(root, skin, [side * 0.125, 0.18, 0], [0.07, 0.21, 0.08]);
-    addEllipsoid(root, outfit, [side * 0.125, 0.065, 0.045], [0.105, 0.06, 0.14]);
-  }
-
-  const leftArm = new THREE.Group();
-  leftArm.position.set(-0.23, 0.94, 0);
-  addEllipsoid(leftArm, outfit, [-0.08, -0.17, 0], [0.11, 0.20, 0.11]);
-  addEllipsoid(leftArm, skin, [-0.10, -0.35, 0.04], [0.064, 0.085, 0.065]);
-  root.add(leftArm);
-  const rightArm = new THREE.Group();
-  rightArm.position.set(0.23, 0.94, 0);
-  addEllipsoid(rightArm, outfit, [0.08, -0.17, 0], [0.11, 0.20, 0.11]);
-  addEllipsoid(rightArm, skin, [0.10, -0.35, 0.04], [0.064, 0.085, 0.065]);
-  root.add(rightArm);
-
-  const headPivot = new THREE.Group();
-  headPivot.position.y = 1.25;
-  addEllipsoid(headPivot, hair, [0, -0.015, -0.13], [0.38, 0.43, 0.26]);
-  addEllipsoid(headPivot, skin, [0, 0, 0.025], [0.305, 0.325, 0.28]);
-  addEllipsoid(headPivot, hair, [0, 0.255, -0.01], [0.34, 0.17, 0.30]);
-  for (const side of [-1, 1]) {
-    addEllipsoid(headPivot, hair, [side * 0.29, -0.15, -0.065], [0.115, 0.30, 0.185]);
-    addEllipsoid(headPivot, blush, [side * 0.185, -0.115, 0.288], [0.062, 0.035, 0.014]);
-  }
-  for (const x of [-0.19, -0.075, 0.07, 0.19]) {
-    const strand = addEllipsoid(
-      headPivot, x === 0.07 ? hairHighlight : hair,
-      [x, 0.185 - Math.abs(x) * 0.13, 0.232], [0.10, 0.18, 0.10]
-    );
-    strand.rotation.z = x * 0.8;
-  }
-
-  const eyes = [];
-  for (const side of [-1, 1]) {
-    const eye = new THREE.Group();
-    eye.position.set(side * 0.138, 0.016, 0.286);
-    addEllipsoid(eye, white, [0, 0, 0], [0.087, 0.113, 0.028]);
-    const pupil = new THREE.Group();
-    addEllipsoid(pupil, iris, [0, -0.005, 0.026], [0.054, 0.076, 0.015]);
-    addEllipsoid(pupil, pupils, [0, -0.005, 0.04], [0.03, 0.053, 0.01]);
-    addEllipsoid(pupil, white, [-0.018, 0.025, 0.053], [0.014, 0.021, 0.007]);
-    eye.add(pupil);
-    headPivot.add(eye);
-    eyes.push({ eye, pupil });
-  }
-  const mouth = addEllipsoid(headPivot, blush, [0, -0.18, 0.30], [0.035, 0.012, 0.012]);
-  root.add(headPivot);
-  return { root, headPivot, leftArm, rightArm, eyes, mouth };
-}
-
-const preview = createPreviewCharacter();
+// A aparência original é renderizada a partir de geometria local, sem assets externos.
+const appearanceFields = Object.freeze({
+  hair: document.querySelector("#hairColor"),
+  hair_style: document.querySelector("#hairStyle"),
+  eyes: document.querySelector("#eyeColor"),
+  outfit: document.querySelector("#outfitColor"),
+  costume: document.querySelector("#costume"),
+  accessory: document.querySelector("#accessory")
+});
+const presetSelector = document.querySelector("#appearancePreset");
+let appearance;
+try { appearance = readAppearance(window.localStorage); }
+catch { appearance = appearanceForPreset("yuna"); }
+let preview = createAnimePreview(appearance);
 scene.add(preview.root);
+
+function updateEditor() {
+  for (const [key, control] of Object.entries(appearanceFields)) {
+    control.value = appearance[key];
+  }
+  const match = Object.entries(PRESETS).find(([, preset]) =>
+    Object.entries(appearance).every(([key, value]) => preset[key] === value));
+  presetSelector.value = match ? match[0] : "custom";
+}
+
+function updatePreviewStyle(next, {save = true, feedback = true} = {}) {
+  const checked = validateAppearance(next);
+  const visible = !currentVrm;
+  const old = preview;
+  appearance = checked;
+  preview = createAnimePreview(appearance);
+  preview.root.visible = visible;
+  scene.add(preview.root);
+  old.dispose();
+  updateEditor();
+  if (save) {
+    try { writeAppearance(window.localStorage, appearance); }
+    catch { /* localStorage pode não estar disponível em modo privado */ }
+  }
+  if (feedback) {
+    status(currentVrm
+      ? "Visual salvo para a Yuna original. Modelos VRM importados não são editados."
+      : "Visual atualizado! Este personagem é uma prévia 3D original, não um VRM.");
+  }
+}
+
+for (const [key, control] of Object.entries(appearanceFields)) {
+  control.addEventListener("change", () => {
+    updatePreviewStyle({...appearance, [key]: control.value});
+  });
+}
+presetSelector.addEventListener("change", () => {
+  if (Object.hasOwn(PRESETS, presetSelector.value)) {
+    updatePreviewStyle(appearanceForPreset(presetSelector.value));
+  }
+});
+document.querySelector("#resetAppearance").addEventListener("click", () => {
+  updatePreviewStyle(appearanceForPreset("yuna"));
+});
+document.querySelector("#restorePreview").addEventListener("click", () => {
+  ++loadSerial; // invalida eventuais imports em andamento
+  if (currentVrm) {
+    scene.remove(currentVrm.scene);
+    VRMUtils.deepDispose(currentVrm.scene);
+    currentVrm = null;
+    rig = null;
+  }
+  preview.root.visible = true;
+  updatePose("idle");
+  renderStatus.textContent = "Yuna original";
+  status("Visualização geométrica original restaurada. Você pode personalizá-la.");
+});
+updateEditor();
+
 let currentVrm = null;
 let rig = null;
 let pose = "idle";
@@ -260,21 +256,6 @@ function createRig(vrm) {
     originalArm: upperArm?.quaternion.clone(),
     originalChest: chest?.quaternion.clone()
   };
-}
-
-function animatePreview(frame, dt) {
-  preview.headPivot.rotation.y = smooth(preview.headPivot.rotation.y, frame.headYaw, 6, dt);
-  preview.headPivot.rotation.x = smooth(preview.headPivot.rotation.x, frame.headPitch, 6, dt);
-  preview.root.position.y = frame.breath;
-  preview.root.rotation.z = frame.bodySway;
-  preview.rightArm.rotation.z = frame.emotion === "wave" ? -2.1 + frame.wave : -0.14;
-  preview.leftArm.rotation.z = 0.14;
-  for (const { eye, pupil } of preview.eyes) {
-    eye.scale.y = Math.max(0.05, 1 - frame.blink * 0.97);
-    pupil.position.x = gazeX * 0.018;
-    pupil.position.y = -gazeY * 0.012;
-  }
-  preview.mouth.scale.y = 0.012 + frame.mouth * 0.085;
 }
 
 const tempRotation = new THREE.Quaternion();
@@ -407,7 +388,7 @@ function animate(now) {
     reducedMotion: reducedInput.checked
   });
   if (currentVrm) animateVrm(frame, dt);
-  else animatePreview(frame, dt);
+  else preview.animate(frame, gazeX, gazeY, dt);
   controls.update();
   renderer.render(scene, camera);
 }
