@@ -527,6 +527,12 @@ class YunaAvatar(QWidget):
             painter.drawEllipse(QRectF(35, 77 + vertical, 19, 15))
             painter.setBrush(QColor("#d7b6ef"))
             painter.drawEllipse(QRectF(40, 81 + vertical, 8, 7))
+            # Duas pontas de fita e um brilho para dar relevo ao laço.
+            painter.setBrush(QColor("#b88bd8"))
+            painter.drawEllipse(QRectF(32, 87 + vertical, 10, 14))
+            painter.drawEllipse(QRectF(49, 87 + vertical, 10, 14))
+            painter.setBrush(QColor("#f4dfff"))
+            painter.drawEllipse(QRectF(42, 82 + vertical, 3, 3))
         elif accessory == "tiara":
             painter.setPen(QPen(QColor("#d0a5ec"), 6))
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -534,6 +540,8 @@ class YunaAvatar(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QColor("#f1c6ff"))
             painter.drawEllipse(QRectF(-5, 59 + vertical, 10, 10))
+            painter.setBrush(QColor("#ffffff"))
+            painter.drawEllipse(QRectF(-2, 61 + vertical, 3, 3))
 
         # Pálpebras piscam; pupilas acompanham o cursor quando ele se aproxima.
         if motion.blink > .9 or pose in ("sleepy", "laugh"):
