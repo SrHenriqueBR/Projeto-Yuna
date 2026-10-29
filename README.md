@@ -95,6 +95,26 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Vídeo dentro da Yuna + SOS de segurança doméstica (piloto opt-in)
+
+No botão **▣ Videochamada dentro da Yuna**, você pode colar um convite
+`Magi1020` e visualizar uma reunião Jitsi numa janela da própria Yuna
+(quando Qt WebEngine estiver disponível). **A outra pessoa precisa participar,
+concordar e ligar a própria webcam**; quem usa o notebook mantém o controle
+da câmera e do microfone. O serviço de mídia continua **externo, Jitsi Meet**.
+
+Na opção **◉ Segurança doméstica (SOS)**, a pessoa no próprio notebook
+pode iniciar uma sessão visível de até 30 minutos para SOS manual e,
+se autorizar explicitamente, análise **local de intensidade sonora**.
+Há detecção opcional de mudança de imagem na prévia da câmera,
+também sem salvar frames nem identificar pessoas.
+
+**Importante:** a Yuna **ainda não envia alertas automáticos pelo WhatsApp**.
+O SOS ou alerta local oferecem apenas um rascunho do WhatsApp que a pessoa
+precisa conferir e enviar. Não há áudio transmitido, gravação oculta,
+reconhecimento de ameaças ou webcam ligada automaticamente. Consulte o
+guia [`docs/SEGURANCA_DOMESTICA_YUNA.md`](docs/SEGURANCA_DOMESTICA_YUNA.md).
+
 ### Magi1020 — convite de vídeo entre dois notebooks
 
 Ao digitar **`Magi1020`** na Yuna Desktop (ou clicar em **◈ Magi1020 • Vídeo remoto**), você pode criar e copiar um convite de videochamada, ou entrar com um convite recebido de outra pessoa.

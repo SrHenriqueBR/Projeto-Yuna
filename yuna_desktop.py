@@ -41,6 +41,8 @@ from remote_camera_invite import (
     validate_remote_camera_invite,
 )
 from camera_viewer import CameraViewer
+from embedded_video import EmbeddedVideoDialog
+from home_safety_dialog import HomeSafetyDialog
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -221,7 +223,9 @@ class YunaDesktop(QMainWindow):
         self.worker = DesktopWorker(self.signals)
         self._stop_requested = False
         self.game_session = GameSession()  # desabilitado por padrão; sem controle de jogos
-        self.camera_viewer = None  # a câmera nunca é aberta automaticamente
+        self.camera_viewer = None  # câmera nunca é aberta automaticamente
+        self.embedded_video = None  # reunião de vídeo sob ação explícita
+        self.home_safety_dialog = None  # microfone/SOS desligados por padrão
         self.setup_ui()
         self.attach_events()
 
@@ -340,6 +344,19 @@ class YunaDesktop(QMainWindow):
             "Não ativa webcams remotamente e usa serviço externo."
         )
         sidebar.addWidget(self.remote_camera_button)
+        self.inline_video_button = QPushButton("▣  Videochamada dentro da Yuna")
+        self.inline_video_button.setObjectName("ghost")
+        self.inline_video_button.setToolTip(
+            "Abre vídeo Jitsi externo numa janela integrada com permissão por pessoa."
+        )
+        sidebar.addWidget(self.inline_video_button)
+        self.safety_button = QPushButton("◉  Segurança doméstica (SOS)")
+        self.safety_button.setObjectName("ghost")
+        self.safety_button.setToolTip(
+            "Ativação temporária pela pessoa presente. Microfone opcional, "
+            "apenas níveis sonoros. WhatsApp abre rascunho para envio manual."
+        )
+        sidebar.addWidget(self.safety_button)
 
         title = QLabel("SUA BIBLIOTECA")
         title.setObjectName("section")
@@ -477,6 +494,8 @@ class YunaDesktop(QMainWindow):
         self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
         self.camera_button.clicked.connect(self.open_camera_viewer)
         self.remote_camera_button.clicked.connect(self.open_remote_camera_invitation)
+        self.inline_video_button.clicked.connect(self.request_embedded_video)
+        self.safety_button.clicked.connect(self.open_home_safety)
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
@@ -725,6 +744,84 @@ class YunaDesktop(QMainWindow):
     def _camera_closed(self, *_args):
         self.camera_viewer = None
 
+    def open_home_safety(self):
+        """A pessoa no notebook ativa o SOS/microfone na janela, nunca no chat."""
+        if self.home_safety_dialog is not None:
+            self.home_safety_dialog.raise_()
+            self.home_safety_dialog.activateWindow()
+            return
+        dialog = HomeSafetyDialog(self)
+        self.home_safety_dialog = dialog
+        dialog.finished.connect(self._home_safety_closed)
+        dialog.state_changed.connect(self._home_safety_state_changed)
+        dialog.show()
+
+    def _home_safety_state_changed(self, status):
+        if status == "desligado":
+            self.safety_button.setText("◉  Segurança doméstica (SOS)")
+            self.safety_button.setToolTip(
+                "DESLIGADO • nenhum áudio monitorado. Clique para configurar."
+            )
+        else:
+            self.safety_button.setText("●  Segurança ATIVA • " + status)
+            self.safety_button.setToolTip(
+                "Monitoramento temporário autorizado • clique para encerrar."
+            )
+
+    def _home_safety_closed(self, *_args):
+        self.home_safety_dialog = None
+        self._home_safety_state_changed("desligado")
+
+    def request_embedded_video(self):
+        """Convite não autentica pessoa; a câmera depende de permissão local."""
+        link, ok = QInputDialog.getText(
+            self, "Videochamada dentro da Yuna",
+            "Cole seu convite Magi1020 para abrir o vídeo numa janela "
+            "dentro da Yuna. O serviço de mídia é EXTERNO (Jitsi Meet):"
+        )
+        if not ok:
+            return
+        try:
+            validated = validate_remote_camera_invite(link)
+        except ValueError:
+            QMessageBox.warning(
+                self, "Convite inválido",
+                "Crie um novo convite por Magi1020 e cole o link completo."
+            )
+            return
+        accepted = QMessageBox.question(
+            self, "Entrar na reunião dentro da Yuna?",
+            "O vídeo será carregado do serviço externo Jitsi Meet. "
+            "O notebook transmissor exibirá a solicitação de câmera "
+            "e a pessoa poderá recusá-la, desligar a webcam ou sair. "
+            "Deseja abrir esta reunião?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if accepted != QMessageBox.StandardButton.Yes:
+            return
+        self.open_embedded_video(validated)
+
+    def open_embedded_video(self, invitation):
+        """Abre visualizador Qt WebEngine opcional; nunca liga webcam alheia."""
+        if self.embedded_video is not None:
+            self.embedded_video.raise_()
+            self.embedded_video.activateWindow()
+            return
+        dialog = EmbeddedVideoDialog(invitation, self)
+        self.embedded_video = dialog
+        dialog.finished.connect(self._embedded_video_closed)
+        dialog.show()
+        loaded = dialog.start()
+        self.status.setText(
+            "Reunião aberta na Yuna com mídia externa Jitsi"
+            if loaded else
+            "Qt WebEngine ausente; pode abrir a reunião em navegador externo"
+        )
+
+    def _embedded_video_closed(self, *_args):
+        self.embedded_video = None
+
     def open_remote_camera_invitation(self):
         """Magi1020: convite para vídeo consentido, sem ligar webcams."""
         options = (
@@ -871,6 +968,10 @@ class YunaDesktop(QMainWindow):
         self.game_session.stop()
         if self.camera_viewer is not None:
             self.camera_viewer.close()
+        if self.embedded_video is not None:
+            self.embedded_video.close()
+        if self.home_safety_dialog is not None:
+            self.home_safety_dialog.stop_safety()
         self.player.stop()
         self.voice_busy = False
         self._stop_avatar_speech()
@@ -1232,6 +1333,10 @@ class YunaDesktop(QMainWindow):
         self.game_session.stop()
         if self.camera_viewer is not None:
             self.camera_viewer.close()
+        if self.embedded_video is not None:
+            self.embedded_video.close()
+        if self.home_safety_dialog is not None:
+            self.home_safety_dialog.close()
         if self.avatar_bridge is not None:
             self.avatar_bridge.stop()
             self.avatar_bridge = None
