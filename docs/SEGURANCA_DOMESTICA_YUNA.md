@@ -65,6 +65,23 @@ miniatura cinza 64x36 em memória, com cooldown contra repetições.
 Pode confundir sombras ou luz com movimento. Mostra aviso **no notebook**
 e **não** envia vídeo, fotos nem notificações ao WhatsApp.
 
+## Alertas automáticos SEM API WhatsApp paga
+
+Agora há uma opção de **Telegram gratuito** na janela Segurança:
+a pessoa no notebook pode marcar o envio automático de rótulos
+pré-definidos de SOS ou som alto, indicar o bot e seu chat privado,
+e confirmar a sessão de no máximo 30 minutos. Não são transmitidos
+áudio, vídeo ou conversas. Sons altos aguardam 15 segundos para
+cancelar falsos alarmes; há limites de tentativas e cooldown. O campo
+de token é mascarado e limpo ao desligar.
+
+**WhatsApp automático continua NÃO implementado**, pois a API oficial
+de modelos pode gerar custos. O botão de WhatsApp manual permanece.
+O Telegram depende de configuração e acesso à internet, e a API aceitar
+uma mensagem não comprova que ela foi entregue no celular.
+
+Guia de configuração: [`ALERTAS_GRATUITOS_YUNA.md`](ALERTAS_GRATUITOS_YUNA.md).
+
 ## O que NÃO foi implementado
 
 - **Envio automático de WhatsApp:** a infraestrutura WhatsApp Business
