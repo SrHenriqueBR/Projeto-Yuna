@@ -35,6 +35,7 @@ from persona_store import load_preferences, save_preferences
 from emergency_stop import is_stop_request
 from game_sessions import GameSession
 from camera_watch import CameraPermission, parse_camera_source
+from camera_commands import is_camera_view_request
 from camera_viewer import CameraViewer
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
@@ -717,6 +718,14 @@ class YunaDesktop(QMainWindow):
         if is_stop_request(content):
             self.composer.clear()
             self.emergency_stop()
+            return
+        if not self.pending_path and is_camera_view_request(content):
+            self.composer.clear()
+            self.add_message("Você", content)
+            self.add_message("Yuna", "Posso abrir uma câmera sua ou autorizada, "
+                             "mas primeiro preciso que você escolha a fonte e "
+                             "confirme o acesso nesta sessão.")
+            self.open_camera_viewer()
             return
         request = parse_voice_preference(content) if not self.pending_path else None
         if request:
