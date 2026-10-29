@@ -14,7 +14,7 @@ from PySide6.QtCore import Qt, QTimer, Signal, QObject, QUrl
 from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence, QDesktopServices
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel,
+    QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QInputDialog,
     QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
     QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget
 )
@@ -34,6 +34,8 @@ from persona_commands import parse_voice_preference
 from persona_store import load_preferences, save_preferences
 from emergency_stop import is_stop_request
 from game_sessions import GameSession
+from camera_watch import CameraPermission, parse_camera_source
+from camera_viewer import CameraViewer
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -214,6 +216,7 @@ class YunaDesktop(QMainWindow):
         self.worker = DesktopWorker(self.signals)
         self._stop_requested = False
         self.game_session = GameSession()  # desabilitado por padrão; sem controle de jogos
+        self.camera_viewer = None  # a câmera nunca é aberta automaticamente
         self.setup_ui()
         self.attach_events()
 
@@ -318,6 +321,13 @@ class YunaDesktop(QMainWindow):
         self.avatar3d_button.setToolTip(
             "Conecta o avatar VRM do navegador à voz da Yuna, somente em 127.0.0.1.")
         sidebar.addWidget(self.avatar3d_button)
+        self.camera_button = QPushButton("◉  Ver câmera autorizada")
+        self.camera_button.setObjectName("ghost")
+        self.camera_button.setToolTip(
+            "Visualização opcional de webcam ou câmera RTSP da sua rede local. "
+            "Sem gravação nem análise automática."
+        )
+        sidebar.addWidget(self.camera_button)
 
         title = QLabel("SUA BIBLIOTECA")
         title.setObjectName("section")
@@ -453,6 +463,7 @@ class YunaDesktop(QMainWindow):
 
         self.avatar_button.clicked.connect(self.toggle_avatar)
         self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
+        self.camera_button.clicked.connect(self.open_camera_viewer)
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
@@ -653,6 +664,54 @@ class YunaDesktop(QMainWindow):
         self.avatar3d_button.setText("■  Desconectar Yuna 3D")
         self.status.setText("Yuna 3D vinculada • somente estados de animação locais")
 
+    def open_camera_viewer(self):
+        """Abre somente uma câmera explicitamente escolhida e aprovada."""
+        if self.camera_viewer is not None and self.camera_viewer.isVisible():
+            self.camera_viewer.raise_()
+            self.camera_viewer.activateWindow()
+            return
+        source_text, accepted = QInputDialog.getText(
+            self, "Yuna • Câmera autorizada",
+            "Selecione sua própria webcam (0, 1...) ou informe uma URL "
+            "rtsp:// de câmera IP privada. Endereços com senha não são salvos:",
+        )
+        if not accepted or not source_text.strip():
+            return
+        try:
+            source = parse_camera_source(source_text)
+        except ValueError as exc:
+            QMessageBox.warning(self, "Fonte de câmera inválida", str(exc))
+            return
+        approval = QMessageBox.question(
+            self, "Permitir visualização por 5 minutos?",
+            "A Yuna abrirá apenas " + source.label + ".\n"
+            "Confirme que você possui autorização para visualizar esta câmera.\n"
+            "Imagens não serão gravadas, analisadas nem enviadas à nuvem.\n"
+            "A sessão dura no máximo 5 minutos e pode ser encerrada "
+            "pelo botão Parar ou Break080111.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if approval != QMessageBox.StandardButton.Yes:
+            return
+        permission = CameraPermission()
+        try:
+            permission.authorize(source_text, approved=True, duration_seconds=300)
+        except (ValueError, PermissionError) as exc:
+            QMessageBox.warning(self, "Não foi possível autorizar", str(exc))
+            return
+        viewer = CameraViewer(permission, self)
+        self.camera_viewer = viewer
+        viewer.finished.connect(self._camera_closed)
+        viewer.show()
+        viewer.start_preview()
+        self.status.setText(
+            "Prévia de câmera autorizada • somente esta sessão • sem gravação"
+        )
+
+    def _camera_closed(self, *_args):
+        self.camera_viewer = None
+
     def send_message(self):
         content = self.composer.toPlainText().strip()
         if is_stop_request(content):
@@ -689,6 +748,8 @@ class YunaDesktop(QMainWindow):
         """Interrompe áudio e ignora resposta em andamento, sem matar a thread."""
         self.worker.cancel_pending()
         self.game_session.stop()
+        if self.camera_viewer is not None:
+            self.camera_viewer.close()
         self.player.stop()
         self.voice_busy = False
         self._stop_avatar_speech()
@@ -1048,6 +1109,8 @@ class YunaDesktop(QMainWindow):
 
     def closeEvent(self, event):
         self.game_session.stop()
+        if self.camera_viewer is not None:
+            self.camera_viewer.close()
         if self.avatar_bridge is not None:
             self.avatar_bridge.stop()
             self.avatar_bridge = None
