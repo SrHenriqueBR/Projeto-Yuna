@@ -6,7 +6,7 @@ from dataclasses import dataclass, replace
 import math
 
 POSES = frozenset(("idle", "walk", "sit", "sleepy", "wave", "wink",
-                   "laugh", "shy", "angry", "happy", "surprised", "pose", "talk"))
+                   "laugh", "shy", "curious", "angry", "happy", "surprised", "pose", "talk"))
 EMOTIONS = frozenset(("neutral", "happy", "shy", "sad", "surprised", "annoyed"))
 
 
