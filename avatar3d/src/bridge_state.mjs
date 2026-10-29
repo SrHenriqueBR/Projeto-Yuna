@@ -3,6 +3,8 @@
 export function connectionFromFragment(fragment) {
   if (typeof fragment !== "string" || !fragment.startsWith("#")) return null;
   const params = new URLSearchParams(fragment.slice(1));
+  if (params.getAll("bridgePort").length !== 1 ||
+      params.getAll("bridgeToken").length !== 1) return null;
   const rawPort = params.get("bridgePort") || "";
   const token = params.get("bridgeToken") || "";
   if (!/^[0-9]{4,5}$/.test(rawPort) || !/^[A-Za-z0-9_-]{32,128}$/.test(token)) {
