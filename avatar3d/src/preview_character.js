@@ -275,7 +275,7 @@ export function createAnimePreview(style = {}) {
     const eyebrow = capsule(headPivot, mats.lash,
       [side * 0.143 - 0.070, 0.158, 0.288],
       [side * 0.143 + 0.070, 0.172, 0.285], 0.013);
-    eyes.push({eye, irisGroup, eyebrow});
+    eyes.push({eye, irisGroup, eyebrow, eyebrowBaselineY: eyebrow.position.y});
   }
   const backHair = addHair(headPivot, mats, appearance);
   addAccessory(headPivot, mats, appearance);
@@ -295,14 +295,15 @@ export function createAnimePreview(style = {}) {
         ? -2.1 + frame.wave : -0.14;
       leftArm.rotation.z = 0.14;
       backHair.rotation.z = -frame.bodySway * 1.6;
-      for (const {eye, irisGroup, eyebrow} of eyes) {
+      for (const {eye, irisGroup, eyebrow, eyebrowBaselineY} of eyes) {
         const surprised = frame.emotion === "surprised";
         const wink = frame.emotion === "shy";
         eye.scale.y = Math.max(0.03, (surprised ? 1.10 : 1) -
           frame.blink * (wink ? 0.99 : 0.96));
         irisGroup.position.set(clamp(gazeX, -1, 1) * 0.019,
           -clamp(gazeY, -1, 1) * 0.012, 0);
-        eyebrow.position.y = frame.emotion === "curious" ? 0.018 : 0;
+        eyebrow.position.y = eyebrowBaselineY +
+          (frame.emotion === "curious" ? 0.018 : 0);
       }
       mouth.scale.y = frame.mouth > 0
         ? 0.018 + frame.mouth * 0.095
