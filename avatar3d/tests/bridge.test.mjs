@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { connectionFromFragment, normalizeRemoteState, reactionPose } from "../src/bridge_state.mjs";
+import { connectionFromFragment, normalizeRemoteState, reactionPose, normalizeBattery } from "../src/bridge_state.mjs";
 
 const token = "s".repeat(43);
 const state = {
@@ -50,4 +50,18 @@ test("accepts only whitelisted style changes from the Python bridge", () => {
   assert.equal(next.appearance.api_key, undefined);
   assert.equal(next.appearance.accessory, undefined);
   assert.deepEqual(normalizeRemoteState({...state, appearance: null}).appearance, {});
+});
+
+test("battery state is strict and excludes privileged or identifying fields", () => {
+  assert.deepEqual(normalizeBattery({
+    percent: 18, plugged: false, mode: "low",
+    executable: "run", serial_number: "secret"
+  }), {percent: 18, plugged: false, mode: "low"});
+  assert.equal(normalizeBattery({percent: -1, plugged: false, mode: "low"}), null);
+  assert.equal(normalizeBattery({percent: 12, plugged: 0, mode: "low"}), null);
+  assert.equal(normalizeBattery({percent: 12, plugged: false, mode: "unsupported"}), null);
+  assert.equal(normalizeRemoteState({...state, battery: undefined}).battery, null);
+  assert.equal(normalizeRemoteState({
+    ...state, battery: {percent: 100, plugged: true, mode: "full"}
+  }).battery.percent, 100);
 });

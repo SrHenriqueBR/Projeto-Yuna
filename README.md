@@ -95,6 +95,35 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Energia ilustrativa da Yuna (bateria do notebook)
+
+Em notebooks Windows com sensor válido, a Yuna consulta **apenas a porcentagem
+da bateria e se o carregador está conectado** pela API do Windows. A consulta
+é local, leve e sem instalação adicional; em desktops sem bateria ou em
+sensores indisponíveis ela **não inventa percentuais nem faz alertas**.
+
+- **Até 35% sem carregador:** prefere ficar sentada e descansando.
+- **Até 20% sem carregador:** mostra sono, reduz FPS para no máximo 12 e
+  caminha lentamente até a lateral direita da tela, junto ao seu indicador
+  virtual de energia (não detecta a tomada física).
+- **Até 10% sem carregador:** pede conexão ao carregador com um alerta mais urgente.
+- **Carregando:** relaxa e mostra a condição de carga.
+- **100% de carga:** comemora e sugere uma atividade, **sem abrir nem controlar
+  aplicativos automaticamente**.
+
+O avatar 2D mostra um pequeno indicador e balões ocasionais; a Yuna
+Desktop também comunica a mudança no chat, sem ligar TTS por conta própria.
+Se o 3D estiver explicitamente conectado, a ponte transmite apenas carga,
+estado AC e categoria visual. O monitoramento é consultado em intervalos
+de 90 segundos — **não é uma leitura instantânea contínua**.
+Gestos explícitos, voz em andamento e movimento reduzido têm prioridade
+sobre a animação automática.
+
+**Jogar de verdade em games de terceiros ainda não foi implementado.**
+Automação de controles, compreensão visual e compatibilidade com jogos
+precisam de autorização específica por sessão, mecanismo de parada e
+testes offline antes de manipular teclado ou gamepad.
+
 ### Avatar 3D VRM experimental (opcional)
 
 A versão 2D continua como padrão. Para testar o protótipo **3D opcional**

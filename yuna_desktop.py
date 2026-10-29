@@ -27,6 +27,7 @@ from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from avatar_controller import AvatarController
 from avatar3d_bridge import Avatar3DBridge
+from battery_life import BatteryCompanion, read_battery, public_battery
 from avatar_reactions import reaction_for_text
 from action_diagnostics import diagnose_failure
 from persona_commands import parse_voice_preference
@@ -205,6 +206,8 @@ class YunaDesktop(QMainWindow):
         self._changing_voice = False
         self._edge_consent = False
         self.microphone_busy = False
+        self._battery_companion = BatteryCompanion()
+        self._battery_mood = self._battery_companion.observe(None)
 
         self.signals = DesktopSignals()
         self.worker = DesktopWorker(self.signals)
@@ -224,6 +227,28 @@ class YunaDesktop(QMainWindow):
         self.player.errorOccurred.connect(self.playback_error)
 
         self.worker.start()
+        # Leitura local a cada 90 s; não inicia processos nem manipula energia.
+        self.battery_timer = QTimer(self)
+        self.battery_timer.setInterval(90000)
+        self.battery_timer.timeout.connect(self.poll_battery)
+        self.battery_timer.start()
+        QTimer.singleShot(2000, self.poll_battery)
+
+    def poll_battery(self):
+        """Informa bateria real sem emitir voz automaticamente."""
+        status = read_battery()
+        mood = self._battery_companion.observe(status)
+        self._battery_mood = mood
+        if self.avatar_window is not None:
+            self.avatar_window.set_battery_status(status)
+        if self.avatar_bridge is not None:
+            self.avatar_bridge.publish(
+                self.avatar_controller.snapshot,
+                has_amplitude=bool(self._audio_levels),
+                battery=public_battery(mood),
+            )
+        if mood.announcement:
+            self.add_message("Yuna", mood.announcement)
 
     def setup_ui(self):
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -612,7 +637,8 @@ class YunaDesktop(QMainWindow):
             bridge = Avatar3DBridge().start()
             bridge.publish(self.avatar_controller.snapshot,
                            has_amplitude=bool(self._audio_levels),
-                           appearance=load_style(ROOT))
+                           appearance=load_style(ROOT),
+                           battery=public_battery(self._battery_mood))
             opened = QDesktopServices.openUrl(QUrl(bridge.viewer_url()))
             if not opened:
                 raise RuntimeError("O navegador não abriu o renderizador local.")

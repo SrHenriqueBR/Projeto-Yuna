@@ -79,6 +79,22 @@ e suas opções não alteram malhas, texturas ou licenças de VRMs importados.
 Para uma waifu 3D com rig e física de cabelos de produção,
 será necessário criar/autorizar um modelo VRM próprio.
 
+## Bateria da Yuna conectada ao notebook
+
+Quando a Yuna Desktop está vinculada, um pequeno indicador no estúdio
+exibe **percentual real e presença de carregador**, quando o Windows
+fornece esses dados. Sem sensor confiável o indicador fica oculto.
+
+O avatar 3D apresenta postura sonolenta quando desconectado e abaixo
+de 20%, postura mais calma abaixo de 35% ou enquanto carrega, e
+animações alegres ao chegar a 100%. Em carga baixa, o renderizador
+limita automaticamente o ritmo a até **12 FPS**. Sem conexão local
+com a Yuna Desktop, o protótipo não tenta ler dados do sistema.
+
+A personagem interpreta esses estados de maneira ilustrativa:
+não detecta emoção real, não acessa adaptador de energia física e
+não inicia jogos automaticamente.
+
 ## Controles
 
 - Mova o cursor: movimentos leves de cabeça e olhos.

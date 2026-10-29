@@ -24,6 +24,20 @@ const ALLOWED_EMOTIONS = new Set([
   "neutral", "happy", "shy", "sad", "surprised", "annoyed"
 ]);
 
+const BATTERY_MODES = new Set([
+  "critical", "low", "tired", "normal", "charging", "full"
+]);
+
+export function normalizeBattery(raw) {
+  if (!raw || typeof raw !== "object" ||
+      !Number.isInteger(raw.percent) || raw.percent < 0 ||
+      raw.percent > 100 || typeof raw.plugged !== "boolean" ||
+      !BATTERY_MODES.has(raw.mode)) return null;
+  return {
+    percent: raw.percent, plugged: raw.plugged, mode: raw.mode
+  };
+}
+
 export function normalizeRemoteState(raw) {
   if (!raw || typeof raw !== "object" ||
       !Number.isSafeInteger(raw.revision) || raw.revision < 0 ||
@@ -39,6 +53,7 @@ export function normalizeRemoteState(raw) {
     mouthLevel: Number.isFinite(raw.mouth_level)
       ? Math.max(0, Math.min(1, raw.mouth_level)) : 0,
     hasAmplitude: raw.has_amplitude === true,
+    battery: normalizeBattery(raw.battery),
     appearanceRevision: Number.isSafeInteger(raw.appearance_revision) &&
       raw.appearance_revision >= 0 ? raw.appearance_revision : 0,
     appearance: raw.appearance && typeof raw.appearance === "object" &&

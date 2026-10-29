@@ -51,9 +51,25 @@ def _safe_appearance(value):
     }
 
 
+_BATTERY_MODES = frozenset(("critical", "low", "tired", "normal",
+                            "charging", "full"))
+
+
+def _safe_battery(value):
+    if not isinstance(value, dict):
+        return None
+    percent = value.get("percent")
+    plugged = value.get("plugged")
+    mode = value.get("mode")
+    if (type(percent) is not int or not 0 <= percent <= 100
+            or type(plugged) is not bool or mode not in _BATTERY_MODES):
+        return None
+    return {"percent": percent, "plugged": plugged, "mode": mode}
+
+
 def public_snapshot(snapshot, *, revision=0, gesture_seq=0,
                     has_amplitude=False, appearance=None,
-                    appearance_revision=0):
+                    appearance_revision=0, battery=None):
     """Whitelisting explícito: nunca serializar uma dataclass arbitrária."""
     pose = getattr(snapshot, "pose", "idle")
     emotion = getattr(snapshot, "emotion", "neutral")
@@ -68,6 +84,7 @@ def public_snapshot(snapshot, *, revision=0, gesture_seq=0,
         "has_amplitude": bool(has_amplitude) if speaking else False,
         "appearance": _safe_appearance(appearance),
         "appearance_revision": int(appearance_revision),
+        "battery": _safe_battery(battery),
     }
 
 
@@ -82,6 +99,7 @@ class Avatar3DBridge:
         self._gesture_seq = 0
         self._appearance = {}
         self._appearance_revision = 0
+        self._battery = None
         self._snapshot = public_snapshot(None)
         self._server = None
         self._thread = None
@@ -98,7 +116,7 @@ class Avatar3DBridge:
                 + "&bridgeToken=" + quote(self._token, safe=""))
 
     def publish(self, snapshot, *, event=None, has_amplitude=False,
-                appearance=None):
+                appearance=None, battery=None):
         """Chamado pelo thread principal Qt; o servidor só lê este estado."""
         with self._lock:
             self._revision += 1
@@ -109,11 +127,14 @@ class Avatar3DBridge:
                 if safe != self._appearance:
                     self._appearance = safe
                     self._appearance_revision += 1
+            if battery is not None:
+                self._battery = _safe_battery(battery)
             self._snapshot = public_snapshot(
                 snapshot, revision=self._revision, gesture_seq=self._gesture_seq,
                 has_amplitude=has_amplitude,
                 appearance=self._appearance,
                 appearance_revision=self._appearance_revision,
+                battery=self._battery,
             )
 
     def start(self):

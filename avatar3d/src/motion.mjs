@@ -1,5 +1,5 @@
 /** Deterministic animation signals, independent from Three.js and DOM. */
-export const EMOTIONS = Object.freeze(["idle", "happy", "curious", "surprised", "shy", "wave"]);
+export const EMOTIONS = Object.freeze(["idle", "happy", "curious", "surprised", "shy", "wave", "sit", "sleepy"]);
 
 export function clamp(value, minimum, maximum) {
   if (!Number.isFinite(value)) return minimum;
@@ -27,11 +27,11 @@ export function frameAt(seconds, {
   const activePose = EMOTIONS.includes(pose) ? pose : "idle";
   const movement = reducedMotion ? 0 : 1;
   return {
-    blink: blinkAt(time, reducedMotion),
+    blink: activePose === "sleepy" ? 1 : blinkAt(time, reducedMotion),
     headYaw: movement ? clamp(pointerX, -1, 1) * 0.16 : 0,
     headPitch: movement ? -clamp(pointerY, -1, 1) * 0.10 : 0,
-    bodySway: movement ? Math.sin(time * 0.9) * 0.018 : 0,
-    breath: movement ? Math.sin(time * 1.65) * 0.012 : 0,
+    bodySway: movement && activePose !== "sleepy" ? Math.sin(time * 0.9) * 0.018 : 0,
+    breath: movement ? Math.sin(time * (activePose === "sleepy" ? 0.8 : 1.65)) * 0.012 : 0,
     wave: activePose === "wave" && movement ? Math.sin(time * 8) * 0.22 : 0,
     mouth: clamp(mouthLevel, 0, 1),
     emotion: activePose

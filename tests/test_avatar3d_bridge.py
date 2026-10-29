@@ -144,6 +144,37 @@ class BridgeTests(unittest.TestCase):
         finally:
             bridge.stop()
 
+    def test_battery_state_only_percent_mode_and_ac_is_sent(self):
+        from avatar3d_bridge import public_snapshot
+        private = {
+            "percent": 12, "plugged": False, "mode": "low",
+            "battery_serial": "private-identifying-value",
+            "game_history": ["The Last of Us"],
+        }
+        snapshot = public_snapshot(TestSnapshot(), battery=private)
+        self.assertEqual(
+            snapshot["battery"],
+            {"percent": 12, "plugged": False, "mode": "low"})
+        self.assertNotIn("battery_serial", str(snapshot))
+        self.assertNotIn("game_history", str(snapshot))
+        bad = [
+            {"percent": 101, "plugged": False, "mode": "low"},
+            {"percent": True, "plugged": False, "mode": "low"},
+            {"percent": 10, "plugged": "false", "mode": "low"},
+            {"percent": 10, "plugged": False, "mode": "execute"},
+        ]
+        for item in bad:
+            self.assertIsNone(public_snapshot(TestSnapshot(), battery=item)["battery"])
+
+        bridge = Avatar3DBridge().start()
+        try:
+            bridge.publish(TestSnapshot(), battery=private)
+            self.assertEqual(bridge._snapshot["battery"]["percent"], 12)
+            bridge.publish(TestSnapshot(), event="speech.started")
+            self.assertEqual(bridge._snapshot["battery"]["mode"], "low")
+        finally:
+            bridge.stop()
+
     def test_no_server_before_start(self):
         bridge = Avatar3DBridge()
         with self.assertRaises(RuntimeError):
