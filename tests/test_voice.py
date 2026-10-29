@@ -18,7 +18,8 @@ class VoiceTests(unittest.TestCase):
 
     def test_female_voice_and_local_privacy(self):
         self.assertEqual(voice.EDGE_VOICE, "pt-BR-FranciscaNeural")
-        self.assertIn("Gender -eq 'Female'", voice.WINDOWS_SCRIPT)
+        self.assertIn("YUNA_VOICE_GENDER", voice.WINDOWS_SCRIPT)
+        self.assertIn("VoiceInfo.Gender.ToString()", voice.WINDOWS_SCRIPT)
         self.assertIn("pt-BR", voice.WINDOWS_SCRIPT)
         self.assertIn("[Console]::In.ReadToEnd()", voice.WINDOWS_SCRIPT)
         self.assertNotIn("http", voice.WINDOWS_SCRIPT.lower())
@@ -50,11 +51,47 @@ class VoiceTests(unittest.TestCase):
             output.unlink(missing_ok=True)
 
 
+    def test_voice_parameters_respect_user_choice(self):
+        female = voice.voice_parameters("feminina", "natural")
+        male = voice.voice_parameters("masculina", "suave")
+        neutral = voice.voice_parameters("neutra", "energica")
+        self.assertEqual(female["gender"], "Female")
+        self.assertEqual(male["gender"], "Male")
+        self.assertEqual(male["edge_voice"], "pt-BR-AntonioNeural")
+        self.assertEqual(male["edge_rate"], "-5%")
+        self.assertEqual(neutral["gender"], "Any")
+        self.assertEqual(neutral["windows_rate"], 4)
+        with self.assertRaises(ValueError):
+            voice.voice_parameters("feminina", "impossivel")
+
+    def test_edge_voice_changes_with_presentation(self):
+        parameters = {}
+
+        class FakeCommunicate:
+            def __init__(self, text, name, rate, pitch):
+                parameters.update(text=text, name=name, rate=rate, pitch=pitch)
+
+            async def save(self, filename):
+                Path(filename).write_bytes(b"ID3male")
+
+        edge_package = ModuleType("edge_tts")
+        edge_package.__path__ = []
+        submodule = ModuleType("edge_tts.communicate")
+        submodule.Communicate = FakeCommunicate
+        with patch.dict(sys.modules, {"edge_tts": edge_package,
+                                      "edge_tts.communicate": submodule}):
+            output = voice.synthesize_edge("Olá!", "masculina", "suave")
+        try:
+            self.assertEqual(parameters["name"], voice.EDGE_MALE_VOICE)
+            self.assertEqual(parameters["rate"], "-5%")
+        finally:
+            output.unlink(missing_ok=True)
+
     def test_lazy_import_failure_has_stable_python_fallback(self):
         async def broken(*args):
             raise TypeError("'lazy_import' object is not callable")
 
-        def fake_stable(text, filename):
+        def fake_stable(text, filename, presentation, voice_style):
             self.assertIn("Kaizen", text)
             Path(filename).write_bytes(b"ID3fallback")
 

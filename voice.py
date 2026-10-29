@@ -19,10 +19,29 @@ import tempfile
 import urllib.error
 import urllib.request
 
+from voice_persona import preferred_voice_gender
+
 EDGE_VOICE = "pt-BR-FranciscaNeural"
 EDGE_RATE = "+13%"
 EDGE_PITCH = "+8Hz"
 WINDOWS_RATE = 2
+EDGE_MALE_VOICE = "pt-BR-AntonioNeural"
+
+
+def voice_parameters(presentation="feminina", voice_style="natural"):
+    """Valida as preferências; sem inferir identidade ou acessar serviços."""
+    gender = preferred_voice_gender(presentation)
+    rates = {"suave": -1, "natural": WINDOWS_RATE, "energica": 4}
+    edge_rates = {"suave": "-5%", "natural": EDGE_RATE, "energica": "+25%"}
+    if voice_style not in rates:
+        raise ValueError("Estilo de voz indisponível")
+    return {
+        "gender": gender or "Any",
+        "windows_rate": rates[voice_style],
+        "edge_voice": EDGE_MALE_VOICE if presentation == "masculina" else EDGE_VOICE,
+        "edge_rate": edge_rates[voice_style],
+        "edge_pitch": "+0Hz" if presentation == "masculina" else EDGE_PITCH,
+    }
 
 
 def speech_text(text, limit=520):
@@ -43,15 +62,19 @@ $ErrorActionPreference = 'Stop'
 [Console]::InputEncoding = [System.Text.UTF8Encoding]::new()
 Add-Type -AssemblyName System.Speech
 $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$gender = [Environment]::GetEnvironmentVariable('YUNA_VOICE_GENDER')
+if ($gender -notin @('Female', 'Male', 'Any')) {
+    throw 'Preferência de apresentação de voz inválida.'
+}
 $voices = @($speaker.GetInstalledVoices() | Where-Object {
-    $_.Enabled -and $_.VoiceInfo.Gender -eq 'Female'
+    $_.Enabled -and ($gender -eq 'Any' -or $_.VoiceInfo.Gender.ToString() -eq $gender)
 })
 $br = @($voices | Where-Object {$_.VoiceInfo.Culture.Name -eq 'pt-BR'})
 if ($br.Count -eq 0) {
-    throw 'Não encontrei voz feminina pt-BR instalada. Instale uma voz nas configurações do Windows ou ative Edge TTS.'
+    throw 'Não encontrei voz pt-BR instalada para a apresentação solicitada. Configure uma voz pt-BR no Windows ou escolha outra opção.'
 }
 $speaker.SelectVoice($br[0].VoiceInfo.Name)
-$speaker.Rate = 2
+$speaker.Rate = [int]([Environment]::GetEnvironmentVariable('YUNA_VOICE_RATE'))
 $speaker.Volume = 95
 $text = [Console]::In.ReadToEnd()
 if (-not [string]::IsNullOrWhiteSpace($text)) { $speaker.Speak($text) }
@@ -59,13 +82,17 @@ $speaker.Dispose()
 """
 
 
-def speak_windows(text):
+def speak_windows(text, presentation="feminina", voice_style="natural"):
     """Bloqueante: executar em thread de trabalho, nunca no thread Qt."""
     if os.name != "nt":
         raise RuntimeError("A voz offline exige Windows.")
     clean = speech_text(text)
     if not clean:
         return
+    options = voice_parameters(presentation, voice_style)
+    env = os.environ.copy()
+    env["YUNA_VOICE_GENDER"] = options["gender"]
+    env["YUNA_VOICE_RATE"] = str(options["windows_rate"])
     ps = Path(os.environ.get("SystemRoot", r"C:\Windows")) / (
         "System32/WindowsPowerShell/v1.0/powershell.exe"
     )
@@ -73,7 +100,7 @@ def speak_windows(text):
         result = subprocess.run(
             [str(ps), "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", WINDOWS_SCRIPT],
             input=clean, text=True, capture_output=True, encoding="utf-8",
-            errors="replace", timeout=90, shell=False,
+            errors="replace", timeout=90, shell=False, env=env,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -99,13 +126,14 @@ WINDOWS_WAV_SCRIPT = WINDOWS_SCRIPT.replace(
 )
 
 
-def synthesize_windows(text):
+def synthesize_windows(text, presentation="feminina", voice_style="natural"):
     """Voz local em WAV temporário; não exige rede nem outra biblioteca."""
     clean = speech_text(text)
     if not clean:
         return None
     if os.name != "nt":
         raise RuntimeError("A voz offline exige Windows.")
+    options = voice_parameters(presentation, voice_style)
     ps = Path(os.environ.get("SystemRoot", r"C:\Windows")) / (
         "System32/WindowsPowerShell/v1.0/powershell.exe"
     )
@@ -116,6 +144,8 @@ def synthesize_windows(text):
         env = os.environ.copy()
         # O destino é passado apenas pelo ambiente, nunca interpolado em código.
         env["YUNA_LOCAL_WAV_PATH"] = str(path)
+        env["YUNA_VOICE_GENDER"] = options["gender"]
+        env["YUNA_VOICE_RATE"] = str(options["windows_rate"])
         result = subprocess.run(
             [str(ps), "-NoLogo", "-NoProfile", "-NonInteractive",
              "-Command", WINDOWS_WAV_SCRIPT],
@@ -183,7 +213,7 @@ def mouth_level_at(levels, position_ms, interval_ms=50):
     return max(0.0, min(1.0, float(levels[index])))
 
 
-async def _edge_save(text, destination):
+async def _edge_save(text, destination, presentation="feminina", voice_style="natural"):
     try:
         # Importação direta da classe: evita um proxy lazy que certas combinações
         # de Python 3.15 e pacotes de terceiros não conseguem invocar.
@@ -192,13 +222,15 @@ async def _edge_save(text, destination):
         raise RuntimeError(
             "Para usar a voz online, instale: py -3 -m pip install edge-tts"
         ) from exc
+    options = voice_parameters(presentation, voice_style)
     communicate = Communicate(
-        speech_text(text), EDGE_VOICE, rate=EDGE_RATE, pitch=EDGE_PITCH
+        speech_text(text), options["edge_voice"],
+        rate=options["edge_rate"], pitch=options["edge_pitch"]
     )
     await communicate.save(str(destination))
 
 
-def _stable_python_edge(text, destination):
+def _stable_python_edge(text, destination, presentation="feminina", voice_style="natural"):
     """Fallback por processo isolado: usa edge-tts no Python 3.13 se instalado.
 
     O Python do GUI não muda; somente a síntese é executada em uma versão estável.
@@ -222,9 +254,10 @@ def _stable_python_edge(text, destination):
             "Instale Python 3.13 e execute: py -3.13 -m pip install edge-tts. "
             "Depois reabra a Yuna; suas memórias ficam intactas."
         )
+    options = voice_parameters(presentation, voice_style)
     result = subprocess.run(
-        ["py", "-3.13", "-m", "edge_tts", "--voice", EDGE_VOICE,
-         "--rate", EDGE_RATE, "--pitch", EDGE_PITCH, "--text", speech_text(text),
+        ["py", "-3.13", "-m", "edge_tts", "--voice", options["edge_voice"],
+         "--rate", options["edge_rate"], "--pitch", options["edge_pitch"], "--text", speech_text(text),
          "--write-media", str(destination)],
         capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=120, shell=False, creationflags=flags
@@ -236,7 +269,7 @@ def _stable_python_edge(text, destination):
         )
 
 
-def synthesize_edge(text):
+def synthesize_edge(text, presentation="feminina", voice_style="natural"):
     """Produz MP3 temporário; o GUI reproduz pelo Qt e apaga depois."""
     if not speech_text(text):
         return None
@@ -244,13 +277,13 @@ def synthesize_edge(text):
         path = Path(file.name)
     try:
         try:
-            asyncio.run(_edge_save(text, path))
+            asyncio.run(_edge_save(text, path, presentation, voice_style))
         except TypeError as exc:
             if "lazy_import" not in str(exc):
                 raise
             # Uma versão estável do interpretador evita a falha conhecida
             # nos imports de algumas dependências no Python 3.15.
-            _stable_python_edge(text, path)
+            _stable_python_edge(text, path, presentation, voice_style)
         if not path.stat().st_size:
             raise RuntimeError("O serviço de voz não retornou áudio.")
         return path
