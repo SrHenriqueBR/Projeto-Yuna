@@ -65,7 +65,13 @@ def detect_hardware(timeout=5):
 
 def detected_profile(environ=None):
     """Respeita override do usuário e usa detecção quando disponível."""
-    from hardware_profiles import select_profile
+    from hardware_profiles import PROFILES, select_profile
     env = os.environ if environ is None else environ
+    # Se a pessoa já definiu o perfil, evita sondagens PowerShell/CIM
+    # desnecessárias. Isso também deixa os testes Qt independentes da
+    # GPU e dos serviços de WMI do runner Windows.
+    override = str(env.get("YUNA_PERFIL", "")).strip().casefold()
+    if override in PROFILES:
+        return PROFILES[override]
     hardware = detect_hardware() or {"ram_gb": 8, "vram_gb": 0}
     return select_profile(hardware["ram_gb"], hardware["vram_gb"], env)
