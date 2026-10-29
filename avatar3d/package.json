@@ -1,0 +1,21 @@
+{
+  "name": "yuna-avatar3d",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Renderizador VRM opcional do Projeto Yuna",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@pixiv/three-vrm": "3.5.5",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "vite": "7.1.0"
+  },
+  "engines": {"node": ">=20.19.0"}
+}
