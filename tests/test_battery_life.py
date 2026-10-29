@@ -63,6 +63,7 @@ class BatteryLifeTests(unittest.TestCase):
         self.assertTrue(companion.observe(BatteryStatus(19, False), now=0).announcement)
         companion.observe(BatteryStatus(23, False), now=20)
         self.assertFalse(companion.observe(BatteryStatus(18, False), now=30).announcement)
+        companion.observe(BatteryStatus(23, False), now=3900)
         self.assertTrue(companion.observe(BatteryStatus(19, False), now=4000).announcement)
 
     def test_desktop_without_battery_is_quiet(self):
