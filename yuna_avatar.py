@@ -16,6 +16,7 @@ from avatar_motion import ambient_pose, ease_gaze, frame_at, blend_frames
 from avatar_idle_life import idle_expression
 from hardware_profiles import select_profile
 from hardware_detection import detected_profile
+from battery_life import BatteryCompanion, read_battery
 
 
 class YunaAvatar(QWidget):
@@ -46,11 +47,20 @@ class YunaAvatar(QWidget):
         self.x_coordinate = 0.0
         self._eye_cursor = (95.0, 135.0)
         self._walk_speed = 0.0
+        self._battery_companion = BatteryCompanion()
+        self.battery_mood = self._battery_companion.observe(None)
+        self._battery_seeking = False
+        self._base_avatar_fps = self._animation_profile().avatar_fps
         self._position_initial()
         self.animation = QTimer(self)
-        self.animation.setInterval(round(1000 / self._animation_profile().avatar_fps))
+        self.animation.setInterval(round(1000 / self._base_avatar_fps))
         self.animation.timeout.connect(self.advance)
         self.animation.start()
+        self.battery_timer = QTimer(self)
+        self.battery_timer.setInterval(90000)
+        self.battery_timer.timeout.connect(self.refresh_battery_state)
+        self.battery_timer.start()
+        QTimer.singleShot(1600, self.refresh_battery_state)
 
     def _animation_profile(self):
         """Detecta hardware local; permite override explícito de perfil."""
@@ -58,7 +68,32 @@ class YunaAvatar(QWidget):
 
     def refresh_animation_profile(self):
         """Aplica mudanças de perfil sem recriar o avatar."""
-        self.animation.setInterval(round(1000 / self._animation_profile().avatar_fps))
+        self._base_avatar_fps = self._animation_profile().avatar_fps
+        self._apply_battery_fps()
+
+    def _apply_battery_fps(self):
+        limit = self.battery_mood.fps_cap
+        fps = min(self._base_avatar_fps, limit) if limit else self._base_avatar_fps
+        self.animation.setInterval(round(1000 / fps))
+
+    def refresh_battery_state(self):
+        """Consulta o indicador do Windows sem instalar bibliotecas extras."""
+        self.set_battery_status(read_battery())
+
+    def set_battery_status(self, status):
+        """Separa reação visual de gestos explícitos, fala e preferências."""
+        previous = self.battery_mood.mode
+        self.battery_mood = self._battery_companion.observe(status)
+        if self.battery_mood.mode != previous:
+            self._apply_battery_fps()
+        if (self.battery_mood.announcement and not self.speaking
+                and self.drag_start is None
+                and time.monotonic() >= self.pose_until):
+            self.bubble = self.battery_mood.announcement
+            self.bubble_until = time.monotonic() + 8
+            if self.battery_mood.suggested_activity:
+                self.set_pose("happy", seconds=6)
+        self.update()
 
     def _apply_size(self):
         """Redimensiona o desenho vetorial sem exigir imagens ou modelos 3D."""
@@ -134,6 +169,10 @@ class YunaAvatar(QWidget):
             return "talk"
         if time.monotonic() < self.pose_until:
             return self.pose
+        if self.battery_mood.mode in ("low", "critical"):
+            return "walk" if self._battery_seeking else "sleepy"
+        if self.battery_mood.mode in ("tired", "charging"):
+            return "sit"
         spontaneous = idle_expression(
             self.tick_count, speaking=self.speaking,
             reduced_motion=self.appearance["reduced_motion"],
@@ -163,7 +202,28 @@ class YunaAvatar(QWidget):
             return
         self.tick_count += 1
         self._update_gaze()
-        walking = self.drag_start is None and self.visible_pose() == "walk"
+        if (self.battery_mood.seek_charger
+                and self.drag_start is None
+                and not self.appearance["reduced_motion"]
+                and not self.speaking
+                and time.monotonic() >= self.pose_until):
+            screen = QApplication.screenAt(self.geometry().center())
+            if screen is None:
+                screen = QApplication.primaryScreen()
+            if screen is not None:
+                rect = screen.availableGeometry()
+                target = max(rect.left(), rect.right() - self.width() - 6)
+                delta = target - self.x_coordinate
+                self._battery_seeking = abs(delta) > 9
+                if self._battery_seeking:
+                    self.x_coordinate += max(-1.2, min(1.2, delta))
+                    self.move(round(self.x_coordinate), self.y())
+            else:
+                self._battery_seeking = False
+        else:
+            self._battery_seeking = False
+        walking = (not self._battery_seeking and self.drag_start is None
+                   and self.visible_pose() == "walk")
         self._walk_speed += ((1.0 if walking else 0.0) - self._walk_speed) * 0.18
         if walking:
             screen = QApplication.screenAt(self.geometry().center())
@@ -683,6 +743,24 @@ class YunaAvatar(QWidget):
             painter.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
             painter.drawText(QRectF(141, 120, 35, 31), Qt.AlignmentFlag.AlignCenter, "✦")
 
+        # Indicador fictício da "energia" da personagem, lendo a bateria real.
+        # Oculto em desktops e em sensores sem status confiável.
+        if self.battery_mood.percent is not None:
+            mode = self.battery_mood.mode
+            tint = QColor("#e88d9e") if mode in ("low", "critical") else (
+                QColor("#a1d5a0") if mode in ("charging", "full")
+                else QColor("#bfa5ee"))
+            painter.setPen(QPen(tint, 1.2))
+            painter.setBrush(QColor("#292238"))
+            painter.drawRoundedRect(QRectF(125, 223, 57, 27), 7, 7)
+            painter.setFont(QFont("Segoe UI", 8, QFont.Weight.Bold))
+            painter.drawText(QRectF(131, 224, 48, 24),
+                             Qt.AlignmentFlag.AlignCenter,
+                             str(self.battery_mood.percent) + "%")
+            if mode == "charging":
+                painter.setPen(QColor("#d7eab0"))
+                painter.drawText(QRectF(139, 249, 38, 22),
+                                 Qt.AlignmentFlag.AlignCenter, "⚡")
         # Balão opcional; o avatar não lê arquivos, microfone ou janela de terceiros.
         if self.bubble and now < self.bubble_until:
             painter.setPen(QPen(QColor("#8b6cb9"), 1.6))
