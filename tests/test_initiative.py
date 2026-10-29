@@ -4,6 +4,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 import yuna
+from persona_instructions import persona_instructions
+from persona_preferences import PersonaPreferences
 from initiative import Initiative, looks_like_command
 
 
@@ -92,7 +94,7 @@ class InitiativeTests(unittest.TestCase):
         self.assertFalse(self.initiative.pending())
 
     def test_persona_feminine(self):
-        self.assertIn("obrigada", yuna.SYSTEM)
+        self.assertIn("obrigada", persona_instructions(PersonaPreferences()))
 
 
 if __name__ == "__main__":
