@@ -72,6 +72,33 @@ class Avatar3DDesktopTests(unittest.TestCase):
         finally:
             window.close()
 
+    def test_avatar_appearance_reaches_bridge_without_chat_text(self):
+        window = self._desktop()
+        style = {
+            "hair": "branco", "eyes": "roxos", "hair_style": "rabo",
+            "costume": "casaco", "outfit": "escura", "accessory": "tiara",
+        }
+        try:
+            with patch("yuna_desktop.socket.create_connection"), patch(
+                    "yuna_desktop.QDesktopServices.openUrl", return_value=True), patch(
+                    "yuna_desktop.load_style", return_value=style), patch(
+                    "yuna_desktop.Avatar3DBridge") as factory:
+                bridge = factory.return_value
+                bridge.start.return_value = bridge
+                bridge.viewer_url.return_value = (
+                    "http://127.0.0.1:5173/#bridgePort=54321&bridgeToken="
+                    + "x" * 43
+                )
+                window.toggle_avatar3d_bridge()
+                self.assertEqual(bridge.publish.call_args.kwargs["appearance"], style)
+                window._avatar_event("avatar.pose", pose="happy")
+                self.assertEqual(bridge.publish.call_args.kwargs["appearance"], style)
+                window._avatar_event("speech.started", speech_id="art-01")
+                self.assertIsNone(bridge.publish.call_args.kwargs["appearance"])
+                window.toggle_avatar3d_bridge()
+        finally:
+            window.close()
+
     def test_browser_failure_closes_server(self):
         window = self._desktop()
         try:
