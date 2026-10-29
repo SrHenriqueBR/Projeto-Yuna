@@ -196,7 +196,7 @@ def startup_greeting(now=None):
         part = "boa tarde"
     else:
         part = "boa noite"
-    return (f"Opa, Kaizen! {part.capitalize()}! ✦ São {now:%H:%M}. "
+    return (f"Olá! {part.capitalize()}! ✦ São {now:%H:%M}. "
             "O que vamos aprontar hoje?")
 
 def declared_name(text):
