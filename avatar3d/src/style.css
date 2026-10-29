@@ -32,3 +32,12 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
   .controls{max-height:none;overflow:visible;width:calc(100% - 28px);max-width:410px}
   .hint{pointer-events:none;font-size:11px}
 }
+
+.power-monitor{margin-top:22px;padding:14px 12px;background:#241d34;border:1px solid #635075;border-radius:13px;display:grid;grid-template-columns:24px 1fr;gap:6px 10px;align-items:center;color:#e9dff7;font-size:12px}
+.power-monitor[hidden]{display:none}
+.power-icon{font-size:18px;color:#b79fea}
+.power-track{grid-column:1 / -1;height:6px;border-radius:999px;background:#514368;overflow:hidden}
+.power-fill{width:0;height:100%;border-radius:999px;background:#ae9be8;transition:width .5s ease}
+.power-monitor[data-mode="low"] .power-fill,.power-monitor[data-mode="critical"] .power-fill{background:#ed8395}
+.power-monitor[data-mode="charging"] .power-fill,.power-monitor[data-mode="full"] .power-fill{background:#91d9b4}
+@media(prefers-reduced-motion:reduce){.power-fill{transition:none}}
