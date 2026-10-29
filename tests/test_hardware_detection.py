@@ -9,6 +9,19 @@ from hardware_detection import detect_hardware, detected_profile
 class HardwareDetectionTests(unittest.TestCase):
     @patch("hardware_detection.sys.platform", "win32")
     @patch("hardware_detection.subprocess.run")
+    def test_nvidia_smi_reports_eight_gib(self, run):
+        from hardware_detection import detect_nvidia_vram
+        run.return_value.stdout = "8192\\n"
+        self.assertEqual(detect_nvidia_vram(), 8.0)
+
+    @patch("hardware_detection.sys.platform", "win32")
+    @patch("hardware_detection.subprocess.run", side_effect=FileNotFoundError())
+    def test_nvidia_smi_missing_is_safe(self, _run):
+        from hardware_detection import detect_nvidia_vram
+        self.assertIsNone(detect_nvidia_vram())
+
+    @patch("hardware_detection.sys.platform", "win32")
+    @patch("hardware_detection.subprocess.run")
     def test_detects_ram_and_vram(self, run):
         run.return_value.stdout = json.dumps({"ram_gb": 16, "vram_gb": 8})
         self.assertEqual(detect_hardware(), {"ram_gb": 16, "vram_gb": 8})
