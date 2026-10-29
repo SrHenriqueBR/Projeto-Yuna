@@ -4,13 +4,14 @@ O launcher padrão inicia esta interface sem abrir console CMD. O motor de
 conversa e SQLite são os mesmos da mascote e do modo terminal.
 """
 import html
+import socket
 from pathlib import Path
 from queue import Queue
 import sys
 from threading import Thread
 
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QUrl
-from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence
+from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence, QDesktopServices
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel,
@@ -25,6 +26,7 @@ from yuna_avatar import YunaAvatar
 from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from avatar_controller import AvatarController
+from avatar3d_bridge import Avatar3DBridge
 from avatar_reactions import reaction_for_text
 from action_diagnostics import diagnose_failure
 from persona_commands import parse_voice_preference
@@ -186,6 +188,7 @@ class YunaDesktop(QMainWindow):
         self.pending_path = None
         self.avatar_window = None
         self.avatar_controller = AvatarController()
+        self.avatar_bridge = None  # opt-in: zero portas abertas sem ação do usuário
         self._avatar_event_sequence = 0
         self._speech_generation = 0
         self._active_speech_id = None
@@ -283,6 +286,11 @@ class YunaDesktop(QMainWindow):
             "Abre uma personagem chibi interativa que passeia na área de trabalho."
         )
         sidebar.addWidget(self.avatar_button)
+        self.avatar3d_button = QPushButton("◇  Conectar Yuna 3D")
+        self.avatar3d_button.setObjectName("ghost")
+        self.avatar3d_button.setToolTip(
+            "Conecta o avatar VRM do navegador à voz da Yuna, somente em 127.0.0.1.")
+        sidebar.addWidget(self.avatar3d_button)
 
         title = QLabel("SUA BIBLIOTECA")
         title.setObjectName("section")
@@ -417,6 +425,7 @@ class YunaDesktop(QMainWindow):
         self.signals.mic_error.connect(self.microphone_error)
 
         self.avatar_button.clicked.connect(self.toggle_avatar)
+        self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
@@ -505,8 +514,9 @@ class YunaDesktop(QMainWindow):
 
     def show_answer(self, answer, is_document):
         self.add_message("Yuna", answer, accent=is_document)
-        if not is_document and self.avatar_window is not None:
-            self.avatar_window.reload_appearance()
+        if not is_document and (self.avatar_window is not None or self.avatar_bridge is not None):
+            if self.avatar_window is not None:
+                self.avatar_window.reload_appearance()
             request = self.last_avatar_request
             if request is not None:
                 if request[0] == "pose":
@@ -528,16 +538,18 @@ class YunaDesktop(QMainWindow):
                             "wake": "Acordei! 🖤",
                         }
                         self._avatar_event("avatar.pose", pose=chosen_pose)
-                        self.avatar_window.set_pose(
-                            chosen_pose, seconds, phrases.get(pose, "")
-                        )
+                        if self.avatar_window is not None:
+                            self.avatar_window.set_pose(
+                                chosen_pose, seconds, phrases.get(pose, "")
+                            )
                 else:
                     self._avatar_event("avatar.pose", pose="happy")
                     self._avatar_event("avatar.emotion", emotion="happy",
                                        intensity=0.8)
-                    self.avatar_window.set_pose(
-                        "happy", 3, "Visual atualizado! 🖤"
-                    )
+                    if self.avatar_window is not None:
+                        self.avatar_window.set_pose(
+                            "happy", 3, "Visual atualizado! 🖤"
+                        )
             elif not is_document:
                 # Gesto leve e opcional, só quando não há comando explícito.
                 reaction = reaction_for_text(answer)
@@ -545,7 +557,8 @@ class YunaDesktop(QMainWindow):
                     pose, emotion = reaction
                     self._avatar_event("avatar.pose", pose=pose)
                     self._avatar_event("avatar.emotion", emotion=emotion, intensity=0.65)
-                    self.avatar_window.set_pose(pose, 3.5)
+                    if self.avatar_window is not None:
+                        self.avatar_window.set_pose(pose, 3.5)
             # A personagem só anima a boca quando a reprodução começa de verdade.
             # Não simular "talk" se a voz estiver desativada ou falhar.
         if not is_document:
@@ -574,6 +587,42 @@ class YunaDesktop(QMainWindow):
             self.avatar_window.show()
             self.avatar_window.raise_()
             self.avatar_button.setText("✦  Esconder avatar")
+
+    def toggle_avatar3d_bridge(self):
+        """Vincula uma prévia Three.js já instalada; nenhum npm é executado."""
+        if self.avatar_bridge is not None:
+            self.avatar_bridge.stop()
+            self.avatar_bridge = None
+            self.avatar3d_button.setText("◇  Conectar Yuna 3D")
+            self.status.setText("Ponte 3D desligada • avatar 2D continua disponível")
+            return
+        try:
+            with socket.create_connection(("127.0.0.1", 5173), timeout=0.5):
+                pass
+        except OSError:
+            QMessageBox.information(
+                self, "Yuna 3D não iniciada",
+                "Primeiro execute iniciar_yuna_3d.bat após instalar as dependências "
+                "Node em avatar3d. Depois clique aqui para vincular a voz ao 3D. "
+                "O avatar 2D continua disponível sem Node.js."
+            )
+            return
+        bridge = None
+        try:
+            bridge = Avatar3DBridge().start()
+            bridge.publish(self.avatar_controller.snapshot,
+                           has_amplitude=bool(self._audio_levels))
+            opened = QDesktopServices.openUrl(QUrl(bridge.viewer_url()))
+            if not opened:
+                raise RuntimeError("O navegador não abriu o renderizador local.")
+        except (OSError, RuntimeError) as exc:
+            if bridge is not None:
+                bridge.stop()
+            self.status.setText("Não consegui conectar o 3D: " + str(exc)[:120])
+            return
+        self.avatar_bridge = bridge
+        self.avatar3d_button.setText("■  Desconectar Yuna 3D")
+        self.status.setText("Yuna 3D vinculada • somente estados de animação locais")
 
     def send_message(self):
         content = self.composer.toPlainText().strip()
@@ -831,9 +880,18 @@ class YunaDesktop(QMainWindow):
 
     def _avatar_event(self, name, **payload):
         self._avatar_event_sequence += 1
-        return self.avatar_controller.dispatch(
+        # MP3 não tem envelope PCM calculado; evitar exceção ao não ter amplitude.
+        if name == "speech.level" and payload.get("amplitude") is None:
+            payload["amplitude"] = 0.0
+        accepted = self.avatar_controller.dispatch(
             name, sequence=self._avatar_event_sequence, **payload
         )
+        if accepted and self.avatar_bridge is not None:
+            self.avatar_bridge.publish(
+                self.avatar_controller.snapshot, event=name,
+                has_amplitude=bool(self._audio_levels),
+            )
+        return accepted
 
     def _stop_avatar_speech(self):
         if self._active_speech_id is not None:
@@ -957,6 +1015,9 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        if self.avatar_bridge is not None:
+            self.avatar_bridge.stop()
+            self.avatar_bridge = None
         if self.avatar_window is not None:
             self.avatar_window.close()
         self.worker.stop()

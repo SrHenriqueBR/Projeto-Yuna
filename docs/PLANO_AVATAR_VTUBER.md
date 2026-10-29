@@ -75,6 +75,17 @@ O comando **“Yuna, muda o cabelo para branco”** deve editar o estado do avat
 4. **0.30+ — VRM experimental:** renderer 3D opcional com `three-vrm`, modelo original, mapeamento de blink/expressões/boca, câmera virtual, desempenho e fallback automático.
 5. **Somente depois:** movimentos de caminhar mais avançados, física simples, novas roupas, editor de personagem e possivelmente distribuição empresarial.
 
+## Marco implementado: ponte local de voz para VRM
+
+O protótipo `avatar3d/` e o botão `Conectar Yuna 3D` na Yuna
+Desktop implementam o fluxo opt-in `AvatarController → HTTP loopback
+read-only → Three.js`. A ponte requer token aleatório e checagem
+de origem, usa apenas snapshots visuais e **não** expõe ações ou memórias.
+WAV sincroniza pela amplitude do player; MP3 usa apenas movimento
+rítmico aproximado enquanto reproduz. O 2D continua independente.
+Ainda faltam benchmark visual Windows, modelo artístico definitivo,
+rigging de mãos/corpo complexo e transparência do desktop.
+
 ## Critérios de aceite de cada etapa
 
 - Testes automatizados Windows/Qt e testes para cancelamento, arquivos ausentes, fallback e memória inalterada.

@@ -103,7 +103,7 @@ instale **Node.js 22 LTS**, entre em `avatar3d/` e execute `npm install`.
 Depois execute `iniciar_yuna_3d.bat` na raiz ou `npm run dev`
 na pasta `avatar3d`, e abra `http://127.0.0.1:5173`.
 
-O protótipo mostra uma prévia geométrica original enquanto não há modelo.
+Depois de iniciar o navegador 3D, clique em **◇ Conectar Yuna 3D** na Yuna Desktop para vincular a voz local (porta dinâmica e token de sessão). Essa ponte transmite somente movimentos, expressão e amplitude — **nunca conversas ou áudio bruto**. O link é opcional e fecha ao encerrar a janela.\n\nO protótipo mostra uma prévia geométrica original enquanto não há modelo.
 Importe **seu próprio arquivo .vrm**, com direitos de uso, para animar
 uma personagem rigada. Ainda **não existe ligação** com a fala do
 QMediaPlayer, com o cérebro Python/Ollama ou com o AvatarController.
