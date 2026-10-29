@@ -78,7 +78,8 @@ class SafetySessionTests(unittest.TestCase):
     def test_whatsapp_is_only_a_draft_not_a_message_send(self):
         url = whatsapp_draft_url("+55 34 99999-9999", "sos")
         self.assertTrue(url.startswith("https://wa.me/5534999999999?text="))
-        self.assertIn("SOS", url.upper() if "SOS" in url else "SOS")
+        from urllib.parse import unquote
+        self.assertIn("SOS", unquote(url))
         with self.assertRaises(ValueError):
             whatsapp_draft_url("5534999999999", "unknown")
 
