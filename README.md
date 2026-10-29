@@ -95,6 +95,22 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Avatar 3D VRM experimental (opcional)
+
+A versão 2D continua como padrão. Para testar o protótipo **3D opcional**
+(com movimentos leves de cabeça, olhos, respiração, expressões e gestos),
+instale **Node.js 22 LTS**, entre em `avatar3d/` e execute `npm install`.
+Depois execute `iniciar_yuna_3d.bat` na raiz ou `npm run dev`
+na pasta `avatar3d`, e abra `http://127.0.0.1:5173`.
+
+O protótipo mostra uma prévia geométrica original enquanto não há modelo.
+Importe **seu próprio arquivo .vrm**, com direitos de uso, para animar
+uma personagem rigada. Ainda **não existe ligação** com a fala do
+QMediaPlayer, com o cérebro Python/Ollama ou com o AvatarController.
+O modo 3D não liga sozinho no Windows e não é instalado pelo assistente
+padrão: preserve `data/` e `assets/` ao atualizar. Instruções e limites:
+[`avatar3d/README.md`](avatar3d/README.md).
+
 ### Voz e boca animada (0.25)
 
 A janela **Yuna Desktop** inicia com **Windows offline**, que exige uma voz feminina pt-BR instalada no próprio Windows. **▶ Testar voz** permite verificar a fala e o avatar.
