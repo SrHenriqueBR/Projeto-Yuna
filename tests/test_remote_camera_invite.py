@@ -30,7 +30,7 @@ class MagiCameraInviteTests(unittest.TestCase):
             self.assertEqual(parts.hostname, "meet.jit.si")
             self.assertFalse(parts.query)
             self.assertFalse(parts.fragment)
-            self.assertEqual(len(parts.path.split("-")[-1]), 32)
+            self.assertEqual(len(parts.path[len("/" + ROOM_PREFIX):]), 32)
 
     def test_only_expected_invite_host_and_random_room(self):
         valid = new_remote_camera_invite()
