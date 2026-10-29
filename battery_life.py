@@ -101,7 +101,7 @@ class BatteryCompanion:
 
     def __init__(self, cooldown_seconds=1200):
         self._previous_mode = "unavailable"
-        self._last_announcement = float("-inf")
+        self._last_by_mode = {}
         self._cooldown = max(0, float(cooldown_seconds))
 
     def observe(self, status, *, now=None):
@@ -110,13 +110,14 @@ class BatteryCompanion:
         changed = mode != self._previous_mode
         # Uma sessão pode começar já em bateria baixa: avisar uma vez.
         eligible = (mode in self._MESSAGES and changed
-                    and moment - self._last_announcement >= self._cooldown)
+                    and moment - self._last_by_mode.get(mode, float("-inf"))
+                    >= self._cooldown)
         message = (
             self._MESSAGES[mode].format(percent=status.percent)
             if eligible else ""
         )
         if message:
-            self._last_announcement = moment
+            self._last_by_mode[mode] = moment
         self._previous_mode = mode
         return BatteryMood(
             mode=mode,
