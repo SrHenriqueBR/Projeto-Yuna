@@ -101,6 +101,8 @@ def parse_avatar_request(message):
         "da uma piscadinha": "wink", "me da uma piscadinha": "wink",
         "da risada": "laugh", "de risada": "laugh", "ri pra mim": "laugh",
         "ri para mim": "laugh",
+        "fica curiosa": "curious", "fique curiosa": "curious",
+        "faz cara de curiosa": "curious", "mostra curiosidade": "curious",
         "fica timida": "shy", "fique timida": "shy",
         "fica envergonhada": "shy", "fique envergonhada": "shy",
         "dorme": "sleepy", "vai dormir": "sleepy",
