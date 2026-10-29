@@ -18,7 +18,7 @@ class BatteryLifeTests(unittest.TestCase):
             (BatteryStatus(21, False), "tired"),
             (BatteryStatus(35, False), "tired"),
             (BatteryStatus(36, False), "normal"),
-            (BatteryStatus(100, False), "normal"),
+            (BatteryStatus(100, False), "full"),
             (BatteryStatus(4, True), "charging"),
             (BatteryStatus(99, True), "charging"),
             (BatteryStatus(100, True), "full"),
