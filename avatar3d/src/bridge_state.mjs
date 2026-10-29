@@ -1,4 +1,5 @@
 /** Consumo somente-leitura do AvatarController, sem ações ou dados privados. */
+import { OPTIONS } from "./appearance.mjs";
 
 export function connectionFromFragment(fragment) {
   if (typeof fragment !== "string" || !fragment.startsWith("#")) return null;
@@ -37,7 +38,15 @@ export function normalizeRemoteState(raw) {
     speaking: raw.speaking === true,
     mouthLevel: Number.isFinite(raw.mouth_level)
       ? Math.max(0, Math.min(1, raw.mouth_level)) : 0,
-    hasAmplitude: raw.has_amplitude === true
+    hasAmplitude: raw.has_amplitude === true,
+    appearanceRevision: Number.isSafeInteger(raw.appearance_revision) &&
+      raw.appearance_revision >= 0 ? raw.appearance_revision : 0,
+    appearance: raw.appearance && typeof raw.appearance === "object" &&
+      !Array.isArray(raw.appearance)
+      ? Object.fromEntries(Object.entries(raw.appearance).filter(([key, value]) =>
+          Object.hasOwn(OPTIONS, key) && typeof value === "string" &&
+          OPTIONS[key].includes(value)))
+      : {}
   };
 }
 

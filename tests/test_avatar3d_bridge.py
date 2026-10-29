@@ -110,6 +110,40 @@ class BridgeTests(unittest.TestCase):
         finally:
             bridge.stop()
 
+    def test_visual_preferences_are_whitelisted_and_revisioned(self):
+        from avatar3d_bridge import public_snapshot
+        state = TestSnapshot()
+        raw = {
+            "hair": "branco", "eyes": "roxos",
+            "hair_style": "rabo", "costume": "casaco",
+            "api_token": "never-send-this",
+            "accessory": "<script>",
+        }
+        checked = public_snapshot(
+            state, appearance=raw, appearance_revision=4)
+        self.assertEqual(checked["appearance"]["hair"], "branco")
+        self.assertEqual(checked["appearance"]["hair_style"], "rabo")
+        self.assertNotIn("api_token", checked["appearance"])
+        self.assertNotIn("accessory", checked["appearance"])
+        self.assertEqual(checked["appearance_revision"], 4)
+
+        bridge = Avatar3DBridge().start()
+        try:
+            bridge.publish(state, event="avatar.pose", appearance=raw)
+            initial = bridge._snapshot
+            self.assertEqual(initial["appearance_revision"], 1)
+            self.assertEqual(initial["appearance"]["costume"], "casaco")
+            # Audio events must preserve appearance without rereading disk.
+            bridge.publish(state, event="speech.started")
+            self.assertEqual(bridge._snapshot["appearance_revision"], 1)
+            self.assertEqual(bridge._snapshot["appearance"], initial["appearance"])
+            bridge.publish(state, event="avatar.pose", appearance={
+                **raw, "hair": "ruivo"
+            })
+            self.assertEqual(bridge._snapshot["appearance_revision"], 2)
+        finally:
+            bridge.stop()
+
     def test_no_server_before_start(self):
         bridge = Avatar3DBridge()
         with self.assertRaises(RuntimeError):

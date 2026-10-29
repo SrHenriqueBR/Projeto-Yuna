@@ -20,6 +20,40 @@
         <div class="eyebrow">ESTÚDIO EXPERIMENTAL</div>
         <h1>Uma Yuna<br><em>com presença.</em></h1>
         <p>Modelo VRM local, movimento suave e expressões. Nenhuma câmera ou microfone é ativado.</p>
+        <div class="section-label">PERSONALIZAÇÃO DA PRÉVIA ORIGINAL</div>
+        <label class="editor-field">Presets
+          <select id="appearancePreset" aria-label="Preset visual">
+            <option value="yuna">Yuna original</option>
+            <option value="neve">Lua de inverno</option>
+            <option value="eclipse">Eclipse violeta</option>
+            <option value="custom" disabled>Personalizado</option>
+          </select>
+        </label>
+        <div class="appearance-grid">
+          <label class="editor-field">Cor do cabelo
+            <select id="hairColor"><option value="preto">Preto</option><option value="branco">Branco</option><option value="ruivo">Ruivo</option><option value="roxo">Roxo</option></select>
+          </label>
+          <label class="editor-field">Penteado
+            <select id="hairStyle"><option value="longo">Longo</option><option value="curto">Curto</option><option value="marias">Maria-chiquinhas</option><option value="rabo">Rabo de cavalo</option></select>
+          </label>
+          <label class="editor-field">Olhos
+            <select id="eyeColor"><option value="roxos">Violetas</option><option value="vermelhos">Vermelhos</option><option value="azuis">Azuis</option><option value="dourados">Dourados</option></select>
+          </label>
+          <label class="editor-field">Tom da roupa
+            <select id="outfitColor"><option value="escura">Escuro</option><option value="clara">Claro</option></select>
+          </label>
+          <label class="editor-field">Figurino
+            <select id="costume"><option value="vestido">Vestido gótico</option><option value="casual">Casual</option><option value="casaco">Casaco de inverno</option></select>
+          </label>
+          <label class="editor-field">Acessório
+            <select id="accessory"><option value="laco">Laço</option><option value="tiara">Tiara</option><option value="oculos">Óculos</option><option value="nenhum">Nenhum</option></select>
+          </label>
+        </div>
+        <div class="editor-actions">
+          <button id="restorePreview" class="secondary" type="button">Mostrar Yuna original</button>
+          <button id="resetAppearance" class="secondary" type="button">Restaurar visual</button>
+        </div>
+        <p class="editor-note">As alterações ficam neste navegador e afetam só a personagem geométrica original. Não alteram modelos VRM importados nem a Yuna 2D.</p>
         <div class="section-label">EXPRESSÕES</div>
         <div id="poses" class="pose-grid">
           <button data-pose="idle" class="selected">Neutra</button>
@@ -34,7 +68,7 @@
         <label class="setting"><span>Limite de FPS</span><select id="fps"><option value="30">30 FPS</option><option value="60">60 FPS</option></select></label>
         <label class="setting"><span>Prévia da fala <small>(demonstração)</small></span><input id="mouth" type="range" min="0" max="100" value="0" aria-label="Abertura de boca para demonstração"></label>
         <button id="resetCamera" class="secondary">Redefinir câmera</button>
-        <div id="message" class="message" role="status" aria-live="polite">Carregue um arquivo VRM seu para testar com um personagem rigado.</div>
+        <div id="message" class="message" role="status" aria-live="polite">Personalize a Yuna original ou carregue um modelo VRM seu, sem enviar arquivos à internet.</div>
       </aside>
     </main>
     <footer>VRM carregado apenas nesta aba · A Yuna 2D continua independente · Não inclua modelos sem licença</footer>

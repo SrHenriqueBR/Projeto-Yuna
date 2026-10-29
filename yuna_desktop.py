@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
 
 from computer import Computer
 from document_library import DocumentLibrary, analyze_document, check_source
-from avatar_state import parse_avatar_request
+from avatar_state import parse_avatar_request, load_style
 from yuna_avatar import YunaAvatar
 from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
@@ -611,7 +611,8 @@ class YunaDesktop(QMainWindow):
         try:
             bridge = Avatar3DBridge().start()
             bridge.publish(self.avatar_controller.snapshot,
-                           has_amplitude=bool(self._audio_levels))
+                           has_amplitude=bool(self._audio_levels),
+                           appearance=load_style(ROOT))
             opened = QDesktopServices.openUrl(QUrl(bridge.viewer_url()))
             if not opened:
                 raise RuntimeError("O navegador não abriu o renderizador local.")
@@ -890,6 +891,8 @@ class YunaDesktop(QMainWindow):
             self.avatar_bridge.publish(
                 self.avatar_controller.snapshot, event=name,
                 has_amplitude=bool(self._audio_levels),
+                appearance=load_style(ROOT) if name in
+                ("avatar.pose", "avatar.emotion") else None,
             )
         return accepted
 

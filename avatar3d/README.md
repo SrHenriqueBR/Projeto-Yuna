@@ -15,8 +15,8 @@ Three.js + `@pixiv/three-vrm` e funciona em navegador moderno com WebGL.
    as expressões. Até 80 MB por arquivo. Também é possível soltar o arquivo
    na área de visualização.
 
-Sem `.vrm`, a aplicação mostra apenas uma **prévia geométrica original**
-com cabelo escuro e olhos violeta. Não é o modelo final da Yuna, nem um VRM.
+Sem `.vrm`, a aplicação mostra uma **personagem anime geométrica original**
+com aparência editável. É uma prévia, não o modelo VRM artístico definitivo.
 
 Para validar o código: `npm test` e `npm run build`.
 
@@ -45,6 +45,39 @@ na reprodução. Para Edge TTS MP3, ainda é uma **animação rítmica
 aproximada**, não fonemas nem amplitude real. Quando o player para,
 o estado remoto fecha a boca. Se a comunicação cair, a prévia
 permanece manual e marca a desconexão. O navegador não controla o PC.
+
+## Estúdio de personagem anime original (nova etapa)
+
+O renderizador inclui uma **personagem original feita com geometria Three.js**,
+sem imagens, texturas ou modelos de terceiros: corpo e rosto estilizados,
+franja, cílios, olhos brilhantes, sorriso, figurinos e acessórios.
+
+No painel **PERSONALIZAÇÃO DA PRÉVIA ORIGINAL** você pode alterar:
+- **cabelo:** preto, branco, ruivo ou roxo;
+- **penteado:** longo, curto, maria-chiquinhas ou rabo de cavalo;
+- **olhos:** violeta, vermelho, azul ou dourado;
+- **roupas:** cores escura/clara e figurinos vestido gótico, casual ou casaco;
+- **acessórios:** laço, tiara, óculos ou nenhum;
+- **presets:** Yuna original, Lua de inverno, Eclipse violeta.
+
+As opções são validadas e guardadas no `localStorage` **apenas deste
+navegador** (pode estar desativado). Não mexem na pasta `data/` ou em
+qualquer VRM importado. **Mostrar Yuna original** remove o VRM importado
+da cena e restaura o personagem geométrico; isso não exclui arquivos do
+disco.
+
+Quando a ponte local da Yuna Desktop estiver conectada, um comando como
+**"Yuna, deixa o cabelo branco"** ou **"Yuna, coloca o casaco"**
+atualiza o estilo autorizado no `data/avatar_yuna.json` e também
+a prévia geométrica 3D na aba conectada. Nesse caso, o estilo vindo da
+Yuna Desktop tem prioridade ao ser alterado. O navegador não envia
+comandos de volta ao Python.
+
+**Importante:** a prévia é um personagem 3D construído de formas;
+**não é um arquivo VRM completo** nem o modelo artístico definitivo,
+e suas opções não alteram malhas, texturas ou licenças de VRMs importados.
+Para uma waifu 3D com rig e física de cabelos de produção,
+será necessário criar/autorizar um modelo VRM próprio.
 
 ## Controles
 

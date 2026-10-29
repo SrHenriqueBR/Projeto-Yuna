@@ -35,3 +35,19 @@ test("maps reactions conservatively", () => {
   assert.equal(reactionPose(normalizeRemoteState({...state, pose:"angry", emotion:"neutral"})), "idle");
   assert.equal(normalizeRemoteState(null), null);
 });
+
+test("accepts only whitelisted style changes from the Python bridge", () => {
+  const next = normalizeRemoteState({
+    ...state, appearance_revision: 3,
+    appearance: {
+      hair: "branco", eyes: "roxos", hair_style: "rabo",
+      costume: "casaco", api_key: "never-expose", accessory: "<script>"
+    }
+  });
+  assert.equal(next.appearanceRevision, 3);
+  assert.equal(next.appearance.hair, "branco");
+  assert.equal(next.appearance.hair_style, "rabo");
+  assert.equal(next.appearance.api_key, undefined);
+  assert.equal(next.appearance.accessory, undefined);
+  assert.deepEqual(normalizeRemoteState({...state, appearance: null}).appearance, {});
+});
