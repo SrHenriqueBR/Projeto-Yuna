@@ -36,6 +36,10 @@ from emergency_stop import is_stop_request
 from game_sessions import GameSession
 from camera_watch import CameraPermission, parse_camera_source
 from camera_commands import is_camera_view_request
+from remote_camera_invite import (
+    is_magi_camera_request, new_remote_camera_invite,
+    validate_remote_camera_invite,
+)
 from camera_viewer import CameraViewer
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
@@ -329,6 +333,13 @@ class YunaDesktop(QMainWindow):
             "Sem gravação nem análise automática."
         )
         sidebar.addWidget(self.camera_button)
+        self.remote_camera_button = QPushButton("◈  Magi1020 • Vídeo remoto")
+        self.remote_camera_button.setObjectName("ghost")
+        self.remote_camera_button.setToolTip(
+            "Cria ou abre convite de videochamada voluntária no navegador. "
+            "Não ativa webcams remotamente e usa serviço externo."
+        )
+        sidebar.addWidget(self.remote_camera_button)
 
         title = QLabel("SUA BIBLIOTECA")
         title.setObjectName("section")
@@ -465,6 +476,7 @@ class YunaDesktop(QMainWindow):
         self.avatar_button.clicked.connect(self.toggle_avatar)
         self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
         self.camera_button.clicked.connect(self.open_camera_viewer)
+        self.remote_camera_button.clicked.connect(self.open_remote_camera_invitation)
         self.send_button.clicked.connect(self.send_message)
         self.composer.submit.connect(self.send_message)
         self.open_attachment.clicked.connect(self.select_document)
@@ -713,11 +725,111 @@ class YunaDesktop(QMainWindow):
     def _camera_closed(self, *_args):
         self.camera_viewer = None
 
+    def open_remote_camera_invitation(self):
+        """Magi1020: convite para vídeo consentido, sem ligar webcams."""
+        options = (
+            "Criar convite privado para minha esposa",
+            "Entrar com um convite que recebi",
+        )
+        selection, accepted = QInputDialog.getItem(
+            self, "Yuna • Magi1020",
+            "Videochamada opcional por serviço externo (Jitsi Meet).\\n"
+            "A câmera da outra pessoa só é compartilhada quando ela entra "
+            "e autoriza o navegador. O que deseja fazer?",
+            list(options), 0, False,
+        )
+        if not accepted:
+            return
+        if selection == options[0]:
+            link = new_remote_camera_invite()
+            popup = QMessageBox(self)
+            popup.setWindowTitle("Magi1020 • Novo convite")
+            popup.setIcon(QMessageBox.Icon.Information)
+            popup.setText("Convite temporário criado para esta chamada.")
+            popup.setInformativeText(
+                "Link: " + link + "\\n\\n"
+                "Envie esse link diretamente à sua esposa. Quem possui o "
+                "link pode tentar entrar, então não o publique.\\n\\n"
+                "Serviço EXTERNO: Jitsi Meet. Ao abrir, o site pode pedir "
+                "login ao anfitrião e acesso à sua câmera/microfone. "
+                "Sua esposa precisa entrar e liberar a webcam dela. "
+                "A Yuna não controla essa câmera e não grava a chamada.\\n\\n"
+                "Para encerrar a transmissão, cada participante deve usar "
+                "'Sair' no próprio navegador; Break080111 na Yuna não "
+                "desliga chamadas externas."
+            )
+            copy_button = popup.addButton(
+                "Copiar convite", QMessageBox.ButtonRole.ActionRole)
+            copy_open_button = popup.addButton(
+                "Copiar e abrir", QMessageBox.ButtonRole.AcceptRole)
+            popup.addButton("Cancelar", QMessageBox.ButtonRole.RejectRole)
+            popup.exec()
+            chosen = popup.clickedButton()
+            if chosen not in (copy_button, copy_open_button):
+                return
+            QApplication.clipboard().setText(link)
+            if chosen == copy_open_button:
+                if not QDesktopServices.openUrl(QUrl(link)):
+                    self.status.setText(
+                        "Convite copiado, mas o navegador não abriu."
+                    )
+                else:
+                    self.status.setText(
+                        "Magi1020 • convite copiado e videochamada aberta "
+                        "no navegador externo"
+                    )
+            else:
+                self.status.setText(
+                    "Magi1020 • link copiado; envie à pessoa convidada "
+                    "e abra a reunião com esse mesmo link"
+                )
+        elif selection == options[1]:
+            link, confirmed = QInputDialog.getText(
+                self, "Magi1020 • Entrar com convite",
+                "Cole o link completo recebido da pessoa de confiança:",
+            )
+            if not confirmed:
+                return
+            try:
+                safe_link = validate_remote_camera_invite(link)
+            except ValueError:
+                QMessageBox.warning(
+                    self, "Convite não reconhecido",
+                    "Aceitamos apenas convites Magi1020 no endereço "
+                    "https://meet.jit.si. Solicite um novo convite."
+                )
+                return
+            decision = QMessageBox.question(
+                self, "Abrir chamada de vídeo externa?",
+                "Você será direcionada(o) ao Jitsi Meet (serviço externo).\\n"
+                "O navegador pedirá permissão antes de usar sua webcam.\\n"
+                "Você pode manter a câmera desligada ou sair da chamada "
+                "a qualquer momento. Deseja continuar?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if decision == QMessageBox.StandardButton.Yes:
+                if not QDesktopServices.openUrl(QUrl(safe_link)):
+                    self.status.setText("Não foi possível abrir a chamada no navegador.")
+                else:
+                    self.status.setText(
+                        "Magi1020 • convite aberto; controle sua câmera pelo navegador"
+                    )
+
     def send_message(self):
         content = self.composer.toPlainText().strip()
         if is_stop_request(content):
             self.composer.clear()
             self.emergency_stop()
+            return
+        if not self.pending_path and is_magi_camera_request(content):
+            self.composer.clear()
+            self.add_message(
+                "Yuna", "Magi1020 reconhecido. Vou abrir as opções "
+                "de convite de videochamada. A outra pessoa decide "
+                "se compartilha sua câmera."
+            )
+            self.open_remote_camera_invitation()
             return
         if not self.pending_path and is_camera_view_request(content):
             self.composer.clear()
