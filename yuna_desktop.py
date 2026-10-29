@@ -733,7 +733,7 @@ class YunaDesktop(QMainWindow):
         )
         selection, accepted = QInputDialog.getItem(
             self, "Yuna • Magi1020",
-            "Videochamada opcional por serviço externo (Jitsi Meet).\\n"
+            "Videochamada opcional por serviço externo (Jitsi Meet).\n"
             "A câmera da outra pessoa só é compartilhada quando ela entra "
             "e autoriza o navegador. O que deseja fazer?",
             list(options), 0, False,
@@ -745,15 +745,15 @@ class YunaDesktop(QMainWindow):
             popup = QMessageBox(self)
             popup.setWindowTitle("Magi1020 • Novo convite")
             popup.setIcon(QMessageBox.Icon.Information)
-            popup.setText("Convite temporário criado para esta chamada.")
+            popup.setText("Convite novo gerado para esta chamada.")
             popup.setInformativeText(
-                "Link: " + link + "\\n\\n"
+                "Link: " + link + "\n\n"
                 "Envie esse link diretamente à sua esposa. Quem possui o "
-                "link pode tentar entrar, então não o publique.\\n\\n"
+                "link pode tentar entrar, então não o publique.\n\n"
                 "Serviço EXTERNO: Jitsi Meet. Ao abrir, o site pode pedir "
                 "login ao anfitrião e acesso à sua câmera/microfone. "
                 "Sua esposa precisa entrar e liberar a webcam dela. "
-                "A Yuna não controla essa câmera e não grava a chamada.\\n\\n"
+                "A Yuna não controla essa câmera e não grava a chamada.\n\n"
                 "Para encerrar a transmissão, cada participante deve usar "
                 "'Sair' no próprio navegador; Break080111 na Yuna não "
                 "desliga chamadas externas."
@@ -801,8 +801,8 @@ class YunaDesktop(QMainWindow):
                 return
             decision = QMessageBox.question(
                 self, "Abrir chamada de vídeo externa?",
-                "Você será direcionada(o) ao Jitsi Meet (serviço externo).\\n"
-                "O navegador pedirá permissão antes de usar sua webcam.\\n"
+                "Você será direcionada(o) ao Jitsi Meet (serviço externo).\n"
+                "O navegador pedirá permissão antes de usar sua webcam.\n"
                 "Você pode manter a câmera desligada ou sair da chamada "
                 "a qualquer momento. Deseja continuar?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
