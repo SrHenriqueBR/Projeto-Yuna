@@ -13,6 +13,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QWidget
 from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
                           ACCESSORIES, SIZES, load_style)
 from avatar_motion import ambient_pose, ease_gaze, frame_at, blend_frames
+from hardware_profiles import select_profile
 
 
 class YunaAvatar(QWidget):
@@ -45,9 +46,23 @@ class YunaAvatar(QWidget):
         self._walk_speed = 0.0
         self._position_initial()
         self.animation = QTimer(self)
-        self.animation.setInterval(80)
+        self.animation.setInterval(round(1000 / self._animation_profile().avatar_fps))
         self.animation.timeout.connect(self.advance)
         self.animation.start()
+
+    def _animation_profile(self):
+        """Perfil configurável; detecção de VRAM será integrada separadamente."""
+        import os
+        try:
+            ram = float(os.environ.get("YUNA_RAM_GB", "8"))
+            vram = float(os.environ.get("YUNA_VRAM_GB", "0"))
+        except ValueError:
+            ram, vram = 8, 0
+        return select_profile(ram, vram)
+
+    def refresh_animation_profile(self):
+        """Aplica mudanças de perfil sem recriar o avatar."""
+        self.animation.setInterval(round(1000 / self._animation_profile().avatar_fps))
 
     def _apply_size(self):
         """Redimensiona o desenho vetorial sem exigir imagens ou modelos 3D."""
