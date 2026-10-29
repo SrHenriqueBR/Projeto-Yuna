@@ -55,7 +55,8 @@ class VoiceWaveTests(unittest.TestCase):
         self.assertIn("SetOutputToWaveFile", script)
         self.assertIn("YUNA_LOCAL_WAV_PATH", script)
         self.assertIn("[Console]::In.ReadToEnd()", script)
-        self.assertIn("Gender -eq 'Female'", script)
+        self.assertIn("YUNA_VOICE_GENDER", script)
+        self.assertIn("VoiceInfo.Gender.ToString()", script)
         self.assertNotIn("http", script.lower())
 
     @unittest.skipUnless(os.name == "nt", "Geração WAV local requer Windows")
