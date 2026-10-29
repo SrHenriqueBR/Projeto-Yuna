@@ -39,6 +39,9 @@ class HardwareDetectionTests(unittest.TestCase):
     def test_light_when_unknown(self, _detect):
         self.assertEqual(detected_profile({}).name, "leve")
 
-    @patch("hardware_detection.detect_hardware", return_value=None)
-    def test_manual_override(self, _detect):
+    @patch("hardware_detection.detect_hardware",
+           side_effect=AssertionError("Sondagem não deveria executar"))
+    def test_manual_override(self, detect):
         self.assertEqual(detected_profile({"YUNA_PERFIL": "avancado"}).name, "avancado")
+        self.assertEqual(detected_profile({"YUNA_PERFIL": "LEVE"}).name, "leve")
+        detect.assert_not_called()
