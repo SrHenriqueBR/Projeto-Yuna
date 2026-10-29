@@ -753,10 +753,24 @@ class YunaDesktop(QMainWindow):
         dialog = HomeSafetyDialog(self)
         self.home_safety_dialog = dialog
         dialog.finished.connect(self._home_safety_closed)
+        dialog.state_changed.connect(self._home_safety_state_changed)
         dialog.show()
+
+    def _home_safety_state_changed(self, status):
+        if status == "desligado":
+            self.safety_button.setText("◉  Segurança doméstica (SOS)")
+            self.safety_button.setToolTip(
+                "DESLIGADO • nenhum áudio monitorado. Clique para configurar."
+            )
+        else:
+            self.safety_button.setText("●  Segurança ATIVA • " + status)
+            self.safety_button.setToolTip(
+                "Monitoramento temporário autorizado • clique para encerrar."
+            )
 
     def _home_safety_closed(self, *_args):
         self.home_safety_dialog = None
+        self._home_safety_state_changed("desligado")
 
     def request_embedded_video(self):
         """Convite não autentica pessoa; a câmera depende de permissão local."""
