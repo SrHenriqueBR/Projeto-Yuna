@@ -95,6 +95,26 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Alertas automáticos SEM custo por Telegram (opt-in)
+
+O WhatsApp **não é usado para envios automáticos**: a API oficial da
+Meta pode cobrar por mensagem de modelo; seguindo a exigência de custo
+zero, esta rota foi **bloqueada**. O WhatsApp manual por link `wa.me`
+continua disponível sem integração paga.
+
+A Yuna também pode **enviar alertas de SOS ou som alto por Telegram**,
+usando a Bot API gratuita, sem ativar transmissões de áudio ou webcam.
+É necessário que a pessoa no notebook concorde, ative uma sessão
+visível de **30 minutos**, configure seu bot e um chat privado,
+e marque a opção Telegram (desligada por padrão). Há limites de
+**6 tentativas por sessão**, 45 s entre SOS e 5 minutos entre
+alertas de som alto. O programa nunca habilita envio pago ou
+"paid broadcast"; confirmação da API **não garante entrega**.
+
+Passo a passo: [`docs/ALERTAS_GRATUITOS_YUNA.md`](docs/ALERTAS_GRATUITOS_YUNA.md).
+Use `py -3 configurar_alertas_telegram.py` para localizar um chat privado
+sem colocar o token do bot na URL do navegador.
+
 ### Vídeo dentro da Yuna + SOS de segurança doméstica (piloto opt-in)
 
 No botão **▣ Videochamada dentro da Yuna**, você pode colar um convite
