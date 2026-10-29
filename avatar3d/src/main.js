@@ -3,6 +3,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
 import { frameAt, expressionValues, smooth, clamp, EMOTIONS } from "./motion.mjs";
+import { connectionFromFragment, normalizeRemoteState, reactionPose } from "./bridge_state.mjs";
 import "./style.css";
 
 // Renderização experimental isolada: nenhum acesso a Ollama, SQLite, shell, câmera ou microfone.
@@ -175,6 +176,66 @@ for (const button of poseButtons) {
 }
 updatePose("idle");
 
+// Ponte opcional somente-leitura: o fragmento possui credencial efêmera, que
+// retiramos imediatamente do histórico. Não há nenhum comando de volta à Yuna.
+const bridge = connectionFromFragment(window.location.hash);
+if (bridge) {
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  renderStatus.textContent = "Conectando à Yuna Desktop...";
+  status("Buscando o estado local da voz e das expressões...");
+}
+let remoteState = null;
+let lastRemoteAt = 0;
+let lastGestureSeq = -1;
+let connected = false;
+
+async function pollBridge() {
+  if (!bridge) return;
+  if (!document.hidden) {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:" + bridge.port + "/v1/avatar-state",
+        {
+          method: "GET",
+          headers: {"X-Yuna-Token": bridge.token},
+          mode: "cors",
+          cache: "no-store",
+          signal: AbortSignal.timeout(1800)
+        }
+      );
+      if (!response.ok) throw new Error("Bridge offline");
+      const next = normalizeRemoteState(await response.json());
+      if (!next) throw new Error("Invalid bridge state");
+      if (remoteState === null || next.revision >= remoteState.revision) {
+        remoteState = next;
+      }
+      lastRemoteAt = performance.now();
+      mouthInput.disabled = true;
+      if (!connected) {
+        connected = true;
+        renderStatus.textContent = "Voz local conectada";
+        status("Yuna Desktop vinculada. A boca acompanha o áudio Windows "
+               + "e reage ao início/fim da fala. Voz MP3 usa animação aproximada.");
+      }
+      if (next.gestureSeq !== lastGestureSeq) {
+        lastGestureSeq = next.gestureSeq;
+        if (next.gestureSeq > 0) updatePose(reactionPose(next));
+      }
+    } catch {
+      if (connected) {
+        connected = false;
+        remoteState = null;
+        mouthInput.disabled = false;
+        renderStatus.textContent = "Ponte 3D desconectada";
+        status("A ligação com Yuna Desktop foi interrompida. A prévia 3D continua disponível.");
+        updatePose("idle");
+      }
+    }
+  }
+  window.setTimeout(pollBridge, document.hidden ? 450 : 90);
+}
+if (bridge) pollBridge();
+
 reducedInput.checked = OS_REDUCED_MOTION;
 fpsSelect.value = "30";
 renderer.domElement.addEventListener("pointermove", (event) => {
@@ -328,9 +389,21 @@ function animate(now) {
   if (pose !== "idle" && poseDeadline && now > poseDeadline) updatePose("idle");
   gazeX = smooth(gazeX, cursorX, 5.5, dt);
   gazeY = smooth(gazeY, cursorY, 5.5, dt);
+  const isRemoteFresh = remoteState !== null
+    && performance.now() - lastRemoteAt < 1800;
+  const speechActive = isRemoteFresh && remoteState.speaking;
+  // WAV: envelope de amplitude real medido pelo player Python.
+  // MP3: pulsação aproximada somente durante a reprodução autorizada.
+  const mouthLevel = isRemoteFresh
+    ? (speechActive
+      ? (remoteState.hasAmplitude
+        ? remoteState.mouthLevel
+        : 0.12 + 0.25 * (0.5 + 0.5 * Math.sin(time * 20)))
+      : 0)
+    : Number(mouthInput.value) / 100;
   const frame = frameAt(time, {
     pose, pointerX: gazeX, pointerY: gazeY,
-    mouthLevel: Number(mouthInput.value) / 100,
+    mouthLevel,
     reducedMotion: reducedInput.checked
   });
   if (currentVrm) animateVrm(frame, dt);
