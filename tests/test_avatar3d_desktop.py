@@ -80,6 +80,10 @@ class Avatar3DDesktopTests(unittest.TestCase):
                     "yuna_desktop.Avatar3DBridge") as factory:
                 bridge = factory.return_value
                 bridge.start.return_value = bridge
+                bridge.viewer_url.return_value = (
+                    "http://127.0.0.1:5173/#bridgePort=54321&bridgeToken="
+                    + "x" * 43
+                )
                 window.toggle_avatar3d_bridge()
                 self.assertIsNone(window.avatar_bridge)
                 bridge.stop.assert_called_once()
