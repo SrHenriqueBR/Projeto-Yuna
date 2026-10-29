@@ -7,7 +7,7 @@ import { connectionFromFragment, normalizeRemoteState, reactionPose } from "./br
 import { createAnimePreview } from "./preview_character.js";
 import {
   validateAppearance, readAppearance, writeAppearance,
-  appearanceForPreset, PRESETS
+  appearanceForPreset, applySharedAppearance, PRESETS
 } from "./appearance.mjs";
 import "./style.css";
 
@@ -183,6 +183,7 @@ if (bridge) {
 let remoteState = null;
 let lastRemoteAt = 0;
 let lastGestureSeq = -1;
+let lastAppearanceRevision = 0;
 let connected = false;
 
 async function pollBridge() {
@@ -212,6 +213,14 @@ async function pollBridge() {
         renderStatus.textContent = "Voz local conectada";
         status("Yuna Desktop vinculada. A boca acompanha o áudio Windows "
                + "e reage ao início/fim da fala. Voz MP3 usa animação aproximada.");
+      }
+      if (next.appearanceRevision > lastAppearanceRevision &&
+          Object.keys(next.appearance).length > 0) {
+        lastAppearanceRevision = next.appearanceRevision;
+        updatePreviewStyle(
+          applySharedAppearance(appearance, next.appearance),
+          {save: false, feedback: false}
+        );
       }
       if (next.gestureSeq !== lastGestureSeq) {
         lastGestureSeq = next.gestureSeq;
