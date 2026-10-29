@@ -17,7 +17,7 @@ test("reads token only from a validated location fragment", () => {
   assert.equal(connectionFromFragment("#bridgePort=999&bridgeToken=" + token), null);
   assert.equal(connectionFromFragment("#bridgePort=43210&bridgeToken=abc"), null);
   assert.equal(connectionFromFragment("#bridgePort=43210&bridgeToken=" +
-                                     token + "&bridgeToken=duplicate"), null === true ? null : null);
+                                     token + "&bridgeToken=duplicate"), null);
 });
 
 test("strips private/unexpected fields and bounds amplitude", () => {
