@@ -103,8 +103,10 @@ class SafetyQtTests(unittest.TestCase):
                        return_value=QMessageBox.StandardButton.Yes):
                 dialog.activate_safety()
             self.assertTrue(dialog.active)
+            self.assertIn("Segurança ATIVA", window.safety_button.text())
             window.emergency_stop()
             self.assertFalse(dialog.active)
+            self.assertIn("Segurança doméstica (SOS)", window.safety_button.text())
         finally:
             window.close()
 
