@@ -33,6 +33,7 @@ from action_diagnostics import diagnose_failure
 from persona_commands import parse_voice_preference
 from persona_store import load_preferences, save_preferences
 from emergency_stop import is_stop_request
+from game_sessions import GameSession
 from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
 
 
@@ -212,6 +213,7 @@ class YunaDesktop(QMainWindow):
         self.signals = DesktopSignals()
         self.worker = DesktopWorker(self.signals)
         self._stop_requested = False
+        self.game_session = GameSession()  # desabilitado por padrão; sem controle de jogos
         self.setup_ui()
         self.attach_events()
 
@@ -686,6 +688,7 @@ class YunaDesktop(QMainWindow):
     def emergency_stop(self):
         """Interrompe áudio e ignora resposta em andamento, sem matar a thread."""
         self.worker.cancel_pending()
+        self.game_session.stop()
         self.player.stop()
         self.voice_busy = False
         self._stop_avatar_speech()
@@ -1044,6 +1047,7 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        self.game_session.stop()
         if self.avatar_bridge is not None:
             self.avatar_bridge.stop()
             self.avatar_bridge = None
