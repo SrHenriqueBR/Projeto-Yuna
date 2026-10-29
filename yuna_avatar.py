@@ -85,7 +85,7 @@ class YunaAvatar(QWidget):
 
     def set_pose(self, pose, seconds=4, phrase=""):
         if pose not in ("idle", "walk", "sit", "angry", "happy", "talk",
-                        "wave", "pose", "surprised",
+                        "wave", "pose", "surprised", "curious",
                         "wink", "laugh", "shy", "sleepy"):
             return
         self.pose = pose
@@ -116,7 +116,8 @@ class YunaAvatar(QWidget):
         # Expressões solicitadas prevalecem sobre o TTS por poucos segundos.
         # A fala permanece sincronizada pelo flag 'speaking' no frame_at.
         if (time.monotonic() < self.pose_until
-                and self.pose in ("angry", "wink", "laugh", "shy", "sleepy")):
+                and self.pose in ("angry", "wink", "laugh", "shy", "sleepy",
+                                  "curious", "surprised", "wave", "happy", "pose")):
             return self.pose
         if self.speaking:
             return "talk"
