@@ -424,10 +424,10 @@ class HomeSafetyDialog(QDialog):
             QMessageBox.StandardButton.No,
         )
         if decision == QMessageBox.StandardButton.Yes:
-            if self._send_telegram_event("sos"):
-                self.warning.setText(
-                    "Solicitando SOS ao Telegram; entrega ainda não confirmada."
-                )
+            self.warning.setText(
+                "Solicitando SOS ao Telegram; entrega ainda não confirmada."
+            )
+            self._send_telegram_event("sos")
 
     def stop_safety(self):
         self._pending.cancel()
