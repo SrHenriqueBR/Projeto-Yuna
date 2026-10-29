@@ -15,6 +15,10 @@ import "./style.css";
 const stage = document.querySelector("#stage");
 const message = document.querySelector("#message");
 const renderStatus = document.querySelector("#renderStatus");
+const powerMonitor = document.querySelector("#powerMonitor");
+const powerLabel = document.querySelector("#powerLabel");
+const powerFill = document.querySelector("#powerFill");
+const powerIcon = document.querySelector("#powerIcon");
 const modelInput = document.querySelector("#modelInput");
 const fpsSelect = document.querySelector("#fps");
 const reducedInput = document.querySelector("#reducedMotion");
@@ -185,6 +189,30 @@ let lastRemoteAt = 0;
 let lastGestureSeq = -1;
 let lastAppearanceRevision = 0;
 let connected = false;
+let powerLastKey = "";
+
+function updateBatteryDisplay(battery) {
+  if (!battery) {
+    powerMonitor.hidden = true;
+    powerLastKey = "";
+    return;
+  }
+  const key = battery.mode + ":" + battery.percent + ":" + battery.plugged;
+  if (powerLastKey === key) return;
+  powerLastKey = key;
+  powerMonitor.hidden = false;
+  powerMonitor.dataset.mode = battery.mode;
+  powerFill.style.width = battery.percent + "%";
+  powerLabel.textContent = (
+    battery.mode === "charging" ? "Carregando · " :
+    battery.mode === "full" ? "Energia completa · " :
+    battery.mode === "low" || battery.mode === "critical" ? "Precisa de carga · " :
+    battery.mode === "tired" ? "Bateria baixa · " : "Bateria · "
+  ) + battery.percent + "%";
+  powerIcon.textContent = battery.mode === "full" ? "✦" :
+    battery.mode === "charging" ? "⚡" :
+    battery.mode === "low" || battery.mode === "critical" ? "☾" : "▰";
+}
 
 async function pollBridge() {
   if (!bridge) return;
@@ -207,6 +235,7 @@ async function pollBridge() {
         remoteState = next;
       }
       lastRemoteAt = performance.now();
+      updateBatteryDisplay(remoteState.battery);
       mouthInput.disabled = true;
       if (!connected) {
         connected = true;
@@ -230,6 +259,7 @@ async function pollBridge() {
       if (connected) {
         connected = false;
         remoteState = null;
+        updateBatteryDisplay(null);
         mouthInput.disabled = false;
         renderStatus.textContent = "Ponte 3D desconectada";
         status("A ligação com Yuna Desktop foi interrompida. A prévia 3D continua disponível.");
@@ -370,7 +400,13 @@ function animate(now) {
     lastPaint = now;
     return;
   }
-  const minInterval = 1000 / Number(fpsSelect.value || 30);
+  const fresh = remoteState !== null && now - lastRemoteAt < 1800;
+  const battery = fresh ? remoteState.battery : null;
+  const lowBattery = battery && !battery.plugged &&
+    (battery.mode === "critical" || battery.mode === "low");
+  const minInterval = 1000 / (lowBattery
+    ? Math.min(Number(fpsSelect.value || 30), 12)
+    : Number(fpsSelect.value || 30));
   if (now - lastPaint < minInterval) return;
   const dt = clamp((now - lastFrame) / 1000, 0, 0.08);
   lastFrame = now;
@@ -391,8 +427,13 @@ function animate(now) {
         : 0.12 + 0.25 * (0.5 + 0.5 * Math.sin(time * 20)))
       : 0)
     : Number(mouthInput.value) / 100;
+  const batteryPose = battery && pose === "idle" && !speechActive
+    ? (lowBattery ? "sleepy" :
+       battery.mode === "tired" || battery.mode === "charging" ? "sit" :
+       battery.mode === "full" ? "happy" : pose)
+    : pose;
   const frame = frameAt(time, {
-    pose, pointerX: gazeX, pointerY: gazeY,
+    pose: batteryPose, pointerX: gazeX, pointerY: gazeY,
     mouthLevel,
     reducedMotion: reducedInput.checked
   });
