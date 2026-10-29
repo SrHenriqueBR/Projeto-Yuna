@@ -2,15 +2,16 @@
 
 Nenhuma captura começa ao instalar/abrir a Yuna. Quem usa este notebook
 ativa por até 30 minutos. Não grava áudio, não transcreve, não identifica
-pessoas e não transmite amostras de microfone. WhatsApp é aberto como
-RASCUNHO para revisão e envio manual, nunca envio automático.
+pessoas e não transmite amostras de microfone. WhatsApp permanece manual;
+Telegram é opcional e envia SOMENTE descrições fixas de eventos.
 """
 import math
 import struct
 import time
+import threading
 from urllib.parse import quote
 
-from PySide6.QtCore import Qt, QTimer, QUrl, Signal
+from PySide6.QtCore import QObject, Qt, QTimer, QUrl, Signal
 from PySide6.QtGui import QDesktopServices, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
@@ -21,6 +22,15 @@ from home_safety import (
     AlertPending, SafetySession, SoundLevelDetector, SAFETY_EVENTS,
     validate_contact,
 )
+from free_alert_budget import AlertBudget
+from free_telegram_alerts import (
+    FreeTelegramNotifier, TelegramConfigurationError, TelegramSendError
+)
+
+
+class _TelegramResults(QObject):
+    completed = Signal(int, bool)
+
 
 
 def rms_pcm16le(pcm):
@@ -60,9 +70,15 @@ class HomeSafetyDialog(QDialog):
         self._audio = None
         self._device = None
         self._audio_mode = False
+        self._telegram_notifier = None
+        self._alert_budget = AlertBudget()
+        self._notification_epoch = 0
+        self._cancel_send = threading.Event()
+        self._telegram_signals = _TelegramResults(self)
+        self._telegram_signals.completed.connect(self._on_telegram_result)
         self.setWindowTitle("Yuna • Segurança doméstica DESLIGADA")
-        self.resize(540, 440)
-        self.setMinimumSize(460, 380)
+        self.resize(565, 560)
+        self.setMinimumSize(475, 495)
         self.setStyleSheet(
             "QDialog{background:#171324;color:#eee9f6;}"
             "QLineEdit{background:#29223c;color:white;padding:10px;"
@@ -77,9 +93,10 @@ class HomeSafetyDialog(QDialog):
         content.addWidget(self.state)
         desc = QLabel(
             "Este modo precisa ser ativado pela pessoa no notebook. "
-            "O SOS abre um rascunho de WhatsApp para envio manual. "
-            "O microfone é opcional e detecta apenas volume alto — "
-            "não reconhece pedidos de ajuda nem identifica ameaças."
+            "O SOS abre um rascunho manual de WhatsApp; você também pode "
+            "ativar avisos gratuitos automáticos por Telegram. O microfone "
+            "é opcional e detecta apenas volume alto — não reconhece "
+            "pedidos de ajuda nem identifica ameaças."
         )
         desc.setWordWrap(True)
         content.addWidget(desc)
@@ -93,6 +110,35 @@ class HomeSafetyDialog(QDialog):
         )
         self.sound_checkbox.setChecked(False)
         content.addWidget(self.sound_checkbox)
+        self.telegram_checkbox = QCheckBox(
+            "Telegram gratuito: enviar SOS/som alto automaticamente (opcional)"
+        )
+        self.telegram_checkbox.setChecked(False)
+        self.telegram_checkbox.toggled.connect(self._update_telegram_form)
+        content.addWidget(self.telegram_checkbox)
+        self.telegram_bot_token = QLineEdit()
+        self.telegram_bot_token.setPlaceholderText(
+            "Token do bot (BotFather) — não será salvo"
+        )
+        self.telegram_bot_token.setEchoMode(QLineEdit.EchoMode.Password)
+        self.telegram_bot_token.setMaxLength(128)
+        self.telegram_bot_token.setEnabled(False)
+        content.addWidget(self.telegram_bot_token)
+        self.telegram_chat_id = QLineEdit()
+        self.telegram_chat_id.setPlaceholderText(
+            "ID numérico da conversa privada com o bot"
+        )
+        self.telegram_chat_id.setMaxLength(20)
+        self.telegram_chat_id.setEnabled(False)
+        content.addWidget(self.telegram_chat_id)
+        self.telegram_help = QLabel(
+            "O Telegram é um serviço externo. Envia somente o tipo de "
+            "alerta, nunca áudio, imagem ou transcrição. Máximo 6 "
+            "tentativas por sessão; sem mensagens pagas. "
+            "Para configurar, veja docs/ALERTAS_GRATUITOS_YUNA.md"
+        )
+        self.telegram_help.setWordWrap(True)
+        content.addWidget(self.telegram_help)
         self.activate = QPushButton("Ativar modo Segurança (30 min)")
         self.activate.clicked.connect(self.activate_safety)
         content.addWidget(self.activate)
@@ -125,6 +171,11 @@ class HomeSafetyDialog(QDialog):
     def active(self):
         return self._session.active
 
+    def _update_telegram_form(self, enabled):
+        if not self.active:
+            self.telegram_bot_token.setEnabled(enabled)
+            self.telegram_chat_id.setEnabled(enabled)
+
     def activate_safety(self):
         if self.active:
             return
@@ -134,6 +185,19 @@ class HomeSafetyDialog(QDialog):
             self.warning.setText("Informe um número WhatsApp válido com DDI e DDD.")
             return
         microphone = self.sound_checkbox.isChecked()
+        notifier = None
+        if self.telegram_checkbox.isChecked():
+            try:
+                notifier = FreeTelegramNotifier(
+                    self.telegram_bot_token.text(),
+                    self.telegram_chat_id.text(),
+                )
+            except TelegramConfigurationError:
+                self.warning.setText(
+                    "Configure o bot e o ID numérico da conversa privada "
+                    "do Telegram; não compartilhe o token."
+                )
+                return
         decision = QMessageBox.question(
             self, "Autorização local de segurança",
             "A pessoa que está usando este notebook concorda em ativar "
@@ -142,7 +206,14 @@ class HomeSafetyDialog(QDialog):
             "?\n\nNenhum áudio, imagem ou conversa será armazenado ou "
             "enviado. Sons altos podem causar falsos alertas. "
             "O WhatsApp abrirá um rascunho e dependerá de alguém "
-            "pressionar Enviar.\n\nVocê pode desligar a qualquer momento.",
+            "pressionar Enviar." +
+            ("\\n\\nSe escolher Telegram, eventos SOS/som alto serão "
+             "enviados automaticamente como texto para o ID informado, "
+             "por um serviço EXTERNO gratuito (no uso normal). "
+             "Não são enviadas imagens, áudio nem conversas."
+             if notifier else
+             "\\n\\nO Telegram automático está DESLIGADO.") +
+            "\\n\\nVocê pode desligar a qualquer momento.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
@@ -154,10 +225,21 @@ class HomeSafetyDialog(QDialog):
         )
         self._detector = SoundLevelDetector()
         self._pending.cancel()
+        self._telegram_notifier = notifier
+        self._alert_budget = AlertBudget()
+        self._notification_epoch += 1
+        self._cancel_send = threading.Event()
         self.recipient.setEnabled(False)
         self.sound_checkbox.setEnabled(False)
+        self.telegram_checkbox.setEnabled(False)
+        self.telegram_bot_token.setEnabled(False)
+        self.telegram_chat_id.setEnabled(False)
         self.activate.setEnabled(False)
         self.sos.setEnabled(True)
+        self.sos.setText(
+            "SOS — Enviar alerta gratuito por Telegram" if notifier
+            else "SOS — Preparar mensagem no WhatsApp"
+        )
         self.warning.clear()
         self.setWindowTitle("Yuna • Segurança ATIVA (temporária)")
         self.tick.start()
@@ -233,11 +315,18 @@ class HomeSafetyDialog(QDialog):
             return
         if self._pending.consume_if_ready():
             self.cancel_warning.setVisible(False)
-            self.warning.setText(
-                "Som alto detectado. Verifique se está tudo bem. "
-                "Nenhum aviso remoto foi enviado."
-            )
-            self._offer_whatsapp_draft("som_alto")
+            if self._telegram_notifier is not None:
+                self.warning.setText(
+                    "Som alto: solicitando alerta gratuito ao Telegram. "
+                    "Entrega no celular ainda não confirmada."
+                )
+                self._send_telegram_event("som_alto")
+            else:
+                self.warning.setText(
+                    "Som alto detectado. Verifique se está tudo bem. "
+                    "Nenhum aviso remoto foi enviado."
+                )
+                self._offer_whatsapp_draft("som_alto")
         self._update_indicator()
 
     def _update_indicator(self):
@@ -269,13 +358,82 @@ class HomeSafetyDialog(QDialog):
             if not QDesktopServices.openUrl(QUrl(address)):
                 self.warning.setText("Não consegui abrir o WhatsApp nesta máquina.")
 
+    def _send_telegram_event(self, kind):
+        """Envio numa thread com timeout, nunca bloqueando o Qt.
+
+        Uma solicitação JÁ ENVIADA não pode ser recolhida. Parar impede
+        disparos novos e ignora resultados de sessões anteriores.
+        """
+        try:
+            self._session.check()
+        except PermissionError:
+            return False
+        notifier = self._telegram_notifier
+        if notifier is None or self._cancel_send.is_set():
+            return False
+        if not self._alert_budget.reserve(kind):
+            self.warning.setText(
+                "Limite/cooldown de alertas atingido. Nenhuma mensagem enviada."
+            )
+            return False
+        epoch = self._notification_epoch
+        cancel = self._cancel_send
+
+        def work():
+            if cancel.is_set():
+                return
+            try:
+                success = notifier.send_event(kind)
+            except (TelegramSendError, OSError, ValueError):
+                success = False
+            if not cancel.is_set():
+                self._telegram_signals.completed.emit(epoch, success)
+
+        threading.Thread(
+            target=work, daemon=True, name="YunaTelegramSafetyAlert"
+        ).start()
+        return True
+
+    def _on_telegram_result(self, epoch, success):
+        if epoch != self._notification_epoch or not self.active:
+            return
+        if success:
+            self.warning.setText(
+                "Telegram aceitou a solicitação. A chegada/leitura no "
+                "celular NÃO foi confirmada. Se houver risco, ligue."
+            )
+        else:
+            self.warning.setText(
+                "Falha ao solicitar o alerta pelo Telegram. Nenhum "
+                "envio via WhatsApp pago foi tentado. Entre em contato "
+                "por outros meios."
+            )
+
     def send_sos_draft(self):
         if not self.active:
             return
-        self._offer_whatsapp_draft("sos")
+        if self._telegram_notifier is None:
+            self._offer_whatsapp_draft("sos")
+            return
+        decision = QMessageBox.question(
+            self, "Enviar SOS via Telegram gratuito?",
+            "Deseja enviar AGORA um pedido de ajuda ao contato configurado "
+            "no Telegram? O serviço externo receberá apenas a mensagem "
+            "predefinida de SOS, sem áudio ou imagens.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if decision == QMessageBox.StandardButton.Yes:
+            self.warning.setText(
+                "Solicitando SOS ao Telegram; entrega ainda não confirmada."
+            )
+            self._send_telegram_event("sos")
 
     def stop_safety(self):
         self._pending.cancel()
+        self._cancel_send.set()
+        self._notification_epoch += 1
+        self._telegram_notifier = None
         self._session.stop()
         self.tick.stop()
         self._audio_mode = False
@@ -289,6 +447,11 @@ class HomeSafetyDialog(QDialog):
         self._device = None
         self.activate.setEnabled(True)
         self.sos.setEnabled(False)
+        self.sos.setText("SOS — Preparar mensagem de ajuda")
+        self.telegram_checkbox.setEnabled(True)
+        self.telegram_bot_token.clear()  # nunca persistir segredo na UI
+        self.telegram_bot_token.setEnabled(self.telegram_checkbox.isChecked())
+        self.telegram_chat_id.setEnabled(self.telegram_checkbox.isChecked())
         self.recipient.setEnabled(True)
         self.sound_checkbox.setEnabled(True)
         self.cancel_warning.setVisible(False)
