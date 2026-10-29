@@ -95,6 +95,14 @@ O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão 
 
 Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
 
+### Magi1020 — convite de vídeo entre dois notebooks
+
+Ao digitar **`Magi1020`** na Yuna Desktop (ou clicar em **◈ Magi1020 • Vídeo remoto**), você pode criar e copiar um convite de videochamada, ou entrar com um convite recebido de outra pessoa.
+
+**A câmera de outra pessoa não é ativada pelo comando**. A chamada acontece no navegador via **Jitsi Meet (serviço externo)** e quem transmite precisa entrar e autorizar sua webcam. A pessoa que inicia uma sala no serviço público pode precisar se autenticar. Os links são aleatórios por convite, mas **não possuem expiração garantida**: não publique nem reutilize convites. A Yuna não grava a chamada, não ativa câmeras escondidas, não transmite vídeo dentro da interface Python e não cria pareamento remoto automático.
+
+O comando é apenas um **atalho de convite, nunca uma senha**. Para parar a transmissão, use **Sair** ou desligue a webcam no navegador. **Break080111 não encerra uma chamada Jitsi externa**. Guia detalhado: [`docs/MAGI1020_VIDEO_REMOTO.md`](docs/MAGI1020_VIDEO_REMOTO.md).
+
 ### Câmeras autorizadas — webcam e RTSP experimental
 
 A Yuna Desktop pode agora abrir uma **prévia temporária** de uma webcam
