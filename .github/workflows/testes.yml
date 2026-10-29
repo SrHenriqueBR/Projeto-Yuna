@@ -31,4 +31,5 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
           PYTHONFAULTHANDLER: "1"
+          YUNA_PERFIL: leve
         run: python -m unittest discover -s tests -v
