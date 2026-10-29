@@ -562,6 +562,10 @@ class YunaAvatar(QWidget):
             # Sobrancelhas elevadas e simétricas.
             painter.drawArc(QRectF(-36, 105 + vertical, 24, 9), 0, 180 * 16)
             painter.drawArc(QRectF(12, 105 + vertical, 24, 9), 0, 180 * 16)
+        elif pose == "curious":
+            # Uma sobrancelha arqueada sugere curiosidade.
+            painter.drawArc(QRectF(-36, 105 + vertical, 24, 10), 0, 180 * 16)
+            painter.drawLine(14, 112 + vertical, 35, 111 + vertical)
         elif pose == "shy":
             # Sobrancelhas delicadamente inclinadas.
             painter.drawLine(-35, 110 + vertical, -14, 113 + vertical)
@@ -600,6 +604,9 @@ class YunaAvatar(QWidget):
             painter.setBrush(QColor("#a45b7e"))
             painter.drawEllipse(QRectF(-8, 149 + vertical,
                                        16, motion.mouth_open + 3))
+        elif pose == "curious":
+            painter.drawArc(QRectF(-6, 147 + vertical, 12, 9),
+                            190 * 16, 155 * 16)
         elif pose == "surprised":
             painter.setBrush(QColor("#9b5774"))
             painter.drawEllipse(QRectF(-6, 148 + vertical, 12, 14))
