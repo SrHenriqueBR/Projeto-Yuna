@@ -14,6 +14,7 @@ from avatar_state import (HAIR, EYES, OUTFITS, HAIR_STYLES, COSTUMES,
                           ACCESSORIES, SIZES, load_style)
 from avatar_motion import ambient_pose, ease_gaze, frame_at, blend_frames
 from hardware_profiles import select_profile
+from hardware_detection import detected_profile
 
 
 class YunaAvatar(QWidget):
@@ -51,14 +52,8 @@ class YunaAvatar(QWidget):
         self.animation.start()
 
     def _animation_profile(self):
-        """Perfil configurável; detecção de VRAM será integrada separadamente."""
-        import os
-        try:
-            ram = float(os.environ.get("YUNA_RAM_GB", "8"))
-            vram = float(os.environ.get("YUNA_VRAM_GB", "0"))
-        except ValueError:
-            ram, vram = 8, 0
-        return select_profile(ram, vram)
+        """Detecta hardware local; permite override explícito de perfil."""
+        return detected_profile()
 
     def refresh_animation_profile(self):
         """Aplica mudanças de perfil sem recriar o avatar."""
