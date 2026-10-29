@@ -11,16 +11,18 @@ import time
 from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QImage, QPixmap, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
-    QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout,
+    QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout,
 )
 
 from camera_watch import CameraPermission
+from camera_motion import MotionChangeDetector
 
 
 class CameraSignals(QObject):
     frame_ready = Signal(QImage)
     failed = Signal(str)
     finished = Signal()
+    motion_detected = Signal()
 
 
 class CameraViewer(QDialog):
@@ -29,10 +31,12 @@ class CameraViewer(QDialog):
         self._permission = permission
         self._stop = threading.Event()
         self._worker = None
+        self._motion_enabled = threading.Event()
         self._signals = CameraSignals(self)
         self._signals.frame_ready.connect(self.show_frame)
         self._signals.failed.connect(self.show_error)
         self._signals.finished.connect(self.worker_finished)
+        self._signals.motion_detected.connect(self.motion_warning)
 
         self.setWindowTitle("Yuna • Câmera autorizada")
         self.resize(860, 550)
@@ -54,6 +58,12 @@ class CameraViewer(QDialog):
         self.status = QLabel("Esta sessão não grava, transmite nem analisa imagens.")
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
+        self.motion_checkbox = QCheckBox(
+            "Detectar mudanças de imagem localmente (sem fotos, nem alertas remotos)"
+        )
+        self.motion_checkbox.setChecked(False)
+        self.motion_checkbox.toggled.connect(self.toggle_motion)
+        layout.addWidget(self.motion_checkbox)
         buttons = QHBoxLayout()
         self.stop_button = QPushButton("■ Encerrar câmera")
         self.stop_button.clicked.connect(self.close)
@@ -66,6 +76,24 @@ class CameraViewer(QDialog):
         self._timer = QTimer(self)
         self._timer.setInterval(500)
         self._timer.timeout.connect(self._check_permission)
+
+    def toggle_motion(self, enabled):
+        """A análise não liga se a pessoa não marcar a opção."""
+        if enabled:
+            self._motion_enabled.set()
+            self.status.setText(
+                "Detecção de alterações ATIVA • sem gravação ou identificação"
+            )
+        else:
+            self._motion_enabled.clear()
+            self.status.setText("Detecção de movimento DESLIGADA")
+
+    def motion_warning(self):
+        if not self._stop.is_set() and self.isVisible():
+            self.status.setText(
+                "Mudança de imagem detectada! Pode ser movimento ou luz. "
+                "Nenhuma mensagem remota foi enviada."
+            )
 
     def start_preview(self):
         if self._worker is not None:
@@ -112,6 +140,8 @@ class CameraViewer(QDialog):
                 raise RuntimeError("Não consegui abrir esta câmera.")
             # Não contar com CAP_PROP_BUFFERSIZE: alguns backends ignoram.
             next_at = time.monotonic()
+            motion = MotionChangeDetector()
+            motion_previously_enabled = False
             while not self._stop.is_set():
                 try:
                     self._permission.check()
@@ -125,6 +155,18 @@ class CameraViewer(QDialog):
                 height, width = frame.shape[:2]
                 if height < 1 or width < 1:
                     continue
+                if self._motion_enabled.is_set():
+                    if not motion_previously_enabled:
+                        motion.reset()
+                    tiny = cv2.resize(frame, (64, 36), interpolation=cv2.INTER_AREA)
+                    gray = cv2.cvtColor(tiny, cv2.COLOR_BGR2GRAY)
+                    if motion.observe(gray.tobytes()):
+                        self._signals.motion_detected.emit()
+                    motion_previously_enabled = True
+                else:
+                    if motion_previously_enabled:
+                        motion.reset()
+                    motion_previously_enabled = False
                 if width > 960:
                     factor = 960.0 / width
                     frame = cv2.resize(frame, (960, max(1, round(height * factor))))
@@ -191,6 +233,7 @@ class CameraViewer(QDialog):
         self._permission.stop()
 
     def stop_preview(self):
+        self._motion_enabled.clear()
         self._stop.set()
         self._permission.stop()
         self._timer.stop()
