@@ -77,6 +77,7 @@ class UnrealStateBridge:
             "emotion": safe["emotion"],
             "intensity": max(0.0, min(1.0, intensity)),
             "speaking": safe["speaking"],
+            "has_amplitude": safe["has_amplitude"],
             "mouth_level": safe["mouth_level"],
         }
         payload = json.dumps(output, ensure_ascii=True, separators=(",", ":"))
