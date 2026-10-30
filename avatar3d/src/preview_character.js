@@ -93,10 +93,15 @@ function addOutfit(root, materials, appearance) {
   sphere(root, dress, [0, 0.77, 0], [0.217, 0.31, 0.145]);
   sphere(root, skin, [0, 1.015, 0], [0.06, 0.11, 0.065]);
 
+  const legs = [];
   for (const side of [-1, 1]) {
-    capsule(root, skin, [side * 0.11, 0.34, 0],
-      [side * 0.11, 0.12, 0], 0.067);
-    sphere(root, dark, [side * 0.11, 0.095, 0.047], [0.106, 0.067, 0.155]);
+    // Articulações simples para evitar pernas completamente rígidas.
+    const leg = new THREE.Group();
+    leg.position.set(side * 0.11, 0.38, 0);
+    capsule(leg, skin, [0, -0.04, 0], [0, -0.26, 0], 0.067);
+    sphere(leg, dark, [0, -0.285, 0.047], [0.106, 0.067, 0.155]);
+    root.add(leg);
+    legs.push(leg);
     strand(root, trim, [
       [side * 0.24, 0.54, 0.02],
       [side * 0.28, 0.46, 0.04],
@@ -130,7 +135,7 @@ function addOutfit(root, materials, appearance) {
       ], 0.014);
     }
   }
-  return { skirt };
+  return { skirt, legs };
 }
 
 function addHair(head, materials, appearance) {
@@ -287,14 +292,31 @@ export function createAnimePreview(style = {}) {
       if (dead) return;
       headPivot.rotation.y = smooth(headPivot.rotation.y, frame.headYaw, 6, dt);
       headPivot.rotation.x = smooth(headPivot.rotation.x, frame.headPitch, 6, dt);
-      headPivot.rotation.z = smooth(headPivot.rotation.z,
-        frame.emotion === "curious" ? -0.06 : 0, 6, dt);
-      root.position.y = frame.breath;
-      root.rotation.z = frame.bodySway;
-      rightArm.rotation.z = frame.emotion === "wave"
-        ? -2.1 + frame.wave : -0.14;
-      leftArm.rotation.z = 0.14;
-      backHair.rotation.z = -frame.bodySway * 1.6;
+      headPivot.rotation.z = smooth(headPivot.rotation.z, frame.headTilt, 5, dt);
+      // Respiração, transferência de peso e braços não dependem do mouse.
+      root.position.y = smooth(root.position.y, frame.breath + frame.bodyBob, 4, dt);
+      root.position.x = smooth(root.position.x, frame.bodySway * 0.22, 3, dt);
+      root.rotation.z = smooth(root.rotation.z, frame.bodySway, 3.5, dt);
+      rightArm.rotation.z = smooth(rightArm.rotation.z,
+        frame.emotion === "wave" ? -2.1 + frame.wave :
+        -0.14 + frame.rightArmSwing - frame.bodySway, 7, dt);
+      leftArm.rotation.z = smooth(leftArm.rotation.z,
+        0.14 + frame.leftArmSwing - frame.bodySway, 5, dt);
+      rightArm.rotation.x = smooth(rightArm.rotation.x,
+        frame.emotion === "shy" ? -0.22 : frame.breath * 1.5, 5, dt);
+      leftArm.rotation.x = smooth(leftArm.rotation.x,
+        frame.emotion === "shy" ? -0.22 : -frame.breath * 1.5, 5, dt);
+      backHair.rotation.z = smooth(backHair.rotation.z,
+        -frame.bodySway * 1.6 + frame.hairSwing, 3.5, dt);
+      outfit.skirt.rotation.z = smooth(outfit.skirt.rotation.z,
+        -frame.bodySway * 0.32, 3, dt);
+      outfit.legs.forEach((leg, index) => {
+        const sign = index === 0 ? -1 : 1;
+        const target = frame.emotion === "sit" ? -0.2 :
+          frame.emotion === "sleepy" ? 0.07 :
+          sign * frame.bodySway * 0.30;
+        leg.rotation.x = smooth(leg.rotation.x, target, 3, dt);
+      });
       for (const {eye, irisGroup, eyebrow, eyebrowBaselineY} of eyes) {
         const surprised = frame.emotion === "surprised";
         const wink = frame.emotion === "shy";
