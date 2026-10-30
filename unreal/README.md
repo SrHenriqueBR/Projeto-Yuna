@@ -15,6 +15,46 @@ Este projeto implementa a ponte do AvatarController Python para um ator de perso
 
 A ponte não abre portas nem envia áudio bruto, textos de conversas, tokens, vídeos, arquivos do usuário ou comandos. A Yuna remove o estado local ao desconectar/fechar. O Unreal ignora estados com mais de 3 segundos de idade e retorna ao repouso quando a Yuna desconecta.
 
+## Yuna 0.46 — corpo articulado sem montar o AnimGraph primeiro
+
+O ator `AYunaAvatarActor` tem agora um segundo componente
+**DirectBoneMesh (Poseable Mesh)** e a opção **bDirectBonePreview**
+(ativada por padrão). Depois que você vincular seu **Skeletal Mesh VRM**
+em `AvatarMesh`, a Yuna tenta encontrar automaticamente os ossos
+da cabeça, peito, braços, pernas, olhos e uma mecha do cabelo.
+São reconhecidos vários nomes comuns do VRoid (`J_Bip_...`) e VRM.
+Se o rig for diferente, escolha os nomes no painel **Yuna | Bones**.
+
+Na execução **Play**, o Unreal copia a pose-base do personagem e
+aplica diretamente as rotações dos ossos conforme `YunaMotion.h`,
+**sem precisar criar um Animation Blueprint para testar os gestos**:
+
+- Olhar espontâneo com pequenas pausas, cabeça e olhos articulados
+- Respiração com movimento suave do tronco e pequenos ajustes de postura
+- Aceno real do braço e alternância dos braços e pernas ao caminhar
+- Timidez, curiosidade, irritação, piscadinha e descanso como sinais
+- Gestos temporários: um aceno volta ao estado neutro após alguns segundos
+- Campo `has_amplitude` distingue WAV com envelope real da voz
+  de síntese sem envelope (animação aproximada apenas durante reprodução)
+
+**Limitação importante:** o modo DirectBoneMesh usa `UPoseableMeshComponent`,
+que oferece transformação direta dos ossos, **mas não replica
+automaticamente morph targets, AnimGraph nem as físicas/spring bones
+do SkeletalMesh original**. Assim, o corpo/cabeça podem se mexer
+enquanto as pálpebras e a boca ainda não deformam visualmente.
+Os sinais `Signals.BlinkLeft`, `BlinkRight`, `Mouth`, `EyeYaw`,
+`HeadTilt`, `Wave` etc. já são calculados e expostos ao Blueprint.
+
+Para usar expressões faciais, fala e física no modelo definitivo,
+**desmarque `bDirectBonePreview`** no ator e configure um **Animation
+Blueprint derivado de `UYunaAnimInstance`**. Nesse modo são aplicados
+morph targets para boca, piscadas e sorriso, além de expor os movimentos
+para o AnimGraph (que você ainda precisa configurar). Os nomes dos
+morph targets variam conforme o VRM importado.
+
+O modo direto é uma etapa de teste para **movimentos reais do rig**,
+não substitui o trabalho artístico de uma personagem VTuber finalizada.
+
 ## Instalar no Windows
 
 1. Instale **Unreal Engine 5.7** pelo Epic Games Launcher e as ferramentas C++ para jogos do Visual Studio. Esta é a versão de projeto configurada; não garantimos compilação em outra versão sem ajuste nem testamos o Unreal nesta máquina.
