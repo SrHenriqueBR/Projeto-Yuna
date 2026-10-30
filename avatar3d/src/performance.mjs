@@ -28,15 +28,26 @@ export function performanceFrame(seconds, {
   const elbow = 0.13 * strength;
   return {
     ...base,
+    motionStrength: strength,
+    gazeX: base.gazeX * strength,
+    gazeY: base.gazeY * strength,
+    headYaw: base.headYaw * strength,
+    headPitch: base.headPitch * strength,
+    headTilt: base.headTilt * strength,
+    bodySway: base.bodySway * strength,
+    breath: base.breath * strength,
+    leftArmSwing: base.leftArmSwing * strength,
+    rightArmSwing: base.rightArmSwing * strength,
     blinkLeft: base.blink,
     blinkRight: active === "wink" && strength ? 1 : base.blink,
-    headPitch: base.headPitch + (talking ? Math.sin(time * 2.3) * 0.027 * strength : 0),
-    headTilt: base.headTilt + (active === "shy" ? -0.055 * strength :
+    headPitch: base.headPitch * strength +
+      (talking ? Math.sin(time * 2.3) * 0.027 * strength : 0),
+    headTilt: base.headTilt * strength + (active === "shy" ? -0.055 * strength :
       active === "wave" ? 0.055 * strength : 0),
     neckYaw: base.headYaw * 0.34,
     spineTwist: w * 0.024 + (active === "curious" ? -0.034 * strength : 0),
     bodyBob: active === "walk" && strength ?
-      Math.abs(stride) * 0.035 : base.bodyBob,
+      Math.abs(stride) * 0.035 : base.bodyBob * strength,
     hipShift: active === "walk" ? stride * 0.03 : w * 0.010,
     hipDrop: resting ? -0.095 * strength : 0,
     leftArmSwing: active === "walk" ? -stride * 0.38 : base.leftArmSwing,
@@ -53,7 +64,7 @@ export function performanceFrame(seconds, {
     rightLeg: resting ? 0 : -stride * 0.45,
     leftKnee: resting ? 0.70 * strength : Math.max(0, -stride) * 0.64,
     rightKnee: resting ? 0.70 * strength : Math.max(0, stride) * 0.64,
-    hairSwing: base.hairSwing + stride * 0.026,
+    hairSwing: base.hairSwing * strength + stride * 0.026,
     wave: wave,
     smile: active === "happy" || active === "laugh" ? 0.85 :
       active === "shy" ? 0.26 : talking ? 0.1 : 0,
