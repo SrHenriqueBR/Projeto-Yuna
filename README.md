@@ -1,8 +1,44 @@
-# Projeto Yuna — versão 0.47
+# Projeto Yuna — versão 0.48
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+
+## Yuna 0.48 — movimentos 3D mais naturais
+
+**[Abrir o laboratório 3D no navegador](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html)**
+
+O laboratório 3D é uma **página WebGL pública**, sem instalação e sem
+Ollama. Mostra um personagem **geométrico original**, construído
+com Three.js, com ombros, cotovelos, punhos, joelhos, cabeça, olhos,
+cabelo e movimentos de repouso **articulados por peças**. Você pode
+escolher expressões e gestos, caminhar no lugar, acenar, descansar,
+girar a personagem e testar a fala demonstrativa do navegador.
+Não é a cena do Unreal nem o avatar anime VRM definitivo.
+
+O motor local `avatar3d/` foi ampliado com:
+- `src/performance.mjs`: diretor de movimento, gestos e transições
+  graduais, com controle de intensidade e movimento reduzido;
+- `src/vrm_performer.mjs`: movimento VRM nas articulações humanoides
+  normalizadas, inclusive coluna, ombros, cotovelos, punhos, quadril,
+  pernas e pés, com expressão facial e piscada quando o VRM suporta;
+- `src/preview_character.js`: prévia original com cotovelos e joelhos
+  separados, que podem ser animados mesmo sem possuir VRM.
+
+O navegador público importa Three.js por CDN (requer internet), mas
+não lê ou envia conversas, arquivos, microfone ou câmera. O
+renderizador **local** `iniciar_yuna_3d.bat` continua permitindo
+importar o **seu arquivo .vrm** (até 80 MB), que não é enviado
+a terceiros. Pelo botão **Conectar Yuna 3D** na interface Python, o
+modelo reproduz estados de emoção e o nível da fala por uma ponte
+autenticada de leitura.
+
+**Limitações:** caminhar é uma animação *no lugar*, sem navegação,
+captura de movimento, IK de pés ou clips profissionais. O cabelo do
+VRM exige seus próprios spring bones e o resultado visual depende
+da qualidade do rig. Voz MP3 ainda usa amplitude aproximada;
+não há visemas fonéticos precisos. Os movimentos 3D **não são**
+transmitidos pela Unreal Engine para a web.
 
 ## Yuna Unreal 0.46 — movimentos de ossos em C++ (experimental)
 

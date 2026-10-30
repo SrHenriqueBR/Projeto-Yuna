@@ -67,11 +67,11 @@ export function normalizeRemoteState(raw) {
 
 export function reactionPose(state) {
   if (!state) return "idle";
-  if (["happy", "curious", "surprised", "shy", "wave"].includes(state.pose)) {
+  if (["happy", "curious", "surprised", "shy", "wave", "walk", "sit",
+       "sleepy", "angry", "laugh", "wink", "pose"].includes(state.pose)) {
     return state.pose;
   }
-  if (state.pose === "laugh") return "happy";
-  if (state.pose === "wink") return "shy";
+  if (state.pose === "talk" && state.speaking) return "talk";
   if (state.emotion === "happy") return "happy";
   if (state.emotion === "surprised") return "surprised";
   if (state.emotion === "shy") return "shy";

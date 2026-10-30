@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="referrer" content="no-referrer">
+<title>Yuna 3D Viva — Laboratório de animação</title>
+<meta name="description" content="Prévia interativa da Yuna em 3D no navegador, com braços, joelhos, olhar, cabelo, gestos e fala demonstrativa.">
+<style>
+:root{color-scheme:dark;font-family:Inter,"Segoe UI",system-ui,sans-serif;background:#0a0b16;color:#f2edff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 65% 20%,#33234a,#0a0b16 62%)}
+button,input,select{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #d8b6ff;outline-offset:3px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:17px clamp(18px,4vw,62px);border-bottom:1px solid #c69fff2b;background:#111022bc}
+.brand{font-weight:850;font-size:19px;letter-spacing:.17em}.brand span{color:#ba94ff}
+.nav{font-size:12px;color:#aaa2c4}.nav a{color:#d8c3ff;text-decoration:underline;text-underline-offset:3px}
+.layout{display:grid;grid-template-columns:minmax(295px,380px) minmax(440px,1fr);align-items:stretch;max-width:1500px;margin:auto;gap:23px;padding:clamp(15px,3vw,36px)}
+.panel{border:1px solid #9881bb35;border-radius:24px;background:linear-gradient(150deg,#1d1732ed,#121224ed);padding:27px 25px;box-shadow:0 24px 55px #0004}
+.tag{font-size:10px;letter-spacing:.22em;color:#bea4f1;font-weight:800}
+h1{font-size:clamp(30px,3vw,45px);letter-spacing:-.04em;line-height:1.13;margin:17px 0 13px}h1 em{color:#c9a4ff;font-style:normal}
+.lead{color:#b4acc8;font-size:13px;line-height:1.7;margin:0 0 19px}
+.message{font-size:12px;line-height:1.55;border:1px solid #725d9c66;background:#241d3d;border-radius:14px;padding:13px;min-height:60px;color:#e8dfff}
+.label{margin:25px 0 11px;color:#988cb4;letter-spacing:.14em;font-weight:800;font-size:10px}
+.buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.buttons button,.ghost{border:1px solid #75638d7d;color:#eee8fa;background:#27213e;border-radius:11px;padding:11px 6px;font-weight:680;font-size:12px}
+.buttons button:hover,.ghost:hover{background:#483364}
+.buttons button[aria-pressed=true]{background:linear-gradient(125deg,#7043ae,#4c3a85);border-color:#dbbafc;color:white}
+.setting{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:12px 0;font-size:12px;color:#d7cde8}
+.setting span small{display:block;color:#988cad;margin-top:5px}
+.setting select{width:125px;border-radius:9px;background:#27213e;border:1px solid #67527e;color:#eee6ff;padding:7px}
+.setting input[type=range]{width:115px;accent-color:#ac83eb}
+.ghost{width:100%;margin-top:10px;padding:12px}
+.note{font-size:11px;line-height:1.6;color:#aea2bd;border-left:2px solid #9672ce;padding-left:12px;margin-top:18px}
+.stage-wrap{position:relative;min-height:680px;max-height:850px;border-radius:27px;overflow:hidden;border:1px solid #a584d142;background:radial-gradient(ellipse at 55% 40%,#3d305d,#19172f 47%,#101020 90%)}
+.stage-wrap:before{content:"";position:absolute;inset:13%;border:1px solid #ac92eb1b;border-radius:50%;box-shadow:0 0 100px #8860db0b;pointer-events:none}
+#stage{position:absolute;inset:0}
+#stage canvas{width:100%;height:100%;display:block;touch-action:pan-y}
+.stamp{position:absolute;top:24px;left:23px;font-size:10px;letter-spacing:.17em;color:#ddcbfc;font-weight:800;pointer-events:none}
+.stamp small{display:block;letter-spacing:.09em;font-weight:500;margin-top:8px;color:#ada0c8}
+.status{position:absolute;bottom:23px;right:20px;border:1px solid #b6a2e74d;background:#17182dbf;border-radius:999px;padding:10px 14px;font-size:10px;font-weight:750;color:#dfcef9}
+.footer{max-width:1500px;margin:auto;padding:3px clamp(18px,4vw,62px) 27px;color:#897f9f;font-size:11px;line-height:1.8}
+@media(max-width:960px){.layout{grid-template-columns:1fr}.stage-wrap{order:0;min-height:540px}.panel{order:1}.buttons{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:580px){.layout{padding:12px;gap:14px}.topbar{padding:13px 14px}.nav{font-size:10px}.stage-wrap{min-height:460px}.panel{padding:21px}.buttons{grid-template-columns:repeat(3,1fr)}.status{font-size:9px;right:8px;bottom:12px}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+</head>
+<body>
+<header class="topbar"><div class="brand">✦ YUNA <span>3D VIVA</span></div><div class="nav">PRÉVIA PÚBLICA · <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">CÓDIGO NO GITHUB</a></div></header>
+<main class="layout">
+<section class="panel" aria-label="Controle de animação da Yuna">
+<div class="tag">LABORATÓRIO DE MOVIMENTOS · 3D</div>
+<h1>Uma Yuna<br><em>com gestos.</em></h1>
+<p class="lead">Uma demonstração real em WebGL: o personagem original tem cabeça, olhos, antebraços, joelhos e cabelo articulados. Escolha o movimento e gire o modelo com o mouse.</p>
+<div id="message" class="message" role="status" aria-live="polite">Inicializando a personagem 3D...</div>
+<div class="label">EXPRESSÕES E GESTOS</div>
+<div class="buttons" id="reactions">
+<button data-pose="idle" aria-pressed="true">✧ Normal</button>
+<button data-pose="happy" aria-pressed="false">♡ Feliz</button>
+<button data-pose="wave" aria-pressed="false">👋 Acenar</button>
+<button data-pose="walk" aria-pressed="false">♫ Andar</button>
+<button data-pose="curious" aria-pressed="false">✦ Curiosa</button>
+<button data-pose="shy" aria-pressed="false">✿ Tímida</button>
+<button data-pose="angry" aria-pressed="false">⚡ Brava</button>
+<button data-pose="wink" aria-pressed="false">◕ Piscadinha</button>
+<button data-pose="sit" aria-pressed="false">☾ Descanso</button>
+</div>
+<div class="label">MOVIMENTO E ESTILO</div>
+<label class="setting"><span>Intensidade <small>Gestos suaves ou expressivos</small></span><input id="intensity" type="range" min="0" max="100" step="5" value="90"></label>
+<label class="setting"><span>Estilo do cabelo</span><select id="hairStyle"><option value="longo">Longo</option><option value="curto">Curto</option><option value="marias">Marias</option><option value="rabo">Rabo de cavalo</option></select></label>
+<label class="setting"><span>Cor dos olhos</span><select id="eyeColor"><option value="roxos">Violetas</option><option value="vermelhos">Vermelhos</option><option value="azuis">Azuis</option><option value="dourados">Dourados</option></select></label>
+<button class="ghost" type="button" id="speak">▶ Ouvir uma frase (voz do navegador)</button>
+<button class="ghost" type="button" id="pause" aria-pressed="false">Ⅱ Pausar animação</button>
+<button class="ghost" type="button" id="cameraReset">✦ Centralizar personagem</button>
+<p class="note"><strong>Prévia 3D geométrica.</strong> É uma personagem original com peças 3D independentes — não o modelo anime VRM final nem uma transmissão do Unreal. O renderizador usa a biblioteca Three.js hospedada em CDN e não acessa câmera, microfone ou dados pessoais.</p>
+</section>
+<section class="stage-wrap" aria-label="Personagem 3D em WebGL">
+<div id="stage"></div><div class="stamp">YUNA / ORIGINAL 3D <small>CORPO ARTICULADO · ANIMAÇÃO PROCEDURAL</small></div>
+<div class="status">✧ ONLINE APENAS NESTA PÁGINA</div>
+</section>
+</main>
+<footer class="footer">A demonstração web não conversa com o Ollama nem com seu computador. Use a versão local em <a href="https://github.com/SrHenriqueBR/Projeto-Yuna/tree/main/avatar3d" style="color:#c6a8ff">avatar3d/</a> para importar um arquivo .VRM próprio e animar uma personagem anime rigada. A prévia é gratuita; a dependência externa Three.js precisa de conexão para carregar.</footer>
+<script type="module" src="./yuna-3d-viva.mjs"></script>
+</body>
+</html>

@@ -2,7 +2,9 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
-import { frameAt, expressionValues, smooth, clamp, EMOTIONS } from "./motion.mjs";
+import { smooth, clamp, EMOTIONS } from "./motion.mjs";
+import { PerformanceDirector } from "./performance.mjs";
+import { VrmPerformer } from "./vrm_performer.mjs";
 import { connectionFromFragment, normalizeRemoteState, reactionPose } from "./bridge_state.mjs";
 import { createAnimePreview } from "./preview_character.js";
 import {
@@ -23,6 +25,7 @@ const modelInput = document.querySelector("#modelInput");
 const fpsSelect = document.querySelector("#fps");
 const reducedInput = document.querySelector("#reducedMotion");
 const mouthInput = document.querySelector("#mouth");
+const intensityInput = document.querySelector("#motionIntensity");
 const poseButtons = [...document.querySelectorAll("[data-pose]")];
 const MAX_VRM_BYTES = 80 * 1024 * 1024;
 // O usuário pode instalar sua personagem original em public/yuna.vrm.
@@ -143,7 +146,7 @@ document.querySelector("#restorePreview").addEventListener("click", () => {
     scene.remove(currentVrm.scene);
     VRMUtils.deepDispose(currentVrm.scene);
     currentVrm = null;
-    rig = null;
+    performer = null;
   }
   preview.root.visible = true;
   updatePose("idle");
@@ -153,7 +156,8 @@ document.querySelector("#restorePreview").addEventListener("click", () => {
 updateEditor();
 
 let currentVrm = null;
-let rig = null;
+let performer = null;
+const motionDirector = new PerformanceDirector();
 let pose = "idle";
 let poseDeadline = 0;
 let time = 0;
@@ -168,7 +172,9 @@ let loadSerial = 0;
 function updatePose(next) {
   if (!EMOTIONS.includes(next)) return;
   pose = next;
-  poseDeadline = next === "idle" ? 0 : performance.now() + 4300;
+  poseDeadline = next === "idle" ? 0 :
+    performance.now() + (["sit","sleepy"].includes(next) ? 9500 :
+    next === "walk" ? 6300 : 4300);
   for (const button of poseButtons) {
     button.classList.toggle("selected", button.dataset.pose === next);
     button.setAttribute("aria-pressed", String(button.dataset.pose === next));
@@ -295,51 +301,12 @@ renderer.domElement.addEventListener("pointerleave", () => {
   cursorY = 0;
 });
 
-function createRig(vrm) {
-  const bone = (name) => vrm.humanoid?.getNormalizedBoneNode(name) || null;
-  const head = bone("head");
-  const upperArm = bone("rightUpperArm");
-  const leftArm = bone("leftUpperArm");
-  const chest = bone("chest");
-  return {
-    head, upperArm, leftArm, chest,
-    originalHead: head?.quaternion.clone(),
-    originalArm: upperArm?.quaternion.clone(),
-    originalLeftArm: leftArm?.quaternion.clone(),
-    originalChest: chest?.quaternion.clone()
-  };
-}
-
-const tempRotation = new THREE.Quaternion();
-const tempEuler = new THREE.Euler();
-function applyRotation(node, original, x, y, z, dt) {
-  if (!node || !original) return;
-  tempEuler.set(x, y, z, "XYZ");
-  tempRotation.setFromEuler(tempEuler).premultiply(original);
-  node.quaternion.slerp(tempRotation, Math.min(1, dt * 9));
-}
-
 function animateVrm(frame, dt) {
-  if (!currentVrm || !rig) return;
-  const expr = currentVrm.expressionManager;
-  if (expr) {
-    for (const [name, value] of Object.entries(expressionValues(frame))) {
-      if (expr.getExpression(name)) expr.setValue(name, value);
-    }
-  }
-  applyRotation(rig.head, rig.originalHead, frame.headPitch,
-                frame.headYaw, frame.headTilt, dt);
-  applyRotation(rig.upperArm, rig.originalArm, frame.breath * 0.5, 0,
-                frame.emotion === "wave" ? -1.05 + frame.wave :
-                frame.rightArmSwing, dt);
-  applyRotation(rig.leftArm, rig.originalLeftArm, -frame.breath * 0.5, 0,
-                -frame.leftArmSwing, dt);
-  applyRotation(rig.chest, rig.originalChest, frame.breath * 0.65, 0,
-                frame.bodySway * 0.5, dt);
+  if (!currentVrm || !performer) return;
   if (currentVrm.lookAt) {
     lookAtTarget.position.set(frame.gazeX * 1.1, -frame.gazeY * 0.65, 0);
   }
-  currentVrm.update(dt);
+  performer.update(frame, dt);
 }
 
 // Nenhum modelo é fornecido por padrão: o próprio usuário escolhe um arquivo
@@ -378,7 +345,7 @@ async function loadLocalVrm(file) {
     }
     scene.add(vrm.scene);
     currentVrm = vrm;
-    rig = createRig(vrm);
+    performer = new VrmPerformer(vrm);
     if (vrm.lookAt) vrm.lookAt.target = lookAtTarget;
     preview.root.visible = false;
     updatePose("idle");
@@ -472,11 +439,12 @@ function animate(now) {
        battery.mode === "tired" || battery.mode === "charging" ? "sit" :
        battery.mode === "full" ? "happy" : pose)
     : pose;
-  const frame = frameAt(time, {
+  const frame = motionDirector.step(time, {
     pose: batteryPose, pointerX: gazeX, pointerY: gazeY,
-    mouthLevel,
+    mouthLevel, talking: speechActive,
+    intensity: Number(intensityInput.value) / 100,
     reducedMotion: reducedInput.checked
-  });
+  }, dt);
   if (currentVrm) animateVrm(frame, dt);
   else preview.animate(frame, frame.gazeX, frame.gazeY, dt);
   controls.update();

@@ -110,7 +110,8 @@ não inicia jogos automaticamente.
 - Sem mover o mouse: a Yuna respira, pisca e alterna olhares e posturas de modo sutil.
 - Mova o cursor: ela dá prioridade ao ponteiro para os movimentos de cabeça e olhos.
 - Arraste com o mouse: gira a câmera; roda: zoom.
-- Botões: neutra, feliz, curiosa, surpresa, tímida e acenar.
+- Botões: neutra, feliz, curiosa, surpresa, tímida, acenar,
+  caminhar, descansar, dormir, brava, piscadinha e rir.
 - Barra **Prévia da fala**: abertura de boca de demonstração (não é áudio real).
 - Marque **Economizar movimento** para reduzir movimentos; há limite de 30/60 FPS.
 - Ao ocultar a aba, a renderização pausa para economizar GPU.
@@ -133,10 +134,34 @@ não inicia jogos automaticamente.
 - O preview 3D precisa de WebGL. Não há garantia de FPS específico no Alienware
   até testes na máquina real; se houver travamentos, use 30 FPS ou volte ao 2D.
 
-## Próxima etapa
+## Yuna 0.48 — animação 3D do corpo inteiro
 
-Ligar o contrato de eventos `AvatarController` → renderer 3D (preferencialmente
-via uma ponte local com controle de origem e autenticação, **não** execução
-de comandos vindos do browser). Sincronizar boca com **reprodução real** do
-QMediaPlayer e adicionar bone rigs/animação de braços quando suportados pelo
-arquivo VRM.
+A versão 0.48 adiciona `src/performance.mjs` e
+`src/vrm_performer.mjs`, com transições suavizadas e animação
+procedural dos ossos humanoides **normalizados** da VRM.
+
+- Os braços saem da T-pose, com ombros, cotovelos e punhos em repouso.
+- Acenos movimentam ombro, cotovelo e punho; a caminhada alterna
+  pernas e braços *no lugar*, com joelhos e compensação do quadril.
+- A cabeça, o pescoço, o tronco e o olhar fazem pequenos movimentos
+  espontâneos; boca e expressões usam apenas canais suportados pelo VRM.
+- As reações `walk`, `sit`, `angry`, `wink` e `laugh` enviadas pelo
+  aplicativo Python agora são interpretadas pelo visualizador 3D.
+- O controle **Intensidade dos gestos** regula a força dos movimentos
+  de 0 a 100%; a opção de redução de movimentos continua ativa.
+- A prévia geométrica possui antebraços e joelhos separados.
+
+**[Visualizar a Yuna 3D grátis no navegador](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html)**.
+Esta URL apresenta um protótipo geométrico local em WebGL,
+não um modelo VRM anime nem Pixel Streaming do Unreal.
+O Three.js é carregado por CDN e requer conexão inicial.
+
+Ainda não há modelo anime VRM original distribuído pelo projeto,
+clips de motion capture, IK de pés nem visemas fonéticos precisos.
+Física de cabelo depende dos spring bones presentes no VRM.
+Use um arquivo .vrm que você tenha direito de utilizar e
+crie uma cópia local em `avatar3d/public/yuna.vrm` se quiser
+autoload; o Git ignora modelos privados.
+
+A ponte com o AvatarController Python já existe e continua
+somente-leitura, autenticada e desligada por padrão.

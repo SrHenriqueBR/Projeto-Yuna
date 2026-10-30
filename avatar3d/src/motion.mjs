@@ -1,5 +1,5 @@
 /** Sinais de animação calculados localmente, sem depender de Three.js ou DOM. */
-export const EMOTIONS = Object.freeze(["idle", "happy", "curious", "surprised", "shy", "wave", "sit", "sleepy"]);
+export const EMOTIONS = Object.freeze(["idle", "happy", "curious", "surprised", "shy", "wave", "sit", "sleepy", "walk", "angry", "wink", "laugh", "talk", "pose"]);
 
 export function clamp(value, minimum, maximum) {
   if (!Number.isFinite(value)) return minimum;
@@ -93,9 +93,12 @@ export function frameAt(seconds, {
 export function expressionValues(frame) {
   return {
     blink: frame.blink,
+    blinkLeft: frame.blinkLeft ?? frame.blink,
+    blinkRight: frame.blinkRight ?? frame.blink,
     aa: frame.mouth,
-    happy: frame.emotion === "happy" ? 0.85 : 0,
-    relaxed: frame.emotion === "shy" ? 0.6 : 0,
+    happy: frame.smile ?? (frame.emotion === "happy" ? 0.85 : 0),
+    angry: frame.emotion === "angry" ? 0.72 : 0,
+    relaxed: ["shy", "sleepy"].includes(frame.emotion) ? 0.6 : 0,
     surprised: frame.emotion === "surprised" ? 0.9 : 0
   };
 }

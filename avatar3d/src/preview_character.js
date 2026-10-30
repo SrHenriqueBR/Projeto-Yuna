@@ -95,13 +95,17 @@ function addOutfit(root, materials, appearance) {
 
   const legs = [];
   for (const side of [-1, 1]) {
-    // Articulações simples para evitar pernas completamente rígidas.
-    const leg = new THREE.Group();
-    leg.position.set(side * 0.11, 0.38, 0);
-    capsule(leg, skin, [0, -0.04, 0], [0, -0.26, 0], 0.067);
-    sphere(leg, dark, [0, -0.285, 0.047], [0.106, 0.067, 0.155]);
-    root.add(leg);
-    legs.push(leg);
+    // Joelho e pé independentes, para caminhar em vez de balançar o corpo todo.
+    const upper = new THREE.Group();
+    upper.position.set(side * 0.11, 0.39, 0);
+    capsule(upper, skin, [0, -0.03, 0], [0, -0.15, 0], 0.067);
+    const lower = new THREE.Group();
+    lower.position.set(0, -0.16, 0);
+    capsule(lower, skin, [0, -0.01, 0], [0, -0.115, 0], 0.063);
+    sphere(lower, dark, [0, -0.135, 0.049], [0.105, 0.064, 0.157]);
+    upper.add(lower);
+    root.add(upper);
+    legs.push({upper, lower});
     strand(root, trim, [
       [side * 0.24, 0.54, 0.02],
       [side * 0.28, 0.46, 0.04],
@@ -231,16 +235,26 @@ export function createAnimePreview(style = {}) {
 
   const leftArm = new THREE.Group();
   leftArm.position.set(-0.22, 0.96, 0);
-  capsule(leftArm, mats.dress, [-0.035, -0.06, 0],
-    [-0.095, -0.27, 0.015], 0.098);
-  sphere(leftArm, mats.skin, [-0.11, -0.32, 0.02], [0.070, 0.09, 0.07]);
+  capsule(leftArm, mats.dress, [-0.025, -0.05, 0],
+    [-0.07, -0.165, 0.015], 0.094);
+  const leftForearm = new THREE.Group();
+  leftForearm.position.set(-0.073, -0.165, 0.015);
+  capsule(leftForearm, mats.dress, [0, -0.02, 0],
+    [-0.039, -0.125, 0], 0.077);
+  sphere(leftForearm, mats.skin, [-0.055, -0.173, 0.012], [0.066, 0.079, 0.07]);
+  leftArm.add(leftForearm);
   root.add(leftArm);
 
   const rightArm = new THREE.Group();
   rightArm.position.set(0.22, 0.96, 0);
-  capsule(rightArm, mats.dress, [0.035, -0.06, 0],
-    [0.095, -0.27, 0.015], 0.098);
-  sphere(rightArm, mats.skin, [0.11, -0.32, 0.02], [0.070, 0.09, 0.07]);
+  capsule(rightArm, mats.dress, [0.025, -0.05, 0],
+    [0.07, -0.165, 0.015], 0.094);
+  const rightForearm = new THREE.Group();
+  rightForearm.position.set(0.073, -0.165, 0.015);
+  capsule(rightForearm, mats.dress, [0, -0.02, 0],
+    [0.039, -0.125, 0], 0.077);
+  sphere(rightForearm, mats.skin, [0.055, -0.173, 0.012], [0.066, 0.079, 0.07]);
+  rightArm.add(rightForearm);
   root.add(rightArm);
 
   const headPivot = new THREE.Group();
@@ -287,21 +301,28 @@ export function createAnimePreview(style = {}) {
 
   let dead = false;
   const preview = {
-    appearance, root, headPivot, leftArm, rightArm, eyes, mouth, backHair, outfit,
+    appearance, root, headPivot, leftArm, rightArm,
+    leftForearm, rightForearm, eyes, mouth, backHair, outfit,
     animate(frame, gazeX = 0, gazeY = 0, dt = 1 / 30) {
       if (dead) return;
       headPivot.rotation.y = smooth(headPivot.rotation.y, frame.headYaw, 6, dt);
       headPivot.rotation.x = smooth(headPivot.rotation.x, frame.headPitch, 6, dt);
       headPivot.rotation.z = smooth(headPivot.rotation.z, frame.headTilt, 5, dt);
       // Respiração, transferência de peso e braços não dependem do mouse.
-      root.position.y = smooth(root.position.y, frame.breath + frame.bodyBob, 4, dt);
-      root.position.x = smooth(root.position.x, frame.bodySway * 0.22, 3, dt);
+      root.position.y = smooth(root.position.y,
+        frame.breath + frame.bodyBob + (frame.hipDrop || 0), 4, dt);
+      root.position.x = smooth(root.position.x,
+        frame.bodySway * 0.22 + (frame.hipShift || 0), 3, dt);
       root.rotation.z = smooth(root.rotation.z, frame.bodySway, 3.5, dt);
       rightArm.rotation.z = smooth(rightArm.rotation.z,
-        frame.emotion === "wave" ? -2.1 + frame.wave :
+        frame.emotion === "wave" ? -2.1 * (frame.motionStrength ?? 1) + frame.wave :
         -0.14 + frame.rightArmSwing - frame.bodySway, 7, dt);
       leftArm.rotation.z = smooth(leftArm.rotation.z,
         0.14 + frame.leftArmSwing - frame.bodySway, 5, dt);
+      rightForearm.rotation.z = smooth(rightForearm.rotation.z,
+        frame.emotion === "wave" ? 0.85 * (frame.motionStrength ?? 1) : -(frame.rightElbow || 0), 7, dt);
+      leftForearm.rotation.z = smooth(leftForearm.rotation.z,
+        frame.leftElbow || 0, 7, dt);
       rightArm.rotation.x = smooth(rightArm.rotation.x,
         frame.emotion === "shy" ? -0.22 : frame.breath * 1.5, 5, dt);
       leftArm.rotation.x = smooth(leftArm.rotation.x,
@@ -310,18 +331,22 @@ export function createAnimePreview(style = {}) {
         -frame.bodySway * 1.6 + frame.hairSwing, 3.5, dt);
       outfit.skirt.rotation.z = smooth(outfit.skirt.rotation.z,
         -frame.bodySway * 0.32, 3, dt);
-      outfit.legs.forEach((leg, index) => {
-        const sign = index === 0 ? -1 : 1;
-        const target = frame.emotion === "sit" ? -0.2 :
-          frame.emotion === "sleepy" ? 0.07 :
-          sign * frame.bodySway * 0.30;
-        leg.rotation.x = smooth(leg.rotation.x, target, 3, dt);
+      outfit.legs.forEach(({upper, lower}, index) => {
+        const target = index === 0 ? (frame.leftLeg || 0) :
+          (frame.rightLeg || 0);
+        const knee = index === 0 ? (frame.leftKnee || 0) :
+          (frame.rightKnee || 0);
+        upper.rotation.x = smooth(upper.rotation.x, target, 6, dt);
+        lower.rotation.x = smooth(lower.rotation.x, -knee, 7, dt);
       });
       for (const {eye, irisGroup, eyebrow, eyebrowBaselineY} of eyes) {
         const surprised = frame.emotion === "surprised";
         const wink = frame.emotion === "shy";
+        const blinkValue = eye.position.x > 0
+          ? (frame.blinkRight ?? frame.blink)
+          : (frame.blinkLeft ?? frame.blink);
         eye.scale.y = Math.max(0.03, (surprised ? 1.10 : 1) -
-          frame.blink * (wink ? 0.99 : 0.96));
+          blinkValue * (wink ? 0.99 : 0.96));
         irisGroup.position.set(clamp(gazeX, -1, 1) * 0.019,
           -clamp(gazeY, -1, 1) * 0.012, 0);
         eyebrow.position.y = eyebrowBaselineY +
