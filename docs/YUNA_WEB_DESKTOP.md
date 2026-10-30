@@ -20,7 +20,8 @@
 ## Como funciona
 
 - **Mesma arte, sem divergência de identidade:** navegador usa `./yuna-portrait.webp`; desktop lê `ROOT/docs/yuna-portrait.webp`.
-- **Web:** movimento leve de parallax e respiração visual, frases e variações de cor por humor. Não conversa com o Ollama.
+- **Web:** avatar SVG com cabeça, cabelo, braços, olhos e boca articulados; expressões e falas prontas. O botão de retrato mostra a ilustração de referência. A pausa interrompe os movimentos dos dois modos e os efeitos de fundo, e a preferência por movimento reduzido é respeitada ao abrir a página. Abas ocultas suspendem o ciclo de animação. A página não conversa com o Ollama.
+- **Voz na web:** o botão alterna entre ouvir e parar. Trocar a expressão interrompe a fala anterior; falhas ou ausência de início da voz geram um aviso sem apagar a legenda. A disponibilidade e o timbre dependem das vozes do navegador, e algumas podem precisar de internet.
 - **Desktop:** pequena oscilação do retrato, botões de humor que também atualizam o `AvatarController` já existente, conversa e recursos locais preservados. Os botões não enviam mensagens ao modelo sem você pedir.
 - **Fallback:** se o arquivo da arte estiver ausente ou seu Qt não conseguir decodificá-lo, os recursos da Yuna continuam disponíveis com a apresentação antiga.
 - **Ainda não é uma personagem 3D de produção:** o retrato 2.5D não tem esqueleto, física de cabelo ou sincronização labial real. Essas características dependem de um VRM rigado no renderizador 3D opcional.
@@ -32,3 +33,8 @@
 - Empacotar no futuro um instalador Windows, com testes de inicialização e áudio em hardware real.
 
 Nenhuma informação pessoal é publicada pela página de demonstração. Não adicione `data/`, credenciais ou vídeos privados ao GitHub.
+
+## Verificar os controles web
+
+Execute `python -m unittest discover -s tests -p test_yuna_live_web.py -v` e `node --test tests/yuna_web_controls.test.cjs`. Os testes de JavaScript simulam a animação e as respostas do serviço de voz, incluindo pausa, alternância de modo, aba oculta e eventos atrasados de áudio. Confira também o layout no navegador em tela estreita e o áudio no dispositivo de destino.
+

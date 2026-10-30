@@ -28,7 +28,7 @@
   let paused = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let pointerX = 0, pointerY = 0, lastPointer = 0;
   let eyeX = 0, eyeY = 0, lookX = 0, lookY = 0;
-  let lastFrame = 0, seconds = 0, lastWidth = 0;
+  let lastFrame = 0, seconds = 0, frameId = null;
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
   const lerp = (a, b, t) => a + (b - a) * t;
   const smoothstep = (x) => { x = clamp(x, 0, 1); return x*x*(3 - 2*x); };
@@ -68,11 +68,13 @@
   function setPortraitMode(requestPortrait) {
     const available = image && image.naturalWidth > 0;
     if (requestPortrait && !available) {
-      document.getElementById("speech").textContent =
+      document.getElementById("feedback").textContent =
         "O retrato original ainda não carregou. O modo articulado funciona sem ele.";
       return;
     }
     isPortrait = !!requestPortrait;
+    image.setAttribute("aria-hidden", String(!isPortrait));
+    figure.setAttribute("aria-hidden", String(isPortrait));
     stage.classList.toggle("live-mode", !isPortrait);
     stage.classList.toggle("show-portrait", isPortrait);
     liveButton.setAttribute("aria-pressed", String(!isPortrait));
@@ -82,19 +84,40 @@
     modeHint.textContent = isPortrait ?
       "Foto de referência com leve efeito visual" :
       "Olhos, boca, braços, cabeça e cabelo em movimento independente";
+    document.getElementById("stageFooter").textContent = isPortrait ?
+      "◈ IMAGEM DE REFERÊNCIA" : "✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO";
+    refreshLoop();
   }
 
   function setPaused(next) {
     paused = !!next;
+    stage.dataset.motionPaused = String(paused);
     pauseButton.setAttribute("aria-pressed", String(paused));
     pauseButton.textContent = paused ? "▶ Retomar movimentos" : "Ⅱ Pausar movimentos";
     motionChip.textContent = paused ? "Ⅱ MOVIMENTOS PAUSADOS" : "● MOVIMENTOS ATIVOS";
+    refreshLoop();
   }
+
+  function refreshLoop() {
+    if (frameId !== null) window.cancelAnimationFrame(frameId);
+    frameId = null;
+    lastFrame = 0;
+    stage.dataset.motionSuspended = String(paused || document.hidden);
+    if (!paused && !isPortrait && !document.hidden)
+      frameId = window.requestAnimationFrame(frame);
+  }
+  document.addEventListener("visibilitychange", refreshLoop);
+  window.addEventListener("pagehide", () => {
+    if (frameId !== null) window.cancelAnimationFrame(frameId);
+    frameId = null;
+  });
+  window.addEventListener("pageshow", refreshLoop);
 
   liveButton.addEventListener("click", () => setPortraitMode(false));
   portraitButton.addEventListener("click", () => setPortraitMode(true));
   pauseButton.addEventListener("click", () => setPaused(!paused));
   stage.addEventListener("pointermove", (event) => {
+    if (paused) return;
     const rect = stage.getBoundingClientRect();
     pointerX = clamp((event.clientX-rect.left)/rect.width*2-1, -1, 1);
     pointerY = clamp((event.clientY-rect.top)/rect.height*2-1, -1, 1);
@@ -105,6 +128,7 @@
   setPaused(paused);
 
   function frame(now) {
+    frameId = null;
     const dt = lastFrame ? clamp((now - lastFrame) / 1000, 0, .05) : 0;
     lastFrame = now;
 
@@ -157,16 +181,8 @@
         motion(armLeft, "rotate(" + num(Math.sin(t * 6) * 19) + "deg)", "194px 542px");
         motion(armRight, "rotate(" + num(Math.sin(t * 6 + Math.PI) * 19) + "deg)", "408px 540px");
       }
-    } else if (paused && !isPortrait) {
-      motion(root,"translate(0px,0px)");
-      motion(head,"rotate(0deg)","300px 460px");
-      for (const eye of eyes) motion(eye,"scaleY(1)");
-      for (const iris of irises) motion(iris,"translate(0px,0px)");
-      for (const node of [armLeft,armRight,hairBack,hairFront,hairSide])
-        motion(node,"rotate(0deg)");
-      motion(mouth,"scaleY(.1)");
     }
-    window.requestAnimationFrame(frame);
+    if (!paused && !isPortrait && !document.hidden)
+      frameId = window.requestAnimationFrame(frame);
   }
-  window.requestAnimationFrame(frame);
 })();

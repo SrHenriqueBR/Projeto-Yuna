@@ -6,6 +6,7 @@ on:
       - 'docs/yuna-preview.html'
       - 'docs/yuna-viva.js'
       - 'tests/test_yuna_live_web.py'
+      - 'tests/yuna_web_controls.test.cjs'
       - '.github/workflows/yuna_live_web.yml'
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - 'docs/yuna-preview.html'
       - 'docs/yuna-viva.js'
       - 'tests/test_yuna_live_web.py'
+      - 'tests/yuna_web_controls.test.cjs'
       - '.github/workflows/yuna_live_web.yml'
 
 jobs:
@@ -39,4 +41,7 @@ jobs:
           PY
           node --check /tmp/yuna-inline.js
       - name: Testar HTML e controles do avatar
-        run: python -m unittest tests.test_yuna_live_web -v
+        run: |
+          python -m unittest discover -s tests -p test_yuna_live_web.py -v
+          node --test tests/yuna_web_controls.test.cjs
+

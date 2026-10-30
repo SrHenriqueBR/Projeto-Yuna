@@ -163,6 +163,22 @@ footer a{color:#bcabea;text-decoration:underline}
 .motion-chip{position:absolute;z-index:5;top:56px;right:18px;padding:6px 9px;background:#0e2f26bc;border:1px solid #77eac072;border-radius:999px;color:#bafce1;font-size:10px;font-weight:800;letter-spacing:.07em}
 @media(prefers-reduced-motion:reduce){#stage.show-portrait .poster{animation:none!important}}
 
+/* A pausa vale para os dois modos, inclusive estrelas e efeitos do fundo. */
+#stage.stage-panel[data-motion-suspended=true],#stage.stage-panel[data-motion-suspended=true] *,
+#stage.stage-panel[data-motion-suspended=true]:before,#stage.stage-panel[data-motion-suspended=true]:after,
+#stage.stage-panel[data-motion-suspended=true] *:before,#stage.stage-panel[data-motion-suspended=true] *:after{
+ animation-play-state:paused!important;transition:none!important
+}
+button:disabled{cursor:not-allowed;opacity:.55}
+.feedback{font-size:12px;line-height:1.6;color:#e5c6ff;max-width:505px;margin:12px 0 0}
+.feedback:empty{display:none}
+@media(max-width:580px){
+ header{flex-wrap:wrap;gap:10px}.topinfo{font-size:8px}
+ .motion-chip{top:65px;right:12px;font-size:9px}
+ .portrait-label{bottom:53px;left:12px;max-width:calc(100% - 24px);font-size:9px}
+ .stage-footer{bottom:13px;left:12px;right:auto;max-width:calc(100% - 24px);font-size:8px}
+}
+
 </style>
 </head>
 <body>
@@ -195,13 +211,14 @@ footer a{color:#bcabea;text-decoration:underline}
    <button type="button" class="primary" id="voice" aria-label="Ouvir fala de demonstração">▶ Ouvir a Yuna falar</button>
    <button type="button" class="secondary" id="look">✦ Surpreenda-me</button>
   </div>
+  <p id="feedback" class="feedback" role="status"></p>
   <div class="preview-modes">
    <button type="button" id="modeLive" aria-pressed="true">✦ Avatar articulado</button>
    <button type="button" id="modePortrait" aria-pressed="false">◈ Retrato original</button>
    <button type="button" id="pauseMotion" aria-pressed="false">Ⅱ Pausar movimentos</button>
    <small id="modeHint">Animação 2D por camadas, não uma foto balançando</small>
   </div>
-  <p class="notice"><strong>Prévia web animada em 2D, independente do Unreal.</strong> É um desenho vetorial em partes articuladas, não um modelo VRM completo nem o Pixel Streaming da Unreal Engine. Não usa câmera, microfone, memória ou Ollama; a fala de teste usa a voz do navegador.</p>
+  <p class="notice"><strong>Demonstração visual interativa em 2D.</strong> Os botões mostram falas prontas e expressões. Para conversar com a IA, use o aplicativo Yuna no Windows. A fala de teste depende das vozes do navegador; algumas podem precisar de internet.</p>
  </section>
  <section class="stage-panel live-mode" id="stage" data-mood="idle" aria-label="Yuna anime vetorial: cabeça, olhos, boca, braços e cabelo animados separadamente">
   <div class="aurora"></div><div class="halo"></div><div class="starfield" id="stars" aria-hidden="true"></div>
@@ -328,10 +345,10 @@ footer a{color:#bcabea;text-decoration:underline}
     <circle cx="462" cy="266" r="3"/><circle cx="132" cy="457" r="2.5"/>
    </g>
   </svg>
-  <div class="stage-footer">✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO</div>
+  <div class="stage-footer" id="stageFooter">✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO</div>
  </section>
 </main>
-<footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é apenas referência estática; o modo articulado é um desenho vetorial separado. Sem coleta de dados, rede, câmera ou microfone.</footer>
+<footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é uma referência estática; o modo articulado é um desenho vetorial separado. Esta página não acessa câmera, microfone, memória ou arquivos do computador.</footer>
 <script>
 (function(){
  "use strict";
@@ -339,6 +356,7 @@ footer a{color:#bcabea;text-decoration:underline}
  var speech=document.getElementById("speech");
  var head=document.getElementById("head");
  var voice=document.getElementById("voice");
+ var feedback=document.getElementById("feedback");
  var figure=document.getElementById("figure");
  var portrait=document.getElementById("portrait");
  if(portrait){
@@ -360,8 +378,13 @@ footer a{color:#bcabea;text-decoration:underline}
  };
  var current="idle";
  var speechTimer=0;
+ var utterance=null;
+ var voiceGeneration=0;
+ var voiceAvailable="speechSynthesis" in window && typeof window.SpeechSynthesisUtterance==="function";
  function setMood(mode){
   if(!Object.prototype.hasOwnProperty.call(moods,mode))return;
+  stopSpeech();
+  if(voiceAvailable)feedback.textContent="";
   current=mode;stage.dataset.mood=mode;speech.textContent=moods[mode];
   document.querySelectorAll("[data-action]").forEach(function(button){
    var on=button.dataset.action===mode;button.classList.toggle("active",on);
@@ -371,10 +394,23 @@ footer a{color:#bcabea;text-decoration:underline}
  document.querySelectorAll("[data-action]").forEach(function(button){
   button.addEventListener("click",function(){setMood(button.dataset.action)});
  });
- function resetMouth(){figure.classList.remove("is-speaking");stage.classList.remove("is-speaking");window.clearTimeout(speechTimer);}
+ function resetMouth(){
+  figure.classList.remove("is-speaking");stage.classList.remove("is-speaking");
+  window.clearTimeout(speechTimer);utterance=null;
+  voice.textContent="▶ Ouvir a Yuna falar";
+  voice.setAttribute("aria-label","Ouvir fala de demonstração");
+ }
+ function stopSpeech(){
+  voiceGeneration++;
+  if(voiceAvailable)window.speechSynthesis.cancel();
+  resetMouth();
+ }
  function speak(){
-  if(!("speechSynthesis" in window)){speech.textContent="Este navegador não oferece voz de demonstração. As animações continuam funcionando.";return;}
-  window.speechSynthesis.cancel();resetMouth();
+  if(!voiceAvailable){feedback.textContent="Este navegador não oferece voz de demonstração. As expressões continuam disponíveis.";return;}
+  if(utterance){stopSpeech();return;}
+  stopSpeech();feedback.textContent="";
+  var generation=voiceGeneration;
+  try{
   var phrase=new SpeechSynthesisUtterance(moods[current]);
   phrase.lang="pt-BR";phrase.rate=1.04;phrase.pitch=1.12;phrase.volume=.9;
   var voices=window.speechSynthesis.getVoices();
@@ -382,17 +418,41 @@ footer a{color:#bcabea;text-decoration:underline}
     voices.find(function(v){return /^pt-BR/i.test(v.lang)}) ||
     voices.find(function(v){return /^pt/i.test(v.lang)});
   if(selected)phrase.voice=selected;
-  phrase.onstart=function(){figure.classList.add("is-speaking");stage.classList.add("is-speaking");window.clearTimeout(speechTimer);speechTimer=window.setTimeout(resetMouth,20000)};
-  phrase.onend=resetMouth;phrase.onerror=resetMouth;
+  utterance=phrase;
+  voice.textContent="■ Parar fala";voice.setAttribute("aria-label","Parar fala de demonstração");
+  phrase.onstart=function(){
+   if(generation!==voiceGeneration)return;
+   figure.classList.add("is-speaking");stage.classList.add("is-speaking");
+   window.clearTimeout(speechTimer);
+   speechTimer=window.setTimeout(function(){
+    if(generation!==voiceGeneration)return;
+    stopSpeech();feedback.textContent="A reprodução demorou demais. Tente ouvir novamente.";
+   },30000);
+  };
+  phrase.onend=function(){if(generation===voiceGeneration)resetMouth();};
+  phrase.onerror=function(event){
+   if(generation!==voiceGeneration)return;
+   resetMouth();
+   if(event.error!=="canceled" && event.error!=="interrupted")
+    feedback.textContent="Não consegui reproduzir a voz. Verifique as vozes de português instaladas e tente novamente.";
+  };
+  speechTimer=window.setTimeout(function(){
+   if(generation!==voiceGeneration)return;
+   stopSpeech();feedback.textContent="A voz não iniciou. Verifique as vozes do navegador e tente novamente.";
+  },10000);
   window.speechSynthesis.speak(phrase);
+  }catch(error){
+   stopSpeech();feedback.textContent="A voz está indisponível neste navegador. As expressões continuam disponíveis.";
+  }
  }
+ if(!voiceAvailable){voice.disabled=true;feedback.textContent="Voz indisponível neste navegador. As expressões continuam disponíveis.";}
  voice.addEventListener("click",speak);
  document.getElementById("look").addEventListener("click",function(){
-  var pool=["happy","shy","angry","wave","idle","sleep"];
+  var pool=Object.keys(moods).filter(function(mode){return mode!==current;});
   setMood(pool[Math.floor(Math.random()*pool.length)]);
  });
  function lookAt(clientX,clientY){
-  if(current==="sleep")return;
+  if(current==="sleep" || stage.dataset.motionPaused==="true")return;
   var bounds=stage.getBoundingClientRect();
   var x=(clientX-(bounds.left+bounds.width*.50))/(bounds.width*.50);
   var y=(clientY-(bounds.top+bounds.height*.40))/(bounds.height*.55);
@@ -406,6 +466,7 @@ footer a{color:#bcabea;text-decoration:underline}
  }
  stage.addEventListener("pointermove",function(e){lookAt(e.clientX,e.clientY)});
  stage.addEventListener("pointerleave",function(){
+  if(stage.dataset.motionPaused==="true")return;
   stage.style.setProperty("--parallax-x","0px");stage.style.setProperty("--parallax-y","0px");
   head.style.setProperty("--look-x","0px");head.style.setProperty("--look-y","0px");
   stage.style.setProperty("--iris-x","0px");stage.style.setProperty("--iris-y","0px");
@@ -422,11 +483,11 @@ footer a{color:#bcabea;text-decoration:underline}
  }
  stars.appendChild(fragment);
  window.addEventListener("pagehide",function(){
-  if("speechSynthesis" in window)window.speechSynthesis.cancel();
-  resetMouth();
+  stopSpeech();
  });
 })();
 </script>
 <script src="./yuna-viva.js" defer></script>
 </body>
 </html>
+
