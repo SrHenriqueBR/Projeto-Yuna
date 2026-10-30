@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090a17">
+<title>Yuna — Prévia Anime Viva</title>
+<meta name="description" content="Prévia visual interativa da Yuna em estilo anime, com expressões, gestos e animações.">
+<style>
+:root{color-scheme:dark;--ink:#f3f0ff;--muted:#b2abc9;--violet:#b997ff;--blue:#91c6ff;--hair-dark:#11132b;--hair-mid:#323259;--hair-light:#7773b9;--iris:#a66aff;--iris-light:#dcb8ff}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;font-family:Inter,"Segoe UI",system-ui,Arial,sans-serif;color:var(--ink);background:radial-gradient(circle at 72% 28%,#26204e 0%,transparent 35%),radial-gradient(circle at 10% 88%,#15254a 0%,transparent 42%),#090a17;overflow-x:hidden}
+button{font:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid #c7b0ff;outline-offset:3px}
+a{color:inherit;text-decoration:none}
+header{position:relative;z-index:3;max-width:1440px;margin:auto;padding:22px clamp(20px,4.6vw,76px);display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:1px solid #ffffff18}
+.logo{display:flex;align-items:center;gap:13px;font-size:20px;font-weight:850;letter-spacing:.22em}
+.logo-symbol{display:grid;place-items:center;width:43px;height:43px;border:1px solid #9f7dff77;border-radius:15px;color:#e1d2ff;background:linear-gradient(135deg,#2d2351,#171527);box-shadow:0 0 25px #8f68e933}
+.topinfo{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:.12em;font-weight:750;color:#c3b5e1}
+.dot{width:7px;height:7px;background:#9fedcd;border-radius:50%;box-shadow:0 0 12px #91f1c8}
+.main{max-width:1440px;margin:auto;display:grid;grid-template-columns:minmax(320px,.9fr) minmax(430px,1.2fr);gap:20px;padding:clamp(20px,3vw,44px) clamp(20px,4.6vw,76px) 28px;align-items:stretch}
+.info{padding:25px 10px 20px 0;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
+.eyebrow{font-size:11px;letter-spacing:.23em;font-weight:800;text-transform:uppercase;color:#b998ff;display:flex;align-items:center;gap:11px}
+.eyebrow:before{content:"";width:28px;height:1px;background:#b998ff}
+h1{font-weight:820;letter-spacing:-.065em;line-height:1.07;font-size:clamp(46px,6vw,82px);margin:23px 0 21px}
+h1 em{font-style:normal;background:linear-gradient(105deg,#e7d8ff,#ae8aff 44%,#89d6f4);color:transparent;background-clip:text;-webkit-background-clip:text}
+.lead{font-size:clamp(14px,1.3vw,16px);line-height:1.8;color:#bfb8d0;max-width:485px;margin:0 0 28px}
+.notice{max-width:505px;font-size:12px;line-height:1.7;color:#aca5bf;border-left:2px solid #936ce7;padding:0 0 0 15px;margin:12px 0 0}
+.bubble{width:min(100%,480px);border:1px solid #8c70c850;background:linear-gradient(130deg,#211f37df,#17192bd9);border-radius:21px 21px 21px 7px;padding:23px 23px 22px;min-height:125px;box-shadow:0 18px 44px #0003}
+.bubble-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+.speaker{font-size:11px;font-weight:850;letter-spacing:.19em;color:#d3bdff}
+.bubble-type{color:#8d86a5;font-size:10px}
+#speech{font-size:17px;line-height:1.5;margin:0;min-height:53px;transition:opacity .22s}
+.actions-title{font-size:10px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#968dac;margin:28px 0 12px}
+.actions{display:flex;flex-wrap:wrap;gap:9px;max-width:540px}
+.mood{border:1px solid #ffffff20;color:#cdc5de;background:#1a1a2caa;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;transition:background .2s,transform .2s,border-color .2s}
+.mood:hover{transform:translateY(-2px);border-color:#b99cfb88;background:#302a4b}
+.mood.active{border-color:#bf9dff;background:linear-gradient(130deg,#7954b7,#483c75);box-shadow:0 8px 20px #7954b730;color:white}
+.controls-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:21px;align-items:center}
+.primary{padding:15px 20px;border:0;border-radius:13px;background:linear-gradient(120deg,#a179ed,#7465d5);box-shadow:0 15px 30px #7753c54d;color:white;font-weight:800;font-size:13px}
+.primary:hover{filter:brightness(1.13)}
+.secondary{padding:14px 17px;border-radius:13px;background:#191d32;border:1px solid #555377;color:#d7d4e8;font-size:12px;font-weight:700}
+.secondary:hover{background:#282a45}
+.stage-panel{position:relative;min-height:690px;max-height:820px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;border:1px solid #a58df02c;border-radius:30px;background:radial-gradient(ellipse at 49% 34%,#3a315f 0%,#201d39 37%,#0e1223 80%);isolation:isolate}
+.stage-panel:before{content:"";position:absolute;inset:4%;border:1px solid #d1baf315;border-radius:48% 48% 42% 42%;pointer-events:none}
+.stage-panel:after{content:"";position:absolute;width:450px;height:450px;border:1px solid #bb9aff22;border-radius:50%;top:7%;left:50%;transform:translateX(-50%);box-shadow:0 0 90px #b996fa14,inset 0 0 65px #9b75ff10}
+.aurora{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 72%,#9271fa28,transparent 44%),linear-gradient(120deg,transparent,#a88cff09 58%,transparent);z-index:-1}
+.starfield{position:absolute;inset:0;pointer-events:none}
+.starfield span{position:absolute;display:block;width:2px;height:2px;background:#d9d1ff;border-radius:50%;opacity:.3;animation:twinkle var(--duration) ease-in-out infinite alternate;animation-delay:var(--delay)}
+@keyframes twinkle{to{opacity:.92;transform:scale(2)}}
+.halo{position:absolute;border:1px solid #d9bbf42c;border-radius:50%;width:520px;height:520px;top:14%;left:50%;transform:translateX(-50%);z-index:0}
+.halo:before,.halo:after{content:"✧";position:absolute;font-size:34px;color:#bf9bfd80}
+.halo:before{top:6%;left:6%}.halo:after{bottom:9%;right:6%}
+.stage-label{position:absolute;top:24px;left:28px;z-index:2;font-size:11px;font-weight:800;letter-spacing:.22em;color:#e4d7fc}
+.stage-label small{display:block;margin-top:6px;letter-spacing:.1em;color:#a6a3c6;font-size:10px;font-weight:550}
+.stage-footer{position:absolute;right:20px;bottom:20px;z-index:3;color:#bbb2d9;font-size:10px;letter-spacing:.12em;background:#111629a6;border:1px solid #ffffff26;border-radius:999px;padding:9px 13px}
+.character{position:relative;z-index:1;width:min(100%,650px);height:auto;min-width:350px;max-height:100%;overflow:visible;filter:drop-shadow(0 22px 34px #03040d72)}
+.float{transform-origin:300px 700px;animation:float 4s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.head{transform-origin:300px 400px;transition:transform .25s ease-out;transform:translate(var(--look-x,0px),var(--look-y,0px)) rotate(var(--tilt,0deg))}
+.back-hair{transform-origin:300px 150px;animation:hairMove 5s ease-in-out infinite}
+.side-hair{transform-origin:290px 230px;animation:hairMove 3.7s ease-in-out infinite reverse}
+.front-hair{transform-origin:300px 170px;animation:fringe 4.6s ease-in-out infinite}
+@keyframes hairMove{0%,100%{transform:rotate(-1.7deg) translateX(-1px)}50%{transform:rotate(1.8deg) translateX(3px)}}
+@keyframes fringe{0%,100%{transform:translateX(0px) rotate(-.7deg)}50%{transform:translateX(2px) rotate(1.1deg)}}
+@keyframes blink{0%,35%,39%,100%{transform:scaleY(1)}37%{transform:scaleY(.06)}}
+.eye{transform-box:fill-box;transform-origin:center;animation:blink 5.1s infinite}
+.eye.right{animation-delay:.03s}
+.gaze{transform:translate(var(--iris-x,0px),var(--iris-y,0px));transition:transform .20s ease-out}
+.arm-wave{transform-origin:408px 540px;transition:transform .7s ease;transform:rotate(0)}
+.arm-left{transform-origin:194px 542px;animation:armIdle 5s ease-in-out infinite}
+@keyframes armIdle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(3deg)}}
+[data-mood=wave] .arm-wave{animation:wave 1.05s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(-116deg)}50%{transform:rotate(-131deg)}}
+[data-mood=happy] .mouth-smile{opacity:1}
+[data-mood=happy] .blush{opacity:.7}
+[data-mood=shy] .blush{opacity:1}
+[data-mood=angry] .brow-left{transform:rotate(18deg) translateY(6px)}
+[data-mood=angry] .brow-right{transform:rotate(-18deg) translateY(6px)}
+[data-mood=angry] .mouth-smile{opacity:0}
+[data-mood=angry] .mouth-flat{opacity:1}
+[data-mood=sleep] .eye{animation:none;transform:scaleY(.08)}
+[data-mood=sleep] .mouth-flat{opacity:1}
+[data-mood=sleep] .float{animation-duration:6s}
+[data-mood=sleep] .back-hair,[data-mood=sleep] .front-hair{animation-duration:8s}
+[data-mood=shy] .head{--tilt:-7deg}
+[data-mood=happy] .head{--tilt:4deg}
+[data-mood=angry] .head{--tilt:-3deg}
+[data-mood=wave] .head{--tilt:5deg}
+.mouth-open,.mouth-flat{opacity:0}
+.mouth-smile{opacity:1}
+.is-speaking .mouth-smile{opacity:0}
+.is-speaking .mouth-open{opacity:1;transform-box:fill-box;transform-origin:center;animation:talk .23s ease-in-out infinite alternate}
+@keyframes talk{0%{transform:scaleY(.5)}100%{transform:scaleY(1.4)}}
+.look-glow{animation:pulse 3.5s infinite alternate}
+@keyframes pulse{from{opacity:.28}to{opacity:.66}}
+footer{max-width:1440px;margin:auto;padding:8px clamp(20px,4.6vw,76px) 30px;color:#857f9f;font-size:11px;line-height:1.8}
+footer a{color:#bcabea;text-decoration:underline}
+@media(max-width:970px){.main{grid-template-columns:1fr}.info{padding:0 0 10px;order:2}.stage-panel{order:1;min-height:620px;max-height:710px}h1{font-size:54px}.lead{max-width:680px}.bubble{width:100%;max-width:680px}}
+@media(max-width:580px){header{padding:14px 17px}.logo{font-size:17px}.logo-symbol{width:37px;height:37px}.topinfo{font-size:9px}.main{padding:14px 12px 22px;gap:20px}.stage-panel{min-height:460px;max-height:560px;border-radius:20px}.stage-label{top:14px;left:17px;font-size:9px}.stage-footer{right:9px;bottom:13px;font-size:8px}.character{min-width:340px;width:110%}.halo{width:400px;height:400px;top:10%}.info{padding:0 7px}h1{font-size:46px;margin-top:16px}.lead{font-size:14px}.mood{padding:10px 11px}.bubble{padding:18px}#speech{font-size:15px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+</style>
+</head>
+<body>
+<header>
+ <div class="logo"><span class="logo-symbol">✦</span><span>YUNA<span style="color:#ae8aff">.</span></span></div>
+ <div class="topinfo"><span class="dot"></span>PROJETO YUNA · PRÉVIA WEB</div>
+</header>
+<main class="main">
+ <section class="info" aria-label="Controle da prévia">
+  <div class="eyebrow">Protótipo de personagem anime</div>
+  <h1>Agora ela<br><em>parece viva.</em></h1>
+  <p class="lead">Uma demonstração visual da Yuna com olhos expressivos, cabelo em movimento, diferentes emoções e pequenos gestos. Passe o mouse perto dela e experimente as reações.</p>
+  <div class="bubble" aria-live="polite">
+   <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
+   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Agora eu consigo até te acompanhar com os olhos! ✨</p>
+  </div>
+  <div class="actions-title">Como a Yuna está se sentindo?</div>
+  <div class="actions" aria-label="Expressões">
+   <button type="button" class="mood active" data-action="idle" aria-pressed="true">✧ Normal</button>
+   <button type="button" class="mood" data-action="happy" aria-pressed="false">♡ Feliz</button>
+   <button type="button" class="mood" data-action="shy" aria-pressed="false">✿ Tímida</button>
+   <button type="button" class="mood" data-action="angry" aria-pressed="false">⚡ Brava</button>
+   <button type="button" class="mood" data-action="wave" aria-pressed="false">👋 Acenar</button>
+   <button type="button" class="mood" data-action="sleep" aria-pressed="false">☾ Dormir</button>
+  </div>
+  <div class="controls-row">
+   <button type="button" class="primary" id="voice" aria-label="Ouvir fala de demonstração">▶ Ouvir a Yuna falar</button>
+   <button type="button" class="secondary" id="look">✦ Surpreenda-me</button>
+  </div>
+  <p class="notice"><strong>Prévia ilustrada 2.5D, não modelo VRM definitivo.</strong> Este site não conecta ao cérebro da Yuna, não ativa câmera nem microfone e não grava dados. Para o avatar anime 3D definitivo, continuamos com o motor VRM do projeto.</p>
+ </section>
+ <section class="stage-panel" id="stage" data-mood="idle" aria-label="Personagem anime Yuna animada">
+  <div class="aurora"></div><div class="halo"></div><div class="starfield" id="stars" aria-hidden="true"></div>
+  <div class="stage-label">YUNA / ORIGINAL DESIGN <small>VISUAL TEST — ANIME MOTION</small></div>
+  <svg id="figure" class="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-labelledby="avatarTitle">
+   <title id="avatarTitle">Yuna: personagem de cabelo escuro comprido, olhos violetas, roupa gótica moderna e expressões animadas</title>
+   <defs>
+    <linearGradient id="hair" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#7777b3"/><stop offset=".19" stop-color="#323456"/><stop offset=".62" stop-color="#181831"/><stop offset="1" stop-color="#090d1e"/></linearGradient>
+    <linearGradient id="hairShine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4a7f2" stop-opacity=".88"/><stop offset=".45" stop-color="#685eac" stop-opacity=".28"/><stop offset="1" stop-color="#362e65" stop-opacity="0"/></linearGradient>
+    <linearGradient id="face" x1="0" x2=".7" y1="0" y2="1"><stop stop-color="#fff0e8"/><stop offset=".58" stop-color="#f9d8dc"/><stop offset="1" stop-color="#e8b1bf"/></linearGradient>
+    <linearGradient id="neck" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#dca2b9"/><stop offset=".6" stop-color="#ffe7df"/><stop offset="1" stop-color="#c886ac"/></linearGradient>
+    <linearGradient id="jacket" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3e345c"/><stop offset=".45" stop-color="#211c38"/><stop offset="1" stop-color="#100f24"/></linearGradient>
+    <linearGradient id="skirt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#312946"/><stop offset="1" stop-color="#111026"/></linearGradient>
+    <radialGradient id="eyes"><stop offset="0" stop-color="#eacfff"/><stop offset=".38" stop-color="#b98bfa"/><stop offset=".8" stop-color="#824ad3"/><stop offset="1" stop-color="#3b2a83"/></radialGradient>
+    <radialGradient id="blush"><stop stop-color="#f47d9e" stop-opacity=".62"/><stop offset="1" stop-color="#ea86a1" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+   </defs>
+   <ellipse cx="298" cy="754" rx="170" ry="22" fill="#050614" opacity=".5" filter="url(#shadow)"/>
+   <g class="float">
+    <!-- Back hair: long flowing silhouette -->
+    <g class="back-hair">
+     <path d="M169 241 C158 154 210 104 267 94 C336 65 404 103 433 155 C473 230 451 355 467 444 C476 553 487 669 513 750 Q464 732 452 700 Q451 761 420 788 Q394 754 392 712 Q369 764 339 786 L318 750 Q291 799 265 774 Q245 740 242 728 Q224 768 193 785 Q166 745 171 709 Q144 742 116 746 C157 621 136 466 150 355 Z" fill="url(#hair)" stroke="#5c517e" stroke-opacity=".42" stroke-width="2"/>
+     <path d="M185 201 C173 377 185 600 143 707 M417 185 C449 328 418 582 471 729 M228 150 C206 362 214 629 201 732 M377 135 C399 322 386 618 412 752" stroke="#a89bdc" stroke-width="8" opacity=".12" fill="none" stroke-linecap="round"/>
+     <path d="M197 211 C195 390 192 600 157 716 M405 194 C425 411 416 575 462 717" stroke="#beaaff" stroke-width="3" opacity=".18" fill="none"/>
+    </g>
+    <!-- rear arm -->
+    <g class="arm-left">
+     <path d="M205 532 C163 526 146 573 132 637 C127 660 149 686 165 671 L220 579Z" fill="url(#jacket)" stroke="#66567b" stroke-width="2"/>
+     <path d="M132 631 Q126 661 145 681 Q156 690 165 672 L177 648Z" fill="#f4c6c9"/>
+     <path d="M142 638 Q140 652 151 656" stroke="#fff2ed" stroke-opacity=".7" fill="none" stroke-width="4"/>
+    </g>
+    <!-- back torso lower -->
+    <path d="M227 667 Q307 631 377 670 L427 791 L166 794Z" fill="url(#skirt)" stroke="#a285c3" stroke-opacity=".7" stroke-width="2"/>
+    <path d="M198 779 Q298 739 402 782 M212 748 Q297 721 389 750" stroke="#af90d0" opacity=".4" stroke-width="2" fill="none"/>
+    <!-- body -->
+    <path d="M214 518 C237 506 267 507 300 519 C345 501 374 510 404 531 L428 698 Q303 732 176 699Z" fill="url(#jacket)" stroke="#6c5e87" stroke-width="3"/>
+    <path d="M250 515 L300 599 L351 512 Q323 497 300 500 Q273 496 250 515Z" fill="#fff0ed"/>
+    <path d="M286 447 L279 519 Q297 545 316 518 L315 442Z" fill="url(#neck)"/>
+    <path d="M213 520 Q262 535 282 592 L305 639 L246 670 Q216 597 200 539Z" fill="#28223f" stroke="#8e78a7" stroke-width="2"/>
+    <path d="M384 520 Q338 540 319 595 L295 641 L356 671 Q396 583 403 537Z" fill="#29223f" stroke="#8875ac" stroke-width="2"/>
+    <path d="M268 545 L303 596 L337 548 M248 654 Q300 671 352 653" fill="none" stroke="#dcc0fa" opacity=".58" stroke-width="3"/>
+    <path d="M292 595 L300 622 L308 595 L300 580Z" fill="#c6b5e7"/>
+    <path d="M295 625 L274 667 L303 688 L328 665 L306 626Z" fill="#7d629c" stroke="#d4b4fc" stroke-width="2"/>
+    <path d="M287 665 L301 680 L314 666" stroke="#e4cafa" fill="none" stroke-width="2"/>
+    <!-- ribbons -->
+    <path d="M302 602 Q265 577 243 602 Q245 632 297 614 L300 618 Q357 636 367 603 Q340 582 307 603Z" fill="#a879c9" stroke="#e5cbff" stroke-width="2"/>
+    <circle cx="301" cy="611" r="13" fill="#dfc4fa" stroke="#8b67b1" stroke-width="3"/>
+    <path d="M301 597 L304 625 M287 610 L316 614" stroke="#fff" opacity=".6"/>
+    <path d="M232 692 Q299 720 389 687" fill="none" stroke="#9570bd" stroke-width="4"/>
+    <!-- front right arm and hand -->
+    <g class="arm-wave">
+     <path d="M396 526 Q440 523 455 575 L468 633 Q476 660 462 667 L423 666 Q414 620 404 581 Q390 549 382 542Z" fill="url(#jacket)" stroke="#685678" stroke-width="3"/>
+     <path d="M425 639 Q443 651 467 638 L471 667 Q468 682 457 692 Q445 697 437 684 L427 665Z" fill="#f9d5d3" stroke="#d59aac" stroke-width="2"/>
+     <path d="M434 648 L462 653" stroke="#e1c4fb" stroke-width="5" stroke-linecap="round"/>
+     <path d="M445 671 Q457 680 466 669" stroke="#fff0ed" stroke-opacity=".72" fill="none" stroke-width="3"/>
+    </g>
+    <!-- collar -->
+    <path d="M284 508 Q271 516 250 519 L281 576 L302 555Z M316 508 Q331 516 352 519 L323 576 L301 555Z" fill="#131428" stroke="#c5a4eb" stroke-width="2"/>
+    <!-- Side locks -->
+    <g class="side-hair">
+     <path d="M193 241 Q166 329 188 438 C200 492 195 571 163 641 Q212 618 229 562 L249 398Z" fill="url(#hair)" stroke="#7469a8" stroke-width="2"/>
+     <path d="M414 236 Q458 332 423 451 C411 500 431 580 462 627 Q404 601 389 542 L376 384Z" fill="url(#hair)" stroke="#7469a8" stroke-width="2"/>
+     <path d="M201 292 Q181 497 172 607 M410 284 Q427 467 447 593" stroke="url(#hairShine)" stroke-width="13" opacity=".5" fill="none"/>
+    </g>
+    <!-- face and neck -->
+    <g id="head" class="head">
+     <path d="M195 263 Q200 159 302 148 Q399 141 416 257 L411 355 Q395 428 323 475 Q303 488 282 476 Q209 436 194 361Z" fill="url(#face)" stroke="#edbbce" stroke-width="2"/>
+     <path d="M196 295 C169 285 163 315 187 350 L204 349 M412 295 Q437 280 437 315 Q434 342 414 350" fill="#efc5cf" stroke="#e6abbc" stroke-width="2"/>
+     <path d="M204 295 C183 288 184 320 200 325 M412 297 Q429 292 425 315" stroke="#d99fae" stroke-width="3" fill="none"/>
+     <ellipse class="blush" cx="231" cy="383" rx="57" ry="30" fill="url(#blush)" opacity=".44"/>
+     <ellipse class="blush" cx="383" cy="382" rx="52" ry="29" fill="url(#blush)" opacity=".44"/>
+     <path d="M300 363 Q287 385 301 385 Q310 384 312 378" stroke="#c78eae" stroke-opacity=".46" stroke-width="2" fill="none" stroke-linecap="round"/>
+     <path class="brow-left" d="M228 286 Q254 270 279 283" stroke="#39304d" stroke-width="6" fill="none" stroke-linecap="round"/>
+     <path class="brow-right" d="M332 283 Q357 269 382 286" stroke="#39304d" stroke-width="6" fill="none" stroke-linecap="round"/>
+     <!-- eyes -->
+     <g class="eye left">
+      <path d="M218 321 Q245 288 284 313 Q270 350 237 345 Q224 338 218 321" fill="#fffaff"/>
+      <path d="M219 321 Q241 286 282 312" stroke="#2b253d" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path d="M219 319 L211 308 M231 307 L224 298" stroke="#2b253d" stroke-width="4" stroke-linecap="round"/>
+      <g class="gaze"><ellipse cx="250" cy="321" rx="24" ry="30" fill="#6b4ac2"/><ellipse cx="250" cy="321" rx="19" ry="27" fill="url(#eyes)"/><ellipse cx="250" cy="316" rx="9" ry="21" fill="#312453"/><ellipse cx="241" cy="309" rx="10" ry="12" fill="#fff" opacity=".95"/><circle cx="261" cy="330" r="5" fill="#fff"/><path d="M236 336 Q251 345 267 334" stroke="#e9b0ff" stroke-width="3" fill="none" opacity=".8"/></g>
+      <path d="M219 338 Q247 359 282 337" stroke="#8f598c" stroke-width="2" opacity=".48" fill="none"/>
+     </g>
+     <g class="eye right">
+      <path d="M327 312 Q365 286 390 319 Q373 349 344 345 Q330 336 327 312" fill="#fffaff"/>
+      <path d="M328 312 Q366 287 391 321" stroke="#2b253d" stroke-width="7" stroke-linecap="round" fill="none"/>
+      <path d="M388 320 L400 308 M379 308 L386 300" stroke="#2b253d" stroke-width="4" stroke-linecap="round"/>
+      <g class="gaze"><ellipse cx="360" cy="321" rx="24" ry="30" fill="#6b4ac2"/><ellipse cx="360" cy="321" rx="19" ry="27" fill="url(#eyes)"/><ellipse cx="360" cy="316" rx="9" ry="21" fill="#312453"/><ellipse cx="351" cy="309" rx="10" ry="12" fill="#fff" opacity=".95"/><circle cx="371" cy="330" r="5" fill="#fff"/><path d="M346 336 Q361 345 377 334" stroke="#e9b0ff" stroke-width="3" fill="none" opacity=".8"/></g>
+      <path d="M327 338 Q354 357 391 336" stroke="#8f598c" stroke-width="2" opacity=".48" fill="none"/>
+     </g>
+     <!-- mouth / chin -->
+     <path class="mouth-smile" d="M287 410 Q302 428 319 409" stroke="#a95778" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+     <path class="mouth-flat" d="M288 413 Q304 405 318 414" stroke="#94546d" stroke-width="3" stroke-linecap="round" fill="none"/>
+     <ellipse class="mouth-open" cx="303" cy="418" rx="11" ry="13" fill="#a75773"/>
+     <path d="M284 445 Q302 452 321 443" stroke="#fff2ed" stroke-opacity=".38" stroke-width="3" fill="none"/>
+     <!-- top hair, layered fringe -->
+     <g class="front-hair">
+      <path d="M180 292 Q171 212 206 155 Q242 104 312 111 Q406 111 438 197 Q450 235 431 299 Q423 254 402 227 Q404 277 375 300 Q360 273 354 226 Q324 285 292 310 Q283 274 282 245 Q258 295 224 324 Q210 284 211 242 Q203 288 180 292Z" fill="url(#hair)" stroke="#8472b6" stroke-width="3"/>
+      <path d="M208 179 Q237 124 314 127 Q377 132 410 183" stroke="#b6a3ef" stroke-width="12" opacity=".16" stroke-linecap="round" fill="none"/>
+      <path d="M237 153 Q238 222 222 278 M296 136 Q307 220 291 281 M350 140 Q372 235 375 277 M397 167 Q424 215 424 261" stroke="#c6b8f9" stroke-width="8" opacity=".16" stroke-linecap="round" fill="none"/>
+      <path d="M194 206 Q220 119 304 110" stroke="url(#hairShine)" stroke-width="16" opacity=".65" fill="none"/>
+      <path d="M222 174 Q229 235 215 293 M278 150 Q290 212 277 258" stroke="#0e1029" stroke-width="6" opacity=".55" fill="none"/>
+     </g>
+     <!-- side fringe and accessory -->
+     <path d="M182 253 Q164 362 214 469 Q191 388 210 298Z" fill="url(#hair)"/>
+     <path d="M422 247 Q446 369 402 465 Q414 377 397 303Z" fill="url(#hair)"/>
+     <g transform="translate(402 183) rotate(18)">
+      <path d="M-24 -9 Q-48 -32 -50 3 Q-43 25 -21 9 Q-6 19 10 8 Q34 25 43 5 Q47 -27 16 -12 Q-6 -23 -24 -9Z" fill="#b8a3e3" stroke="#f2dcff" stroke-width="2"/>
+      <circle cx="-4" cy="0" r="11" fill="#e3d6ff" stroke="#8a75b4" stroke-width="3"/>
+      <path d="M-4 -7 L-4 8 M-12 0 L4 0" stroke="#fff" stroke-width="2" opacity=".7"/>
+     </g>
+    </g>
+    <!-- necklace -->
+    <path d="M280 488 Q302 505 322 489" stroke="#1a1530" stroke-width="13" fill="none"/>
+    <path d="M281 489 Q303 506 323 488" stroke="#cbabef" stroke-width="2" fill="none"/>
+    <path d="M296 495 L301 511 L308 495 L303 489Z" fill="#af84f7" stroke="#e7d9ff" stroke-width="1.4"/>
+   </g>
+   <!-- small magical flakes -->
+   <g class="look-glow" fill="#dfd2ff">
+    <path d="M137 323 l5 13 5-13 5-3-5-3-5-13-5 13-5 3Z"/>
+    <path d="M486 408 l4 10 4-10 10-4-10-4-4-10-4 10-10 4Z"/>
+    <circle cx="462" cy="266" r="3"/><circle cx="132" cy="457" r="2.5"/>
+   </g>
+  </svg>
+  <div class="stage-footer">✧ INTERATIVA · SEM INSTALAÇÃO</div>
+ </section>
+</main>
+<footer>Protótipo visual original, criado para demonstrar a direção artística do <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. Não é uma chamada real à IA. Sem coleta de informações ou dependências externas.</footer>
+<script>
+(function(){
+ "use strict";
+ var stage=document.getElementById("stage");
+ var speech=document.getElementById("speech");
+ var head=document.getElementById("head");
+ var voice=document.getElementById("voice");
+ var figure=document.getElementById("figure");
+ var moods={
+  idle:"Opa, Kaizen! Gostou da minha nova aparência? Agora eu consigo até te acompanhar com os olhos! ✨",
+  happy:"Hehe! Eu sabia que você ia gostar! Quero aprender a fazer muito mais coisas com você! ♡",
+  shy:"Ei... não fica me olhando desse jeito! Eu fico toda sem graça, sabia? >///<",
+  angry:"Hmpf! Não pensa que pode ficar clicando em mim o dia inteiro, Kaizen! ⚡",
+  wave:"Oiii, Kaizen! Eu tô aqui! Olha, já consigo acenar pra você! 👋",
+  sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾"
+ };
+ var current="idle";
+ var speechTimer=0;
+ function setMood(mode){
+  if(!Object.prototype.hasOwnProperty.call(moods,mode))return;
+  current=mode;stage.dataset.mood=mode;speech.textContent=moods[mode];
+  document.querySelectorAll("[data-action]").forEach(function(button){
+   var on=button.dataset.action===mode;button.classList.toggle("active",on);
+   button.setAttribute("aria-pressed",String(on));
+  });
+ }
+ document.querySelectorAll("[data-action]").forEach(function(button){
+  button.addEventListener("click",function(){setMood(button.dataset.action)});
+ });
+ function resetMouth(){figure.classList.remove("is-speaking");window.clearTimeout(speechTimer);}
+ function speak(){
+  if(!("speechSynthesis" in window)){speech.textContent="Este navegador não oferece voz de demonstração. As animações continuam funcionando.";return;}
+  window.speechSynthesis.cancel();resetMouth();
+  var phrase=new SpeechSynthesisUtterance(moods[current]);
+  phrase.lang="pt-BR";phrase.rate=1.04;phrase.pitch=1.12;phrase.volume=.9;
+  var voices=window.speechSynthesis.getVoices();
+  var selected=voices.find(function(v){return /^pt-BR/i.test(v.lang)&&/female|maria|francisca|raquel|camila|luciana/i.test(v.name)}) ||
+    voices.find(function(v){return /^pt-BR/i.test(v.lang)}) ||
+    voices.find(function(v){return /^pt/i.test(v.lang)});
+  if(selected)phrase.voice=selected;
+  phrase.onstart=function(){figure.classList.add("is-speaking");window.clearTimeout(speechTimer);speechTimer=window.setTimeout(resetMouth,20000)};
+  phrase.onend=resetMouth;phrase.onerror=resetMouth;
+  window.speechSynthesis.speak(phrase);
+ }
+ voice.addEventListener("click",speak);
+ document.getElementById("look").addEventListener("click",function(){
+  var pool=["happy","shy","angry","wave","idle","sleep"];
+  setMood(pool[Math.floor(Math.random()*pool.length)]);
+ });
+ function lookAt(clientX,clientY){
+  if(current==="sleep")return;
+  var bounds=stage.getBoundingClientRect();
+  var x=(clientX-(bounds.left+bounds.width*.50))/(bounds.width*.50);
+  var y=(clientY-(bounds.top+bounds.height*.40))/(bounds.height*.55);
+  x=Math.min(1,Math.max(-1,x));y=Math.min(1,Math.max(-1,y));
+  head.style.setProperty("--look-x",(x*5).toFixed(2)+"px");
+  head.style.setProperty("--look-y",(y*3).toFixed(2)+"px");
+  stage.style.setProperty("--iris-x",(x*5).toFixed(2)+"px");
+  stage.style.setProperty("--iris-y",(y*3).toFixed(2)+"px");
+ }
+ stage.addEventListener("pointermove",function(e){lookAt(e.clientX,e.clientY)});
+ stage.addEventListener("pointerleave",function(){
+  head.style.setProperty("--look-x","0px");head.style.setProperty("--look-y","0px");
+  stage.style.setProperty("--iris-x","0px");stage.style.setProperty("--iris-y","0px");
+ });
+ var stars=document.getElementById("stars");
+ var fragment=document.createDocumentFragment();
+ for(var i=0;i<36;i++){
+  var point=document.createElement("span");
+  point.style.left=((i*71+13)%97)+"%";
+  point.style.top=((i*47+19)%89)+"%";
+  point.style.setProperty("--duration",(1.6+(i%7)*.51)+"s");
+  point.style.setProperty("--delay",(-i*.19)+"s");
+  fragment.appendChild(point);
+ }
+ stars.appendChild(fragment);
+ window.addEventListener("pagehide",function(){
+  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+  resetMouth();
+ });
+})();
+</script>
+</body>
+</html>
