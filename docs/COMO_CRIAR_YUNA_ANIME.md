@@ -55,8 +55,36 @@ para quem prefere menos movimento, incluindo a preferência do sistema.
   completa de geração 3D para copiar para Yuna. Não importamos
   material nem código desse projeto, cuja licença para reutilização
   não está especificada no repositório.
+- **Unity VRoid Character Customization (ReForge-Mode):**
+  https://github.com/ReForge-Mode/Unity_VRoid_Character_Customization .
+  É um projeto em Unity/C# (2022.2.15f1), licença **MIT**, focado em
+  customização de modelos VRoid. As técnicas de figurino e customização
+  são uma referência valiosa, mas copiar os scripts diretamente para
+  o renderer Three.js não funciona: são engines diferentes.
+- **CharacterGen (zjp-shadow):**
+  https://github.com/zjp-shadow/CharacterGen .
+  Código sob **Apache-2.0** de pesquisa SIGGRAPH 2024: transforma uma
+  imagem em um personagem 3D usando pipelines 2D/3D de IA. Pode criar
+  malhas/texturas anime, mas usa dependências pesadas de PyTorch,
+  nvdiffrast e pesos externos. **Não entrega automaticamente o VRM
+  rigado, pronto para animação em tempo real na Yuna**. A etapa de
+  rigging/conversão ainda é necessária, assim como a análise das
+  licenças separadas de pesos, materiais e datasets. Não instalar no
+  notebook comum de 8 GB nem misturar ao Python padrão da Yuna.
 - Para a Yuna, mantemos a arquitetura já existente: **Three.js +
   @pixiv/three-vrm**, com avatar humanoide anime VRM criado pelo usuário.
+
+### Direitos de uso e customização
+
+De acordo com as [diretrizes do VRoid Studio](https://vroid.com/en/studio/guidelines),
+há diferenças entre (1) usar um avatar VRM em um aplicativo e
+(2) criar um aplicativo que exporta avatares produzidos combinando/deformando
+malhas e texturas do VRoid Studio. O segundo caso pode exigir licença
+adicional da pixiv para distribuição pública. A Yuna, nesta atualização,
+**só importa e anima um VRM fornecido pelo usuário** e não exporta
+modelos customizados. Se futuramente houver editor comercial/exportador,
+rever as permissões antes de publicá-lo.
+
 
 ## Limitações honestas
 
