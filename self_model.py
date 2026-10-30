@@ -1,4 +1,4 @@
-"""Yuna 0.46: identidade verificável e planejamento local, sem execução autônoma.
+"""Yuna 0.47: identidade verificável e planejamento local, sem execução autônoma.
 
 A IA não vê seu próprio código-fonte por introspecção do modelo. Esta descrição
 representa as capacidades IMPLEMENTADAS e é atualizada por quem mantém o projeto.
@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.46"
+VERSION = "0.47"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,

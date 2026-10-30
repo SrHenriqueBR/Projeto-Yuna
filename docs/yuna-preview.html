@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#090a17">
-<title>Yuna — Prévia Anime Viva</title>
+<title>Yuna Viva — Anime Articulado na Web</title>
 <meta name="description" content="Prévia visual interativa da Yuna em estilo anime, com expressões, gestos e animações.">
 <style>
 :root{color-scheme:dark;--ink:#f3f0ff;--muted:#b2abc9;--violet:#b997ff;--blue:#91c6ff;--hair-dark:#11132b;--hair-mid:#323259;--hair-light:#7773b9;--iris:#a66aff;--iris-light:#dcb8ff}
@@ -124,6 +124,45 @@ footer a{color:#bcabea;text-decoration:underline}
  border:1px solid #c5a9ff4d;border-radius:999px;padding:8px 12px;font-size:10px;font-weight:750}
 @media(max-width:970px){.poster{object-position:center top}}
 @media(prefers-reduced-motion:reduce){.poster-ready .poster{animation:none!important;scale:1!important;translate:0 0!important}}
+
+/* Modo vivo: camadas de cabeça, braços, cabelo, olhos e boca independentes. */
+#stage.live-mode .poster{opacity:0!important;pointer-events:none!important;animation:none!important}
+#stage.live-mode svg.character{opacity:1!important;visibility:visible!important}
+#stage.live-mode .float,#stage.live-mode .eye,#stage.live-mode .head,
+#stage.live-mode .front-hair,#stage.live-mode .back-hair,
+#stage.live-mode .side-hair,#stage.live-mode .arm-left,#stage.live-mode .arm-wave,
+#stage.live-mode .mouth-open{animation:none!important;transition:none!important}
+#stage.live-mode .float{transform-origin:300px 700px}
+#stage.live-mode .head{transform-origin:300px 460px}
+#stage.live-mode .front-hair{transform-origin:300px 140px}
+#stage.live-mode .back-hair{transform-origin:300px 160px}
+#stage.live-mode .side-hair{transform-origin:300px 200px}
+#stage.live-mode .arm-wave{transform-origin:408px 540px}
+#stage.live-mode .arm-left{transform-origin:194px 542px}
+#stage.live-mode .eye{transform-box:fill-box;transform-origin:center}
+#stage.live-mode .gaze{transition:none!important}
+#stage.live-mode .mouth-open{transform-box:fill-box;transform-origin:center}
+#stage.show-portrait .poster{opacity:1!important;animation:portraitBreathe 5.5s ease-in-out infinite!important}
+#stage.show-portrait svg.character{opacity:0!important;visibility:hidden!important}
+#stage.live-mode .portrait-label{background:#19362ecd;border-color:#8ff2bf66;color:#b7f9db}
+#stage[data-mood=curious] .brow-left{transform:translateY(-4px) rotate(-5deg)}
+#stage[data-mood=curious] .brow-right{transform:translateY(-2px) rotate(4deg)}
+#stage.live-mode[data-mood=surprised] .mouth-smile{opacity:0}
+#stage.live-mode.is-speaking .mouth-smile{opacity:0}
+#stage.live-mode.is-speaking .mouth-open,
+#stage.live-mode[data-mood=surprised] .mouth-open{opacity:1}
+#stage.live-mode[data-mood=sleep] .mouth-smile{opacity:0}
+#stage.live-mode[data-mood=sleep] .mouth-flat{opacity:1}
+#stage.live-mode[data-mood=angry] .mouth-smile{opacity:0}
+#stage.live-mode[data-mood=angry] .mouth-flat{opacity:1}
+.preview-modes{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:18px}
+.preview-modes button{border-radius:999px;border:1px solid #8977b855;padding:10px 12px;background:#1c1830;color:#e9ddff;font-size:12px;font-weight:750}
+.preview-modes button[aria-pressed=true]{background:#5e478f;border-color:#bea2f5;color:white}
+.preview-modes button:hover{border-color:#d4b8ff}
+.preview-modes small{color:#afa7c8;font-size:11px}
+.motion-chip{position:absolute;z-index:5;top:56px;right:18px;padding:6px 9px;background:#0e2f26bc;border:1px solid #77eac072;border-radius:999px;color:#bafce1;font-size:10px;font-weight:800;letter-spacing:.07em}
+@media(prefers-reduced-motion:reduce){#stage.show-portrait .poster{animation:none!important}}
+
 </style>
 </head>
 <body>
@@ -134,8 +173,8 @@ footer a{color:#bcabea;text-decoration:underline}
 <main class="main">
  <section class="info" aria-label="Controle da prévia">
   <div class="eyebrow">Protótipo de personagem anime</div>
-  <h1>Agora ela<br><em>parece viva.</em></h1>
-  <p class="lead">Uma demonstração visual da Yuna com olhos expressivos, cabelo em movimento, diferentes emoções e pequenos gestos. Passe o mouse perto dela e experimente as reações.</p>
+  <h1>Yuna<br><em>viva na tela.</em></h1>
+  <p class="lead">Aqui os olhos, a boca, a cabeça, os braços e o cabelo da Yuna são partes independentes que se animam no navegador. Passe o mouse perto dela e experimente suas reações!</p>
   <div class="bubble" aria-live="polite">
    <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
    <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Agora eu consigo até te acompanhar com os olhos! ✨</p>
@@ -148,18 +187,27 @@ footer a{color:#bcabea;text-decoration:underline}
    <button type="button" class="mood" data-action="angry" aria-pressed="false">⚡ Brava</button>
    <button type="button" class="mood" data-action="wave" aria-pressed="false">👋 Acenar</button>
    <button type="button" class="mood" data-action="sleep" aria-pressed="false">☾ Dormir</button>
+   <button type="button" class="mood" data-action="curious" aria-pressed="false">✦ Curiosa</button>
+   <button type="button" class="mood" data-action="walk" aria-pressed="false">♫ Andar</button>
+   <button type="button" class="mood" data-action="surprised" aria-pressed="false">! Surpresa</button>
   </div>
   <div class="controls-row">
    <button type="button" class="primary" id="voice" aria-label="Ouvir fala de demonstração">▶ Ouvir a Yuna falar</button>
    <button type="button" class="secondary" id="look">✦ Surpreenda-me</button>
   </div>
-  <p class="notice"><strong>Identidade visual compartilhada com a Yuna Desktop.</strong> O retrato é uma ilustração com movimento suave de enquadramento, não um modelo 3D articulado. Os botões testam frases e efeitos visuais; a versão web não acessa o Ollama, microfone ou câmera.</p>
+  <div class="preview-modes">
+   <button type="button" id="modeLive" aria-pressed="true">✦ Avatar articulado</button>
+   <button type="button" id="modePortrait" aria-pressed="false">◈ Retrato original</button>
+   <button type="button" id="pauseMotion" aria-pressed="false">Ⅱ Pausar movimentos</button>
+   <small id="modeHint">Animação 2D por camadas, não uma foto balançando</small>
+  </div>
+  <p class="notice"><strong>Prévia web animada em 2D, independente do Unreal.</strong> É um desenho vetorial em partes articuladas, não um modelo VRM completo nem o Pixel Streaming da Unreal Engine. Não usa câmera, microfone, memória ou Ollama; a fala de teste usa a voz do navegador.</p>
  </section>
- <section class="stage-panel" id="stage" data-mood="idle" aria-label="Personagem anime Yuna animada">
+ <section class="stage-panel live-mode" id="stage" data-mood="idle" aria-label="Yuna anime vetorial: cabeça, olhos, boca, braços e cabelo animados separadamente">
   <div class="aurora"></div><div class="halo"></div><div class="starfield" id="stars" aria-hidden="true"></div>
-  <div class="stage-label">YUNA / DESIGN ORIGINAL <small>IDENTIDADE WEB + WINDOWS</small></div>
+  <div class="stage-label">YUNA / CORPO ARTICULADO <small>DEMONSTRAÇÃO ANIMADA NA WEB</small></div><div class="motion-chip" id="motionChip">● MOVIMENTOS ATIVOS</div>
   <img id="portrait" class="poster" src="./yuna-portrait.webp" alt="Retrato ilustrado da Yuna: personagem anime de olhos violetas, cabelo escuro e laço lilás" decoding="async" fetchpriority="high">
-  <span class="portrait-label">✧ YUNA ANIME · PRÉVIA</span>
+  <span class="portrait-label" id="portraitLabel">✧ AVATAR ARTICULADO 2D</span>
   <svg id="figure" class="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-labelledby="avatarTitle">
    <title id="avatarTitle">Yuna: personagem de cabelo escuro comprido, olhos violetas, roupa gótica moderna e expressões animadas</title>
    <defs>
@@ -280,10 +328,10 @@ footer a{color:#bcabea;text-decoration:underline}
     <circle cx="462" cy="266" r="3"/><circle cx="132" cy="457" r="2.5"/>
    </g>
   </svg>
-  <div class="stage-footer">✧ INTERATIVA · SEM INSTALAÇÃO</div>
+  <div class="stage-footer">✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO</div>
  </section>
 </main>
-<footer>Protótipo visual original, criado para demonstrar a direção artística do <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. Não é uma chamada real à IA. Sem coleta de informações ou dependências externas.</footer>
+<footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é apenas referência estática; o modo articulado é um desenho vetorial separado. Sem coleta de dados, rede, câmera ou microfone.</footer>
 <script>
 (function(){
  "use strict";
@@ -305,7 +353,10 @@ footer a{color:#bcabea;text-decoration:underline}
   shy:"Ei... não fica me olhando desse jeito! Eu fico toda sem graça, sabia? >///<",
   angry:"Hmpf! Não pensa que pode ficar clicando em mim o dia inteiro, Kaizen! ⚡",
   wave:"Oiii, Kaizen! Eu tô aqui! Olha, já consigo acenar pra você! 👋",
-  sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾"
+  sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾",
+  curious:"Hm? O que será que há daquele lado? Quero descobrir! ✦",
+  walk:"Estou passeando! Ainda não ando pela sua área de trabalho, mas consigo fazer o gesto! ♫",
+  surprised:"Ah! Essa eu não esperava! ✨"
  };
  var current="idle";
  var speechTimer=0;
@@ -376,5 +427,6 @@ footer a{color:#bcabea;text-decoration:underline}
  });
 })();
 </script>
+<script src="./yuna-viva.js" defer></script>
 </body>
 </html>

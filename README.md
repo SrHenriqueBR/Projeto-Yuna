@@ -1,4 +1,4 @@
-# Projeto Yuna — versão 0.46
+# Projeto Yuna — versão 0.47
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
@@ -37,13 +37,20 @@ continua leve e sem Unreal.
 
 **[Abrir a prévia web da Yuna](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-preview.html)**
 
-Esta página é uma **prévia ilustrada 2.5D**, gratuita e sem instalação.
-A personagem agora utiliza **o mesmo retrato anime** da janela principal
-do Windows, em `docs/yuna-portrait.webp`. A web exibe movimento de
-enquadramento, efeitos visuais e frases demonstrativas nos botões
-*Feliz*, *Tímida*, *Brava*, *Acenar* e *Dormir*, além de teste de voz
-do navegador (se houver voz instalada). As expressões do retrato não
-são deformadas: não há rigging/visemas no arquivo de imagem.
+Na versão **0.47**, a prévia passou a abrir no modo **Avatar
+articulado**: personagem anime desenhada em SVG com partes separadas,
+controladas por JavaScript em `docs/yuna-viva.js`. A cabeça, os
+olhos e pálpebras, a boca, os braços e as mechas do cabelo se mexem
+independentemente. Ela pisca, olha para o cursor, respira, acena,
+faz reações, e abre a boca somente durante a fala demonstrativa.
+Você pode **Pausar movimentos** ou alternar para **Retrato original**,
+uma imagem estática usada como referência de aparência.
+
+Esta versão é totalmente gratuita e não exige Unreal, Node.js,
+Ollama nem instalação para o modo de demonstração web. **Ainda é
+2D vetorial, não o personagem 3D do Unreal Engine**: o movimento
+é real em partes do SVG, mas não inclui malha 3D, rigging/visemas
+profissionais nem a mesma aparência exata do retrato do desktop.
 
 No **Windows**, `iniciar_yuna.bat` abre a conversa real com uma
 **terceira coluna de apresentação anime**, os mesmos estados de humor,
