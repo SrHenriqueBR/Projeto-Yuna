@@ -20,7 +20,7 @@
 ## Como funciona
 
 - **Mesma arte, sem divergência de identidade:** navegador usa `./yuna-portrait.webp`; desktop lê `ROOT/docs/yuna-portrait.webp`.
-- **Web:** avatar SVG com cabeça, cabelo, braços, olhos e boca articulados; expressões e falas prontas. O botão de retrato mostra a ilustração de referência. A pausa interrompe os movimentos dos dois modos e os efeitos de fundo, e a preferência por movimento reduzido é respeitada ao abrir a página. Abas ocultas suspendem o ciclo de animação. A página não conversa com o Ollama.
+- **Web:** avatar SVG de corpo inteiro com proporções mais humanas e traço anime, incluindo cabeça, cabelo, braços, cotovelos, mãos, pernas, joelhos, olhos e boca articulados; expressões e falas prontas. “Ver rosto” aproxima a personagem para conferir as expressões e retorna ao corpo inteiro. O botão de retrato mostra a ilustração de referência. A pausa interrompe os movimentos dos dois modos e os efeitos de fundo, e a preferência por movimento reduzido é respeitada ao abrir a página. Abas ocultas suspendem o ciclo de animação. A página não conversa com o Ollama.
 - **Voz na web:** o botão alterna entre ouvir e parar. Trocar a expressão interrompe a fala anterior; falhas ou ausência de início da voz geram um aviso sem apagar a legenda. A disponibilidade e o timbre dependem das vozes do navegador, e algumas podem precisar de internet.
 - **Desktop:** pequena oscilação do retrato, botões de humor que também atualizam o `AvatarController` já existente, conversa e recursos locais preservados. Os botões não enviam mensagens ao modelo sem você pedir.
 - **Fallback:** se o arquivo da arte estiver ausente ou seu Qt não conseguir decodificá-lo, os recursos da Yuna continuam disponíveis com a apresentação antiga.

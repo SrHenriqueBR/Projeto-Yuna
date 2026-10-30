@@ -56,20 +56,20 @@ h1 em{font-style:normal;background:linear-gradient(105deg,#e7d8ff,#ae8aff 44%,#8
 .stage-label small{display:block;margin-top:6px;letter-spacing:.1em;color:#a6a3c6;font-size:10px;font-weight:550}
 .stage-footer{position:absolute;right:20px;bottom:20px;z-index:3;color:#bbb2d9;font-size:10px;letter-spacing:.12em;background:#111629a6;border:1px solid #ffffff26;border-radius:999px;padding:9px 13px}
 .character{position:relative;z-index:1;width:min(100%,650px);height:auto;min-width:350px;max-height:100%;overflow:visible;filter:drop-shadow(0 22px 34px #03040d72)}
-.float{transform-origin:300px 700px;animation:float 4s ease-in-out infinite}
+.float{transform-origin:300px 800px;animation:float 4s ease-in-out infinite}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.head{transform-origin:300px 400px;transition:transform .25s ease-out;transform:translate(var(--look-x,0px),var(--look-y,0px)) rotate(var(--tilt,0deg))}
-.back-hair{transform-origin:300px 150px;animation:hairMove 5s ease-in-out infinite}
-.side-hair{transform-origin:290px 230px;animation:hairMove 3.7s ease-in-out infinite reverse}
-.front-hair{transform-origin:300px 170px;animation:fringe 4.6s ease-in-out infinite}
+.head{transform-origin:300px 232px;transition:transform .25s ease-out;transform:translate(var(--look-x,0px),var(--look-y,0px)) rotate(var(--tilt,0deg))}
+.back-hair{transform-origin:300px 105px;animation:hairMove 5s ease-in-out infinite}
+.side-hair{transform-origin:300px 155px;animation:hairMove 3.7s ease-in-out infinite reverse}
+.front-hair{transform-origin:300px 100px;animation:fringe 4.6s ease-in-out infinite}
 @keyframes hairMove{0%,100%{transform:rotate(-1.7deg) translateX(-1px)}50%{transform:rotate(1.8deg) translateX(3px)}}
 @keyframes fringe{0%,100%{transform:translateX(0px) rotate(-.7deg)}50%{transform:translateX(2px) rotate(1.1deg)}}
 @keyframes blink{0%,35%,39%,100%{transform:scaleY(1)}37%{transform:scaleY(.06)}}
 .eye{transform-box:fill-box;transform-origin:center;animation:blink 5.1s infinite}
 .eye.right{animation-delay:.03s}
 .gaze{transform:translate(var(--iris-x,0px),var(--iris-y,0px));transition:transform .20s ease-out}
-.arm-wave{transform-origin:408px 540px;transition:transform .7s ease;transform:rotate(0)}
-.arm-left{transform-origin:194px 542px;animation:armIdle 5s ease-in-out infinite}
+.arm-wave{transform-origin:362px 278px;transition:transform .7s ease;transform:rotate(0)}
+.arm-left{transform-origin:238px 278px;animation:armIdle 5s ease-in-out infinite}
 @keyframes armIdle{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(3deg)}}
 [data-mood=wave] .arm-wave{animation:wave 1.05s ease-in-out infinite}
 @keyframes wave{0%,100%{transform:rotate(-116deg)}50%{transform:rotate(-131deg)}}
@@ -132,13 +132,13 @@ footer a{color:#bcabea;text-decoration:underline}
 #stage.live-mode .front-hair,#stage.live-mode .back-hair,
 #stage.live-mode .side-hair,#stage.live-mode .arm-left,#stage.live-mode .arm-wave,
 #stage.live-mode .mouth-open{animation:none!important;transition:none!important}
-#stage.live-mode .float{transform-origin:300px 700px}
-#stage.live-mode .head{transform-origin:300px 460px}
-#stage.live-mode .front-hair{transform-origin:300px 140px}
-#stage.live-mode .back-hair{transform-origin:300px 160px}
-#stage.live-mode .side-hair{transform-origin:300px 200px}
-#stage.live-mode .arm-wave{transform-origin:408px 540px}
-#stage.live-mode .arm-left{transform-origin:194px 542px}
+#stage.live-mode .float{transform-origin:300px 800px}
+#stage.live-mode .head{transform-origin:300px 232px}
+#stage.live-mode .front-hair{transform-origin:300px 100px}
+#stage.live-mode .back-hair{transform-origin:300px 105px}
+#stage.live-mode .side-hair{transform-origin:300px 155px}
+#stage.live-mode .arm-wave{transform-origin:362px 278px}
+#stage.live-mode .arm-left{transform-origin:238px 278px}
 #stage.live-mode .eye{transform-box:fill-box;transform-origin:center}
 #stage.live-mode .gaze{transition:none!important}
 #stage.live-mode .mouth-open{transform-box:fill-box;transform-origin:center}
@@ -163,6 +163,12 @@ footer a{color:#bcabea;text-decoration:underline}
 .motion-chip{position:absolute;z-index:5;top:56px;right:18px;padding:6px 9px;background:#0e2f26bc;border:1px solid #77eac072;border-radius:999px;color:#bafce1;font-size:10px;font-weight:800;letter-spacing:.07em}
 @media(prefers-reduced-motion:reduce){#stage.show-portrait .poster{animation:none!important}}
 
+/* Proporções naturais e enquadramento do corpo completo. */
+.stage-panel{height:800px}
+.character{width:100%;height:100%;min-width:0;max-height:100%;align-self:stretch}
+.brow-left,.brow-right{transform-box:fill-box;transform-origin:center}
+@media(max-width:970px){.stage-panel{height:710px}}
+@media(max-width:580px){.stage-panel{height:560px}.character{width:100%;min-width:0}}
 /* A pausa vale para os dois modos, inclusive estrelas e efeitos do fundo. */
 #stage.stage-panel[data-motion-suspended=true],#stage.stage-panel[data-motion-suspended=true] *,
 #stage.stage-panel[data-motion-suspended=true]:before,#stage.stage-panel[data-motion-suspended=true]:after,
@@ -189,11 +195,11 @@ button:disabled{cursor:not-allowed;opacity:.55}
 <main class="main">
  <section class="info" aria-label="Controle da prévia">
   <div class="eyebrow">Protótipo de personagem anime</div>
-  <h1>Yuna<br><em>viva na tela.</em></h1>
-  <p class="lead">Aqui os olhos, a boca, a cabeça, os braços e o cabelo da Yuna são partes independentes que se animam no navegador. Passe o mouse perto dela e experimente suas reações!</p>
+  <h1>Yuna<br><em>em anime.</em></h1>
+  <p class="lead">Uma silhueta mais humana, traços delicados e a mesma personalidade. Conheça a nova Yuna em estilo anime: cabelos longos, olhos violetas e movimentos suaves. Experimente as expressões ou aproxime o rosto.</p>
   <div class="bubble" aria-live="polite">
    <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
-   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Agora eu consigo até te acompanhar com os olhos! ✨</p>
+   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨</p>
   </div>
   <div class="actions-title">Como a Yuna está se sentindo?</div>
   <div class="actions" aria-label="Expressões">
@@ -213,139 +219,177 @@ button:disabled{cursor:not-allowed;opacity:.55}
   </div>
   <p id="feedback" class="feedback" role="status"></p>
   <div class="preview-modes">
-   <button type="button" id="modeLive" aria-pressed="true">✦ Avatar articulado</button>
+   <button type="button" id="modeLive" aria-pressed="true">✦ Anime animado</button>
+   <button type="button" id="zoomCharacter" aria-pressed="false">⌕ Ver rosto</button>
    <button type="button" id="modePortrait" aria-pressed="false">◈ Retrato original</button>
    <button type="button" id="pauseMotion" aria-pressed="false">Ⅱ Pausar movimentos</button>
    <small id="modeHint">Animação 2D por camadas, não uma foto balançando</small>
   </div>
   <p class="notice"><strong>Demonstração visual interativa em 2D.</strong> Os botões mostram falas prontas e expressões. Para conversar com a IA, use o aplicativo Yuna no Windows. A fala de teste depende das vozes do navegador; algumas podem precisar de internet.</p>
  </section>
- <section class="stage-panel live-mode" id="stage" data-mood="idle" aria-label="Yuna anime vetorial: cabeça, olhos, boca, braços e cabelo animados separadamente">
+ <section class="stage-panel live-mode" id="stage" data-mood="idle" aria-label="Yuna em estilo anime: rosto, mãos, pernas e cabelo articulados">
   <div class="aurora"></div><div class="halo"></div><div class="starfield" id="stars" aria-hidden="true"></div>
-  <div class="stage-label">YUNA / CORPO ARTICULADO <small>DEMONSTRAÇÃO ANIMADA NA WEB</small></div><div class="motion-chip" id="motionChip">● MOVIMENTOS ATIVOS</div>
+  <div class="stage-label">YUNA / ESTUDO DE PERSONAGEM <small>DEMONSTRAÇÃO ANIMADA NA WEB</small></div><div class="motion-chip" id="motionChip">● MOVIMENTOS ATIVOS</div>
   <img id="portrait" class="poster" src="./yuna-portrait.webp" alt="Retrato ilustrado da Yuna: personagem anime de olhos violetas, cabelo escuro e laço lilás" decoding="async" fetchpriority="high">
   <span class="portrait-label" id="portraitLabel">✧ AVATAR ARTICULADO 2D</span>
-  <svg id="figure" class="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" role="img" aria-labelledby="avatarTitle">
-   <title id="avatarTitle">Yuna: personagem de cabelo escuro comprido, olhos violetas, roupa gótica moderna e expressões animadas</title>
+  <svg id="figure" class="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" role="img" aria-labelledby="avatarTitle">
+   <title id="avatarTitle">Yuna: jovem adulta em estilo anime, com proporções humanas, cabelo preto longo, olhos violetas e roupa gótica lilás</title>
    <defs>
-    <linearGradient id="hair" x1="0" y1="0" x2=".85" y2="1"><stop offset="0" stop-color="#7777b3"/><stop offset=".19" stop-color="#323456"/><stop offset=".62" stop-color="#181831"/><stop offset="1" stop-color="#090d1e"/></linearGradient>
-    <linearGradient id="hairShine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b4a7f2" stop-opacity=".88"/><stop offset=".45" stop-color="#685eac" stop-opacity=".28"/><stop offset="1" stop-color="#362e65" stop-opacity="0"/></linearGradient>
-    <linearGradient id="face" x1="0" x2=".7" y1="0" y2="1"><stop stop-color="#fff0e8"/><stop offset=".58" stop-color="#f9d8dc"/><stop offset="1" stop-color="#e8b1bf"/></linearGradient>
-    <linearGradient id="neck" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#dca2b9"/><stop offset=".6" stop-color="#ffe7df"/><stop offset="1" stop-color="#c886ac"/></linearGradient>
-    <linearGradient id="jacket" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3e345c"/><stop offset=".45" stop-color="#211c38"/><stop offset="1" stop-color="#100f24"/></linearGradient>
-    <linearGradient id="skirt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#312946"/><stop offset="1" stop-color="#111026"/></linearGradient>
-    <radialGradient id="eyes"><stop offset="0" stop-color="#eacfff"/><stop offset=".38" stop-color="#b98bfa"/><stop offset=".8" stop-color="#824ad3"/><stop offset="1" stop-color="#3b2a83"/></radialGradient>
-    <radialGradient id="blush"><stop stop-color="#f47d9e" stop-opacity=".62"/><stop offset="1" stop-color="#ea86a1" stop-opacity="0"/></radialGradient>
-    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
-    <filter id="eyeGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+    <linearGradient id="hair" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#151827"/><stop offset=".28" stop-color="#343447"/><stop offset=".48" stop-color="#191d30"/><stop offset=".82" stop-color="#101423"/><stop offset="1" stop-color="#3a3355"/></linearGradient>
+    <linearGradient id="hairShine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b7a9e8" stop-opacity=".5"/><stop offset=".5" stop-color="#8b81b6" stop-opacity=".18"/><stop offset="1" stop-color="#7d6ba8" stop-opacity="0"/></linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff1e8"/><stop offset=".64" stop-color="#f9dbd6"/><stop offset="1" stop-color="#e6b4bc"/></linearGradient>
+    <linearGradient id="skinShade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#dba5b2"/><stop offset=".4" stop-color="#fce5dc"/><stop offset="1" stop-color="#f0c7c7"/></linearGradient>
+    <linearGradient id="jacket" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#454056"/><stop offset=".4" stop-color="#252539"/><stop offset="1" stop-color="#151827"/></linearGradient>
+    <linearGradient id="skirt" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#211c32"/><stop offset=".25" stop-color="#494058"/><stop offset=".52" stop-color="#272338"/><stop offset=".76" stop-color="#4b405b"/><stop offset="1" stop-color="#171a2c"/></linearGradient>
+    <linearGradient id="tights" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#252538"/><stop offset=".45" stop-color="#555063"/><stop offset=".68" stop-color="#3e3a51"/><stop offset="1" stop-color="#232537"/></linearGradient>
+    <linearGradient id="boot" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4f485c"/><stop offset=".3" stop-color="#242535"/><stop offset="1" stop-color="#0f1322"/></linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dfcef5"/><stop offset=".5" stop-color="#ae94ce"/><stop offset="1" stop-color="#74558f"/></linearGradient>
+    <radialGradient id="eyes" cx=".5" cy=".75"><stop stop-color="#efd5ff"/><stop offset=".4" stop-color="#bd88f7"/><stop offset=".78" stop-color="#7652b5"/><stop offset="1" stop-color="#352948"/></radialGradient>
+    <radialGradient id="blush"><stop stop-color="#ef9ca9" stop-opacity=".6"/><stop offset="1" stop-color="#ef9ca9" stop-opacity="0"/></radialGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="8"/></filter>
+    <clipPath id="leftEyeClip"><path d="M263 171 Q275 158 291 168 Q283 180 270 178Z"/></clipPath>
+    <clipPath id="rightEyeClip"><path d="M313 168 Q329 157 341 169 Q334 180 320 177Z"/></clipPath>
    </defs>
-   <ellipse cx="298" cy="754" rx="170" ry="22" fill="#050614" opacity=".5" filter="url(#shadow)"/>
+   <ellipse cx="300" cy="949" rx="110" ry="12" fill="#060a18" opacity=".7" filter="url(#shadow)"/>
    <g class="float">
-    <!-- Back hair: long flowing silhouette -->
+    <!-- Long hair lies behind the shoulders and waist. -->
     <g class="back-hair">
-     <path d="M169 241 C158 154 210 104 267 94 C336 65 404 103 433 155 C473 230 451 355 467 444 C476 553 487 669 513 750 Q464 732 452 700 Q451 761 420 788 Q394 754 392 712 Q369 764 339 786 L318 750 Q291 799 265 774 Q245 740 242 728 Q224 768 193 785 Q166 745 171 709 Q144 742 116 746 C157 621 136 466 150 355 Z" fill="url(#hair)" stroke="#5c517e" stroke-opacity=".42" stroke-width="2"/>
-     <path d="M185 201 C173 377 185 600 143 707 M417 185 C449 328 418 582 471 729 M228 150 C206 362 214 629 201 732 M377 135 C399 322 386 618 412 752" stroke="#a89bdc" stroke-width="8" opacity=".12" fill="none" stroke-linecap="round"/>
-     <path d="M197 211 C195 390 192 600 157 716 M405 194 C425 411 416 575 462 717" stroke="#beaaff" stroke-width="3" opacity=".18" fill="none"/>
+     <path d="M238 166 C228 114 250 86 287 85 C339 68 374 107 372 158 C369 236 380 302 386 384 C390 455 402 499 389 571 L373 550 L372 586 Q352 568 346 546 L335 582 L316 548 L299 581 L282 555 L264 587 L254 548 Q241 576 220 580 C230 532 214 503 220 445 C225 358 227 268 238 166Z" fill="url(#hair)" stroke="#716286" stroke-width="1.2"/>
+     <path d="M248 142 C232 258 248 421 233 549 M356 141 C369 288 359 436 379 551 M271 117 C250 289 280 451 259 552 M333 117 C348 300 328 473 347 556" fill="none" stroke="#9c8cae" stroke-width="3" opacity=".17"/>
+     <path d="M253 165 C242 328 256 467 241 548 M352 173 C357 340 353 457 373 532" fill="none" stroke="url(#hairShine)" stroke-width="9"/>
+     <path d="M240 222 C226 334 243 425 225 522 M364 209 C379 329 369 479 388 548" fill="none" stroke="#c1b2da" stroke-width="1" opacity=".3"/>
     </g>
-    <!-- rear arm -->
+    <!-- Legs have separate hips and knees for the walking gesture. -->
+    <g class="leg-left">
+     <path d="M255 513 Q277 503 299 521 L294 668 Q289 695 265 697 Q249 668 250 631Z" fill="url(#tights)" stroke="#8b7b9b" stroke-width="1"/>
+     <path d="M258 539 Q267 590 263 657" fill="none" stroke="#b4a0b6" opacity=".18" stroke-width="3"/>
+     <g class="shin-left">
+      <path d="M265 674 Q283 668 294 679 Q288 733 281 784 L278 856 L254 858 Q252 783 250 746 Q250 706 265 674Z" fill="url(#tights)" stroke="#6b607a" stroke-width="1"/>
+      <path d="M259 763 Q272 771 286 763 L283 879 Q284 896 278 911 L285 929 Q284 940 273 941 L236 941 Q226 935 237 926 L253 908 L252 871Z" fill="url(#boot)" stroke="#8e7e9f" stroke-width="1.2"/>
+      <path d="M257 776 Q270 783 284 776 M254 805 L282 808 M254 877 Q268 885 280 879 M250 910 Q267 917 280 911" fill="none" stroke="#a696b8" stroke-width="1" opacity=".55"/>
+      <path d="M262 792 L270 876 M256 892 L254 913" fill="none" stroke="#d1bddb" stroke-width="1" opacity=".24"/>
+      <path d="M237 936 L282 936 L282 944 L233 944Z" fill="#0c1020"/>
+      <path d="M265 792 L280 794 L279 802 L264 801Z" fill="none" stroke="#c0a5d8" stroke-width="1.6"/>
+     </g>
+    </g>
+    <g class="leg-right">
+     <path d="M304 521 Q325 508 346 518 L355 631 Q355 671 339 696 Q318 700 312 677Z" fill="url(#tights)" stroke="#8b7b9b" stroke-width="1"/>
+     <path d="M324 545 Q339 604 337 659" fill="none" stroke="#b4a0b6" opacity=".17" stroke-width="3"/>
+     <g class="shin-right">
+      <path d="M313 679 Q329 670 341 677 Q353 715 351 751 L345 855 L322 859 Q319 795 315 759 Q307 714 313 679Z" fill="url(#tights)" stroke="#6b607a" stroke-width="1"/>
+      <path d="M315 767 Q330 774 350 765 L348 869 Q347 890 352 907 L368 927 Q381 938 366 942 L325 943 Q314 939 318 928 L323 909 L319 872Z" fill="url(#boot)" stroke="#8e7e9f" stroke-width="1.2"/>
+      <path d="M318 778 Q332 785 349 777 M319 808 L347 804 M322 880 Q336 885 348 877 M322 912 Q337 917 352 908" fill="none" stroke="#a696b8" stroke-width="1" opacity=".55"/>
+      <path d="M332 794 L335 876 M337 894 L342 914" fill="none" stroke="#d1bddb" stroke-width="1" opacity=".24"/>
+      <path d="M321 937 L372 936 L374 945 L322 945Z" fill="#0c1020"/>
+      <path d="M321 794 L336 792 L337 801 L322 803Z" fill="none" stroke="#c0a5d8" stroke-width="1.6"/>
+     </g>
+    </g>
+    <!-- Sleeves, forearms and hands are separate joints. -->
     <g class="arm-left">
-     <path d="M205 532 C163 526 146 573 132 637 C127 660 149 686 165 671 L220 579Z" fill="url(#jacket)" stroke="#66567b" stroke-width="2"/>
-     <path d="M132 631 Q126 661 145 681 Q156 690 165 672 L177 648Z" fill="#f4c6c9"/>
-     <path d="M142 638 Q140 652 151 656" stroke="#fff2ed" stroke-opacity=".7" fill="none" stroke-width="4"/>
+     <path d="M239 267 C222 268 214 290 209 325 L201 382 Q206 396 225 393 L245 326 L256 282Z" fill="url(#jacket)" stroke="#8e7d9f" stroke-width="1.3"/>
+     <path d="M222 301 L211 354 M207 376 L223 383 M206 385 L220 390" stroke="#b7a2c9" stroke-width="1" opacity=".38" fill="none"/>
+     <g class="forearm-left">
+      <path d="M202 380 Q212 374 226 382 L229 421 L226 463 L207 465 Q199 422 202 380Z" fill="url(#jacket)" stroke="#8e7d9f" stroke-width="1.2"/>
+      <path d="M204 451 L226 450 L226 467 L208 470Z" fill="#777086" stroke="#c2aed7" stroke-width="1"/>
+      <path d="M211 459 L221 458" stroke="#e7daf6" stroke-width="1.5"/>
+      <g class="hand-left">
+       <path d="M209 468 L224 467 Q224 480 228 490 L235 504 Q235 510 231 508 L222 494 L225 518 Q225 524 221 523 L217 504 L218 528 Q215 534 212 528 L210 506 L208 526 Q205 531 203 525 L203 503 L200 517 Q196 521 196 514 L200 489Z" fill="url(#skinShade)" stroke="#c28c9f" stroke-width="1" stroke-linejoin="round"/>
+       <path d="M208 486 Q216 483 221 488 M207 495 L209 503 M213 494 L215 502" fill="none" stroke="#c995a6" stroke-width=".8"/>
+      </g>
+     </g>
     </g>
-    <!-- back torso lower -->
-    <path d="M227 667 Q307 631 377 670 L427 791 L166 794Z" fill="url(#skirt)" stroke="#a285c3" stroke-opacity=".7" stroke-width="2"/>
-    <path d="M198 779 Q298 739 402 782 M212 748 Q297 721 389 750" stroke="#af90d0" opacity=".4" stroke-width="2" fill="none"/>
-    <!-- body -->
-    <path d="M214 518 C237 506 267 507 300 519 C345 501 374 510 404 531 L428 698 Q303 732 176 699Z" fill="url(#jacket)" stroke="#6c5e87" stroke-width="3"/>
-    <path d="M250 515 L300 599 L351 512 Q323 497 300 500 Q273 496 250 515Z" fill="#fff0ed"/>
-    <path d="M286 447 L279 519 Q297 545 316 518 L315 442Z" fill="url(#neck)"/>
-    <path d="M213 520 Q262 535 282 592 L305 639 L246 670 Q216 597 200 539Z" fill="#28223f" stroke="#8e78a7" stroke-width="2"/>
-    <path d="M384 520 Q338 540 319 595 L295 641 L356 671 Q396 583 403 537Z" fill="#29223f" stroke="#8875ac" stroke-width="2"/>
-    <path d="M268 545 L303 596 L337 548 M248 654 Q300 671 352 653" fill="none" stroke="#dcc0fa" opacity=".58" stroke-width="3"/>
-    <path d="M292 595 L300 622 L308 595 L300 580Z" fill="#c6b5e7"/>
-    <path d="M295 625 L274 667 L303 688 L328 665 L306 626Z" fill="#7d629c" stroke="#d4b4fc" stroke-width="2"/>
-    <path d="M287 665 L301 680 L314 666" stroke="#e4cafa" fill="none" stroke-width="2"/>
-    <!-- ribbons -->
-    <path d="M302 602 Q265 577 243 602 Q245 632 297 614 L300 618 Q357 636 367 603 Q340 582 307 603Z" fill="#a879c9" stroke="#e5cbff" stroke-width="2"/>
-    <circle cx="301" cy="611" r="13" fill="#dfc4fa" stroke="#8b67b1" stroke-width="3"/>
-    <path d="M301 597 L304 625 M287 610 L316 614" stroke="#fff" opacity=".6"/>
-    <path d="M232 692 Q299 720 389 687" fill="none" stroke="#9570bd" stroke-width="4"/>
-    <!-- front right arm and hand -->
     <g class="arm-wave">
-     <path d="M396 526 Q440 523 455 575 L468 633 Q476 660 462 667 L423 666 Q414 620 404 581 Q390 549 382 542Z" fill="url(#jacket)" stroke="#685678" stroke-width="3"/>
-     <path d="M425 639 Q443 651 467 638 L471 667 Q468 682 457 692 Q445 697 437 684 L427 665Z" fill="#f9d5d3" stroke="#d59aac" stroke-width="2"/>
-     <path d="M434 648 L462 653" stroke="#e1c4fb" stroke-width="5" stroke-linecap="round"/>
-     <path d="M445 671 Q457 680 466 669" stroke="#fff0ed" stroke-opacity=".72" fill="none" stroke-width="3"/>
+     <path d="M359 267 C382 270 390 296 393 326 L401 382 Q394 394 378 391 L359 326 L345 282Z" fill="url(#jacket)" stroke="#8e7d9f" stroke-width="1.3"/>
+     <path d="M380 302 L391 354 M381 379 L398 373 M382 387 L399 382" stroke="#b7a2c9" stroke-width="1" opacity=".38" fill="none"/>
+     <g class="forearm-right">
+      <path d="M378 381 Q390 376 402 384 L400 423 L393 467 L375 464 L375 420Z" fill="url(#jacket)" stroke="#8e7d9f" stroke-width="1.2"/>
+      <path d="M376 450 L397 453 L395 471 L375 467Z" fill="#777086" stroke="#c2aed7" stroke-width="1"/>
+      <path d="M381 458 L391 460" stroke="#e7daf6" stroke-width="1.5"/>
+      <g class="hand-right">
+       <path d="M377 468 L393 471 L396 491 L398 515 Q398 522 394 518 L391 502 L391 526 Q388 533 385 528 L385 505 L382 530 Q379 535 376 528 L378 504 L374 524 Q370 529 368 523 L372 495 L363 509 Q359 513 358 508 L370 487Z" fill="url(#skinShade)" stroke="#c28c9f" stroke-width="1" stroke-linejoin="round"/>
+       <path d="M377 488 Q383 485 391 491 M379 495 L377 503 M385 495 L384 503" fill="none" stroke="#c995a6" stroke-width=".8"/>
+      </g>
+     </g>
     </g>
-    <!-- collar -->
-    <path d="M284 508 Q271 516 250 519 L281 576 L302 555Z M316 508 Q331 516 352 519 L323 576 L301 555Z" fill="#131428" stroke="#c5a4eb" stroke-width="2"/>
-    <!-- Side locks -->
+    <!-- Tailored jacket and a pleated skirt over opaque tights. -->
+    <path d="M284 225 L282 258 Q269 264 253 268 L270 314 L332 314 L349 268 Q331 264 319 257 L316 223Z" fill="url(#skinShade)" stroke="#d5a1b2" stroke-width=".8"/>
+    <path d="M285 232 Q301 244 317 232 L319 249 Q303 255 284 244Z" fill="#cc93a6" opacity=".35"/>
+    <path d="M270 260 Q299 283 333 259 L345 289 L325 392 L274 395 L254 289Z" fill="#e9e3ef" stroke="#bdb1cf" stroke-width="1.2"/>
+    <path d="M277 285 Q300 302 326 285 M298 310 L298 387" fill="none" stroke="#afa2be" stroke-width="1"/>
+    <path d="M248 264 Q268 264 284 277 L300 319 L318 275 Q337 261 357 266 L371 308 Q353 349 348 393 L361 444 Q335 463 302 452 Q271 464 238 446 L252 393 Q250 350 229 309Z" fill="url(#jacket)" stroke="#a28baa" stroke-width="1.5"/>
+    <path d="M260 267 L283 277 L298 319 L275 349 L256 313 L266 304 L248 289Z M337 266 L317 277 L302 319 L326 350 L346 313 L336 302 L354 287Z" fill="#4d415f" stroke="#b5a0c5" stroke-width="1.2"/>
+    <path d="M256 331 Q271 362 269 402 M345 332 Q333 362 334 404 M254 417 L282 412 M321 413 L349 419" fill="none" stroke="#9f8cae" stroke-width="1.3"/>
+    <path d="M299 341 L301 441 M247 438 Q273 450 298 444 M305 445 Q330 452 353 438" fill="none" stroke="#c6aedc" stroke-width="1" opacity=".7"/>
+    <circle cx="301" cy="354" r="2.7" fill="#cfb4e6"/><circle cx="301" cy="382" r="2.7" fill="#cfb4e6"/><circle cx="301" cy="411" r="2.7" fill="#cfb4e6"/>
+    <path d="M257 390 Q243 417 274 421" fill="none" stroke="#b5a4cb" stroke-width="1.1"/>
+    <path d="M246 440 Q299 451 355 440 L385 552 Q342 570 300 560 Q257 571 216 551Z" fill="url(#skirt)" stroke="#ac93bf" stroke-width="1.3"/>
+    <path d="M250 449 L230 549 L254 556 L270 451 L273 558 L295 558 L295 452 L307 452 L308 559 L331 557 L328 451 L348 556 L371 550 L350 450" fill="#211d31" opacity=".55"/>
+    <path d="M250 451 L230 548 M270 453 L255 554 M295 454 L295 555 M309 453 L310 556 M328 452 L348 554 M350 451 L372 549 M221 544 Q299 562 380 545" fill="none" stroke="#bd9fca" stroke-width="1.1" opacity=".6"/>
+    <path d="M243 440 Q299 449 357 440 L359 449 Q299 459 241 448Z" fill="#19192b" stroke="#9b83b2" stroke-width="1"/>
+    <rect x="292" y="444" width="17" height="10" rx="2" fill="#6f5c87" stroke="#d5bce9" stroke-width="1.4"/>
+    <!-- Ribbon, collar and a small amethyst choker. -->
+    <path d="M281 257 L300 278 L287 297 L269 266Z M320 257 L301 278 L314 297 L334 266Z" fill="#faf0f4" stroke="#c4b3d4" stroke-width="1"/>
+    <path d="M300 285 Q277 271 268 284 Q266 301 296 295 L284 319 L298 314 L304 296 L314 319 L327 321 L308 295 Q338 303 334 284 Q323 272 305 285Z" fill="url(#ribbon)" stroke="#e1c9f7" stroke-width="1"/>
+    <path d="M275 284 L295 289 M312 290 L328 284" stroke="#715184" stroke-width="1" opacity=".6"/>
+    <ellipse cx="302" cy="290" rx="6" ry="7" fill="#bda0e2" stroke="#f6e5ff" stroke-width="1.2"/>
+    <path d="M284 247 Q301 253 318 247 L319 252 Q301 258 284 252Z" fill="#292236" stroke="#c0a3d8" stroke-width=".7"/>
+    <path d="M297 252 L302 260 L307 252 L302 249Z" fill="#aa7edd" stroke="#efd7ff" stroke-width=".8"/>
+    <!-- Front locks frame the shoulders rather than hiding the entire body. -->
     <g class="side-hair">
-     <path d="M193 241 Q166 329 188 438 C200 492 195 571 163 641 Q212 618 229 562 L249 398Z" fill="url(#hair)" stroke="#7469a8" stroke-width="2"/>
-     <path d="M414 236 Q458 332 423 451 C411 500 431 580 462 627 Q404 601 389 542 L376 384Z" fill="url(#hair)" stroke="#7469a8" stroke-width="2"/>
-     <path d="M201 292 Q181 497 172 607 M410 284 Q427 467 447 593" stroke="url(#hairShine)" stroke-width="13" opacity=".5" fill="none"/>
+     <path d="M244 153 Q225 218 235 298 Q241 352 223 408 Q251 393 258 345 Q268 280 254 211Z" fill="url(#hair)" stroke="#837192" stroke-width="1.2"/>
+     <path d="M356 153 Q378 229 365 300 Q357 356 381 414 Q352 398 345 350 Q336 281 348 213Z" fill="url(#hair)" stroke="#837192" stroke-width="1.2"/>
+     <path d="M242 212 Q240 306 237 371 M360 205 Q364 311 365 371" stroke="url(#hairShine)" stroke-width="5" fill="none"/>
+     <path d="M249 231 Q258 321 241 380 M354 239 Q347 322 367 384" stroke="#b8a5cf" stroke-width=".8" fill="none" opacity=".4"/>
     </g>
-    <!-- face and neck -->
     <g id="head" class="head">
-     <path d="M195 263 Q200 159 302 148 Q399 141 416 257 L411 355 Q395 428 323 475 Q303 488 282 476 Q209 436 194 361Z" fill="url(#face)" stroke="#edbbce" stroke-width="2"/>
-     <path d="M196 295 C169 285 163 315 187 350 L204 349 M412 295 Q437 280 437 315 Q434 342 414 350" fill="#efc5cf" stroke="#e6abbc" stroke-width="2"/>
-     <path d="M204 295 C183 288 184 320 200 325 M412 297 Q429 292 425 315" stroke="#d99fae" stroke-width="3" fill="none"/>
-     <ellipse class="blush" cx="231" cy="383" rx="57" ry="30" fill="url(#blush)" opacity=".44"/>
-     <ellipse class="blush" cx="383" cy="382" rx="52" ry="29" fill="url(#blush)" opacity=".44"/>
-     <path d="M300 363 Q287 385 301 385 Q310 384 312 378" stroke="#c78eae" stroke-opacity=".46" stroke-width="2" fill="none" stroke-linecap="round"/>
-     <path class="brow-left" d="M228 286 Q254 270 279 283" stroke="#39304d" stroke-width="6" fill="none" stroke-linecap="round"/>
-     <path class="brow-right" d="M332 283 Q357 269 382 286" stroke="#39304d" stroke-width="6" fill="none" stroke-linecap="round"/>
-     <!-- eyes -->
+     <path d="M249 161 Q239 151 241 168 Q242 185 252 186 M351 161 Q363 150 362 168 Q360 184 350 186" fill="url(#skinShade)" stroke="#d09bab" stroke-width="1"/>
+     <path d="M248 162 L248 176 M355 162 L354 175" stroke="#bf889b" stroke-width="1" fill="none"/>
+     <path d="M249 145 C247 115 270 99 299 99 C331 97 352 120 352 147 L350 184 Q344 208 311 231 Q301 238 291 231 Q258 208 251 186Z" fill="url(#face)" stroke="#d9a8b4" stroke-width="1.1"/>
+     <path d="M250 148 Q258 127 276 132 Q301 143 345 130 L350 146 Q334 153 319 145 Q281 137 255 162Z" fill="#d0a0b3" opacity=".18"/>
+     <path d="M252 183 Q259 213 292 232 Q268 223 256 202Z" fill="#d296aa" opacity=".16"/>
+     <ellipse class="blush" cx="270" cy="194" rx="20" ry="12" fill="url(#blush)" opacity=".42"/>
+     <ellipse class="blush" cx="333" cy="193" rx="19" ry="12" fill="url(#blush)" opacity=".42"/>
+     <path class="brow-left" d="M264 156 Q276 151 288 156" stroke="#5d4455" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+     <path class="brow-right" d="M315 155 Q327 149 339 155" stroke="#5d4455" stroke-width="1.7" fill="none" stroke-linecap="round"/>
      <g class="eye left">
-      <path d="M218 321 Q245 288 284 313 Q270 350 237 345 Q224 338 218 321" fill="#fffaff"/>
-      <path d="M219 321 Q241 286 282 312" stroke="#2b253d" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M219 319 L211 308 M231 307 L224 298" stroke="#2b253d" stroke-width="4" stroke-linecap="round"/>
-      <g class="gaze"><ellipse cx="250" cy="321" rx="24" ry="30" fill="#6b4ac2"/><ellipse cx="250" cy="321" rx="19" ry="27" fill="url(#eyes)"/><ellipse cx="250" cy="316" rx="9" ry="21" fill="#312453"/><ellipse cx="241" cy="309" rx="10" ry="12" fill="#fff" opacity=".95"/><circle cx="261" cy="330" r="5" fill="#fff"/><path d="M236 336 Q251 345 267 334" stroke="#e9b0ff" stroke-width="3" fill="none" opacity=".8"/></g>
-      <path d="M219 338 Q247 359 282 337" stroke="#8f598c" stroke-width="2" opacity=".48" fill="none"/>
+      <path d="M263 171 Q275 158 291 168 Q283 180 270 178Z" fill="#fff9f2"/>
+      <g clip-path="url(#leftEyeClip)"><g class="gaze"><ellipse cx="279" cy="169" rx="8" ry="11" fill="url(#eyes)"/><ellipse cx="279" cy="167" rx="3" ry="7" fill="#292239"/><ellipse cx="276" cy="165" rx="3" ry="2.7" fill="#fff"/><circle cx="283" cy="173" r="1.4" fill="#f4e7ff"/><path d="M274 176 Q280 179 285 174" fill="none" stroke="#e2b9ff" stroke-width="1"/></g></g>
+      <path d="M260 166 L265 169 Q276 158 291 168" fill="none" stroke="#34293d" stroke-width="2.3" stroke-linecap="round"/>
+      <path d="M264 169 L261 162 M268 165 L266 160" stroke="#34293d" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M266 177 Q279 182 288 174" fill="none" stroke="#b17b94" stroke-width=".8"/>
      </g>
      <g class="eye right">
-      <path d="M327 312 Q365 286 390 319 Q373 349 344 345 Q330 336 327 312" fill="#fffaff"/>
-      <path d="M328 312 Q366 287 391 321" stroke="#2b253d" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M388 320 L400 308 M379 308 L386 300" stroke="#2b253d" stroke-width="4" stroke-linecap="round"/>
-      <g class="gaze"><ellipse cx="360" cy="321" rx="24" ry="30" fill="#6b4ac2"/><ellipse cx="360" cy="321" rx="19" ry="27" fill="url(#eyes)"/><ellipse cx="360" cy="316" rx="9" ry="21" fill="#312453"/><ellipse cx="351" cy="309" rx="10" ry="12" fill="#fff" opacity=".95"/><circle cx="371" cy="330" r="5" fill="#fff"/><path d="M346 336 Q361 345 377 334" stroke="#e9b0ff" stroke-width="3" fill="none" opacity=".8"/></g>
-      <path d="M327 338 Q354 357 391 336" stroke="#8f598c" stroke-width="2" opacity=".48" fill="none"/>
+      <path d="M313 168 Q329 157 341 169 Q334 180 320 177Z" fill="#fff9f2"/>
+      <g clip-path="url(#rightEyeClip)"><g class="gaze"><ellipse cx="325" cy="168" rx="8" ry="11" fill="url(#eyes)"/><ellipse cx="325" cy="166" rx="3" ry="7" fill="#292239"/><ellipse cx="322" cy="164" rx="3" ry="2.7" fill="#fff"/><circle cx="329" cy="172" r="1.4" fill="#f4e7ff"/><path d="M320 175 Q326 178 331 174" fill="none" stroke="#e2b9ff" stroke-width="1"/></g></g>
+      <path d="M313 168 Q329 157 341 169 L345 165" fill="none" stroke="#34293d" stroke-width="2.3" stroke-linecap="round"/>
+      <path d="M340 168 L343 161 M336 164 L338 159" stroke="#34293d" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M316 174 Q328 182 338 176" fill="none" stroke="#b17b94" stroke-width=".8"/>
      </g>
-     <!-- mouth / chin -->
-     <path class="mouth-smile" d="M287 410 Q302 428 319 409" stroke="#a95778" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-     <path class="mouth-flat" d="M288 413 Q304 405 318 414" stroke="#94546d" stroke-width="3" stroke-linecap="round" fill="none"/>
-     <ellipse class="mouth-open" cx="303" cy="418" rx="11" ry="13" fill="#a75773"/>
-     <path d="M284 445 Q302 452 321 443" stroke="#fff2ed" stroke-opacity=".38" stroke-width="3" fill="none"/>
-     <!-- top hair, layered fringe -->
+     <path d="M302 178 L298 194 Q301 197 305 194" fill="none" stroke="#c28a9c" stroke-width=".85" stroke-linecap="round"/>
+     <path d="M304 193 L307 191" fill="none" stroke="#fff4e8" stroke-width="1.4" stroke-linecap="round"/>
+     <path d="M293 213 Q301 217 310 212 Q303 221 295 216Z" fill="#d8a1ad" opacity=".6"/>
+     <path class="mouth-smile" d="M292 211 Q301 216 311 210" stroke="#a96b84" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+     <path class="mouth-flat" d="M293 212 Q301 210 310 213" stroke="#9b637b" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+     <ellipse class="mouth-open" cx="301" cy="214" rx="5.4" ry="5" fill="#974c65"/>
+     <path d="M296 223 Q301 225 307 222" stroke="#fff3eb" stroke-width="1.2" stroke-linecap="round" fill="none" opacity=".65"/>
      <g class="front-hair">
-      <path d="M180 292 Q171 212 206 155 Q242 104 312 111 Q406 111 438 197 Q450 235 431 299 Q423 254 402 227 Q404 277 375 300 Q360 273 354 226 Q324 285 292 310 Q283 274 282 245 Q258 295 224 324 Q210 284 211 242 Q203 288 180 292Z" fill="url(#hair)" stroke="#8472b6" stroke-width="3"/>
-      <path d="M208 179 Q237 124 314 127 Q377 132 410 183" stroke="#b6a3ef" stroke-width="12" opacity=".16" stroke-linecap="round" fill="none"/>
-      <path d="M237 153 Q238 222 222 278 M296 136 Q307 220 291 281 M350 140 Q372 235 375 277 M397 167 Q424 215 424 261" stroke="#c6b8f9" stroke-width="8" opacity=".16" stroke-linecap="round" fill="none"/>
-      <path d="M194 206 Q220 119 304 110" stroke="url(#hairShine)" stroke-width="16" opacity=".65" fill="none"/>
-      <path d="M222 174 Q229 235 215 293 M278 150 Q290 212 277 258" stroke="#0e1029" stroke-width="6" opacity=".55" fill="none"/>
+      <path d="M242 162 C231 119 248 87 279 84 C316 69 355 91 363 121 Q368 145 352 175 L347 145 Q339 156 330 161 L331 124 Q319 150 301 160 L307 123 Q288 151 268 162 L278 129 Q265 147 250 171 L250 142Z" fill="url(#hair)" stroke="#7f6e92" stroke-width="1.3"/>
+      <path d="M249 120 Q263 87 293 89 Q330 82 350 113" stroke="url(#hairShine)" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M282 94 Q281 120 264 148 M307 90 Q307 123 292 143 M329 96 Q340 126 335 149 M349 118 L353 152" stroke="#a897be" stroke-width="1.1" opacity=".3" fill="none"/>
+      <path d="M292 89 Q274 108 269 127 M319 91 Q324 107 323 123" stroke="#090e1c" stroke-width="2.5" opacity=".5" fill="none"/>
      </g>
-     <!-- side fringe and accessory -->
-     <path d="M182 253 Q164 362 214 469 Q191 388 210 298Z" fill="url(#hair)"/>
-     <path d="M422 247 Q446 369 402 465 Q414 377 397 303Z" fill="url(#hair)"/>
-     <g transform="translate(402 183) rotate(18)">
-      <path d="M-24 -9 Q-48 -32 -50 3 Q-43 25 -21 9 Q-6 19 10 8 Q34 25 43 5 Q47 -27 16 -12 Q-6 -23 -24 -9Z" fill="#b8a3e3" stroke="#f2dcff" stroke-width="2"/>
-      <circle cx="-4" cy="0" r="11" fill="#e3d6ff" stroke="#8a75b4" stroke-width="3"/>
-      <path d="M-4 -7 L-4 8 M-12 0 L4 0" stroke="#fff" stroke-width="2" opacity=".7"/>
+     <path d="M246 146 Q238 190 256 236 Q249 201 255 166Z M353 142 Q367 193 345 237 Q354 201 346 170Z" fill="url(#hair)" stroke="#8a759c" stroke-width=".8"/>
+     <g transform="translate(350 115) rotate(16)">
+      <path d="M-3 0 Q-19 -17 -23 -6 Q-28 9 -8 9 L-3 5 Q13 17 20 5 Q25 -9 5 -2Z" fill="url(#ribbon)" stroke="#e9d6fa" stroke-width=".9"/>
+      <path d="M-5 6 L-12 25 L-5 21 L0 26 L4 8 L14 23 L19 20 L23 22 L13 7" fill="url(#ribbon)" stroke="#c9addf" stroke-width=".7"/>
+      <ellipse cx="0" cy="3" rx="4" ry="5" fill="#e1cafa" stroke="#ac86ca" stroke-width="1"/>
      </g>
+     <path d="M246 184 L247 198 M356 182 L356 196" stroke="#e3c2f7" stroke-width="1.2"/>
+     <path d="M244 198 L248 204 L252 198 L248 194Z M352 196 L356 202 L360 196 L356 192Z" fill="#b89ae0" stroke="#ebd5ff" stroke-width=".7"/>
     </g>
-    <!-- necklace -->
-    <path d="M280 488 Q302 505 322 489" stroke="#1a1530" stroke-width="13" fill="none"/>
-    <path d="M281 489 Q303 506 323 488" stroke="#cbabef" stroke-width="2" fill="none"/>
-    <path d="M296 495 L301 511 L308 495 L303 489Z" fill="#af84f7" stroke="#e7d9ff" stroke-width="1.4"/>
-   </g>
-   <!-- small magical flakes -->
-   <g class="look-glow" fill="#dfd2ff">
-    <path d="M137 323 l5 13 5-13 5-3-5-3-5-13-5 13-5 3Z"/>
-    <path d="M486 408 l4 10 4-10 10-4-10-4-4-10-4 10-10 4Z"/>
-    <circle cx="462" cy="266" r="3"/><circle cx="132" cy="457" r="2.5"/>
    </g>
   </svg>
-  <div class="stage-footer" id="stageFooter">✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO</div>
+  <div class="stage-footer" id="stageFooter">✧ ROSTO · MÃOS · PERNAS · CABELO</div>
  </section>
 </main>
 <footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é uma referência estática; o modo articulado é um desenho vetorial separado. Esta página não acessa câmera, microfone, memória ou arquivos do computador.</footer>
@@ -366,7 +410,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
    portrait.addEventListener("error",function(){portrait.style.display="none";});
  }
  var moods={
-  idle:"Opa, Kaizen! Gostou da minha nova aparência? Agora eu consigo até te acompanhar com os olhos! ✨",
+  idle:"Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨",
   happy:"Hehe! Eu sabia que você ia gostar! Quero aprender a fazer muito mais coisas com você! ♡",
   shy:"Ei... não fica me olhando desse jeito! Eu fico toda sem graça, sabia? >///<",
   angry:"Hmpf! Não pensa que pode ficar clicando em mim o dia inteiro, Kaizen! ⚡",

@@ -25,9 +25,10 @@ function setup({ reduced = false, voice = true } = {}) {
   }
   const ids = Object.fromEntries(['stage','figure','head','portrait','modeLive','modePortrait',
     'pauseMotion','portraitLabel','motionChip','modeHint','stageFooter','speech','voice',
-    'feedback','look','stars'].map(k => [k, element()]));
+    'feedback','look','stars','zoomCharacter'].map(k => [k, element()]));
   const parts = Object.fromEntries(['.float','.back-hair','.front-hair','.side-hair',
-    '.arm-left','.arm-wave','.eye.left','.eye.right','.mouth-open'].map(k => [k, element(k.includes('eye') ? 'eye' : k.slice(1))]));
+    '.arm-left','.arm-wave','.forearm-left','.forearm-right','.hand-right',
+    '.leg-left','.leg-right','.shin-left','.shin-right','.eye.left','.eye.right','.mouth-open'].map(k => [k, element(k.includes('eye') ? 'eye' : k.slice(1))]));
   const irises = [element('gaze'), element('gaze')];
   ids.figure.querySelector = k => parts[k];
   ids.figure.querySelectorAll = () => irises;
@@ -128,4 +129,30 @@ test('movimento reduzido e navegador sem voz mantêm os controles visuais', () =
   assert.equal(app.ids.voice.disabled, true);
   app.moods[8].emit('click');
   assert.equal(app.ids.stage.dataset.mood, 'surprised');
+});
+
+test('enquadramento do rosto retorna ao corpo inteiro sem perder a pausa', () => {
+  const app = setup();
+  app.ids.pauseMotion.emit('click');
+  app.ids.zoomCharacter.emit('click');
+  assert.equal(app.ids.figure.getAttribute('viewBox'), '190 65 220 350');
+  assert.equal(app.ids.zoomCharacter.getAttribute('aria-pressed'), 'true');
+  app.ids.modePortrait.emit('click');
+  assert.equal(app.ids.zoomCharacter.disabled, true);
+  app.ids.modeLive.emit('click');
+  assert.equal(app.ids.zoomCharacter.disabled, false);
+  app.ids.zoomCharacter.emit('click');
+  assert.equal(app.ids.figure.getAttribute('viewBox'), '0 0 600 1000');
+  assert.equal(app.ids.pauseMotion.getAttribute('aria-pressed'), 'true');
+});
+
+test('a caminhada move pernas e joelhos e a pose normal os reinicia', () => {
+  const app = setup();
+  app.moods.find(button => button.dataset.action === 'walk').emit('click');
+  app.tick(); app.tick();
+  assert.notEqual(app.parts['.leg-left'].style.transform, 'rotate(0deg)');
+  assert.notEqual(app.parts['.shin-left'].style.transform, 'rotate(0deg)');
+  app.moods[0].emit('click'); app.tick();
+  assert.equal(app.parts['.leg-left'].style.transform, 'rotate(0deg)');
+  assert.equal(app.parts['.shin-left'].style.transform, 'rotate(0deg)');
 });

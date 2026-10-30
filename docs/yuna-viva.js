@@ -13,6 +13,11 @@
   const hairSide = $(".side-hair");
   const armLeft = $(".arm-left");
   const armRight = $(".arm-wave");
+  const forearmLeft = $(".forearm-left");
+  const forearmRight = $(".forearm-right");
+  const handRight = $(".hand-right");
+  const legLeft = $(".leg-left"), legRight = $(".leg-right");
+  const shinLeft = $(".shin-left"), shinRight = $(".shin-right");
   const eyes = [$(".eye.left"), $(".eye.right")];
   const irises = Array.from(figure.querySelectorAll(".gaze"));
   const mouth = $(".mouth-open");
@@ -23,8 +28,10 @@
   const label = document.getElementById("portraitLabel");
   const motionChip = document.getElementById("motionChip");
   const modeHint = document.getElementById("modeHint");
+  const zoomButton = document.getElementById("zoomCharacter");
 
   let isPortrait = false;
+  let closeUp = false;
   let paused = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let pointerX = 0, pointerY = 0, lastPointer = 0;
   let eyeX = 0, eyeY = 0, lookX = 0, lookY = 0;
@@ -79,13 +86,14 @@
     stage.classList.toggle("show-portrait", isPortrait);
     liveButton.setAttribute("aria-pressed", String(!isPortrait));
     portraitButton.setAttribute("aria-pressed", String(isPortrait));
+    if (zoomButton) zoomButton.disabled = isPortrait;
     label.textContent = isPortrait ?
       "◈ RETRATO ORIGINAL (ESTÁTICO)" : "✧ AVATAR ARTICULADO 2D";
     modeHint.textContent = isPortrait ?
       "Foto de referência com leve efeito visual" :
-      "Olhos, boca, braços, cabeça e cabelo em movimento independente";
+      "Rosto, braços, mãos e pernas articulados";
     document.getElementById("stageFooter").textContent = isPortrait ?
-      "◈ IMAGEM DE REFERÊNCIA" : "✧ OLHOS · BOCA · CABEÇA · BRAÇOS · CABELO";
+      "◈ IMAGEM DE REFERÊNCIA" : "✧ ROSTO · MÃOS · PERNAS · CABELO";
     refreshLoop();
   }
 
@@ -116,6 +124,12 @@
   liveButton.addEventListener("click", () => setPortraitMode(false));
   portraitButton.addEventListener("click", () => setPortraitMode(true));
   pauseButton.addEventListener("click", () => setPaused(!paused));
+  if (zoomButton) zoomButton.addEventListener("click", () => {
+    closeUp = !closeUp;
+    figure.setAttribute("viewBox", closeUp ? "190 65 220 350" : "0 0 600 1000");
+    zoomButton.setAttribute("aria-pressed", String(closeUp));
+    zoomButton.textContent = closeUp ? "⌕ Ver corpo inteiro" : "⌕ Ver rosto";
+  });
   stage.addEventListener("pointermove", (event) => {
     if (paused) return;
     const rect = stage.getBoundingClientRect();
@@ -140,28 +154,35 @@
       const target = pointerIsActive ? [pointerX, pointerY] : idleLook(seconds);
       lookX = lerp(lookX, target[0], clamp(dt * 5, 0, 1));
       lookY = lerp(lookY, target[1], clamp(dt * 5, 0, 1));
-      eyeX = lerp(eyeX, lookX * 7, clamp(dt * 7, 0, 1));
-      eyeY = lerp(eyeY, lookY * 5, clamp(dt * 7, 0, 1));
+      eyeX = lerp(eyeX, lookX * 1.8, clamp(dt * 7, 0, 1));
+      eyeY = lerp(eyeY, lookY * 1.4, clamp(dt * 7, 0, 1));
 
       const t = seconds;
       const breath = Math.sin(t * 1.6 * (sleeping ? .6 : 1));
       const sway = Math.sin(t * .43) * .8 + Math.sin(t * .67 + 1.1) * .2;
-      const tilt = sway * 1.25 +
-        (mood === "shy" ? -6 : mood === "happy" ? 3 : mood === "wave" ? 4 : 0);
+      const tilt = sway * .255 +
+        (mood === "shy" ? -3 : mood === "happy" ? 1.5 : mood === "wave" ? 2 : 0);
       const nod = lookY * 3 + Math.sin(t * .48) * 1.2;
-      motion(root, "translate(" + num(sway * 2.3) + "px," +
-        num(breath * 3.4 - 4) + "px) rotate(" + num(sway * .6) + "deg)", "300px 700px");
-      motion(head, "translate(" + num(lookX * 4) + "px," +
-        num(-nod * .35) + "px) rotate(" + num(tilt) + "deg)", "300px 460px");
-      motion(hairBack, "rotate(" + num(Math.sin(t * .9 + 1) * 1.6) + "deg)", "300px 160px");
-      motion(hairFront, "rotate(" + num(Math.sin(t * 1.1 + .2) * 1.2) + "deg)", "300px 140px");
-      motion(hairSide, "rotate(" + num(Math.sin(t * .82 + 2) * 1.6 - tilt * .18) + "deg)", "300px 200px");
-      const right = mood === "wave" ? -116 + Math.sin(t * 8) * 14 :
-        mood === "angry" ? -19 : Math.sin(t * .95 + 1.9) * 3.2;
+      motion(root, "translate(" + num(sway * .8) + "px," +
+        num(breath * 1.5 - 1) + "px) rotate(" + num(sway * .25) + "deg)", "300px 800px");
+      motion(head, "translate(" + num(lookX * 1.1) + "px," +
+        num(-nod * .18) + "px) rotate(" + num(tilt) + "deg)", "300px 232px");
+      motion(hairBack, "rotate(" + num(Math.sin(t * .9 + 1) * 1.6) + "deg)", "300px 105px");
+      motion(hairFront, "rotate(" + num(Math.sin(t * 1.1 + .2) * 1.2) + "deg)", "300px 100px");
+      motion(hairSide, "rotate(" + num(Math.sin(t * .82 + 2) * 1.6 - tilt * .18) + "deg)", "300px 155px");
+      const right = mood === "wave" ? -55 + Math.sin(t * 2) * 2 :
+        mood === "angry" ? -19 : Math.sin(t * .95 + 1.9) * 1.4;
       const left = mood === "shy" ? -22 : mood === "angry" ? 20 :
-        Math.sin(t * .92 + .2) * 3.5;
-      motion(armRight, "rotate(" + num(right) + "deg)", "408px 540px");
-      motion(armLeft, "rotate(" + num(left) + "deg)", "194px 542px");
+        Math.sin(t * .92 + .2) * 1.6;
+      motion(armRight, "rotate(" + num(right) + "deg)", "362px 278px");
+      motion(armLeft, "rotate(" + num(left) + "deg)", "238px 278px");
+      motion(forearmRight, "rotate(" + num(mood === "wave" ? -116 + Math.sin(t * 6) * 7 : 0) + "deg)", "390px 384px");
+      motion(forearmLeft, "rotate(" + num(mood === "shy" ? -12 : 0) + "deg)", "214px 386px");
+      motion(handRight, "rotate(" + num(mood === "wave" ? Math.sin(t * 8) * 9 : 0) + "deg)", "384px 470px");
+      motion(legLeft, "rotate(0deg)", "274px 529px");
+      motion(legRight, "rotate(0deg)", "327px 529px");
+      motion(shinLeft, "rotate(0deg)", "275px 687px");
+      motion(shinRight, "rotate(0deg)", "326px 687px");
       const blinkValue = sleeping ? 1 : blink(t);
       const eyeScale = clamp(1 - blinkValue * .96, .04, 1);
       for (const eye of eyes) motion(eye, "scaleY(" + num(eyeScale) + ")");
@@ -175,11 +196,15 @@
       motion(mouth, "scaleY(" + num(level) + ")");
 
       if (mood === "walk") {
-        motion(root, "translate(" + num(Math.sin(t * 3.5) * 10) + "px," +
-          num(-Math.abs(Math.sin(t * 6)) * 8) + "px) rotate(" +
-          num(sway * .5) + "deg)", "300px 700px");
-        motion(armLeft, "rotate(" + num(Math.sin(t * 6) * 19) + "deg)", "194px 542px");
-        motion(armRight, "rotate(" + num(Math.sin(t * 6 + Math.PI) * 19) + "deg)", "408px 540px");
+        motion(root, "translate(" + num(Math.sin(t * 1.5) * 6) + "px," +
+          num(-Math.abs(Math.sin(t * 4)) * 2) + "px) rotate(" +
+          num(sway * .5) + "deg)", "300px 800px");
+        motion(legLeft, "rotate(" + num(Math.sin(t * 4) * 7) + "deg)", "274px 529px");
+        motion(legRight, "rotate(" + num(-Math.sin(t * 4) * 7) + "deg)", "327px 529px");
+        motion(shinLeft, "rotate(" + num(Math.max(0, Math.sin(t * 4)) * 10) + "deg)", "275px 687px");
+        motion(shinRight, "rotate(" + num(Math.max(0, -Math.sin(t * 4)) * 10) + "deg)", "326px 687px");
+        motion(armLeft, "rotate(" + num(Math.sin(t * 4) * 7) + "deg)", "238px 278px");
+        motion(armRight, "rotate(" + num(Math.sin(t * 4 + Math.PI) * 7) + "deg)", "362px 278px");
       }
     }
     if (!paused && !isPortrait && !document.hidden)
