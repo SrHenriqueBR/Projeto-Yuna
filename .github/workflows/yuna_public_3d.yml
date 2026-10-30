@@ -1,0 +1,40 @@
+name: Prévia 3D pública da Yuna
+
+on:
+  pull_request:
+    paths:
+      - 'docs/yuna-3d-viva.html'
+      - 'docs/yuna-3d-viva.mjs'
+      - 'tests/test_yuna_public_3d.py'
+      - '.github/workflows/yuna_public_3d.yml'
+      - 'avatar3d/src/performance.mjs'
+      - 'avatar3d/src/preview_character.js'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/yuna-3d-viva.html'
+      - 'docs/yuna-3d-viva.mjs'
+      - 'tests/test_yuna_public_3d.py'
+      - '.github/workflows/yuna_public_3d.yml'
+      - 'avatar3d/src/performance.mjs'
+      - 'avatar3d/src/preview_character.js'
+
+jobs:
+  static-3d:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verificar sintaxe JavaScript ES modules
+        run: |
+          node --check docs/yuna-3d-viva.mjs
+          node --check avatar3d/src/performance.mjs
+          node --check avatar3d/src/vrm_performer.mjs
+          node --check avatar3d/src/preview_character.js
+      - name: Conferir HTML e segurança da demonstração
+        run: python -m unittest tests.test_yuna_public_3d -v
