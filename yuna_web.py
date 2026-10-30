@@ -9,10 +9,12 @@ import sqlite3
 import threading
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.cookies import SimpleCookie, CookieError
 from urllib.parse import urlsplit
 import webbrowser
 
 from model_config import load_selected_model
+from yuna_governance import Governance
 
 ROOT = Path(__file__).resolve().parent
 PORT = 8787
@@ -45,6 +47,8 @@ ASSETS = {
     '/': 'yuna-preview.html', '/yuna-preview.html': 'yuna-preview.html',
     '/yuna-viva.js': 'yuna-viva.js', '/yuna-chat.js': 'yuna-chat.js',
     '/yuna-portrait.webp': 'yuna-portrait.webp',
+    '/yuna-gestao.html': 'yuna-gestao.html', '/yuna-gestao.js': 'yuna-gestao.js',
+    '/yuna-learning.js': 'yuna-learning.js',
 }
 
 
@@ -53,7 +57,8 @@ class BusyError(Exception):
 
 
 class Conversation:
-    def __init__(self, root=ROOT):
+    def __init__(self, root=ROOT, governance=None):
+        self.governance = governance if governance is not None else Governance(root)
         self.root = Path(root).resolve()
         self.path = self.root / 'data' / 'yuna.db'
         self.model = load_selected_model(self.root)
@@ -102,7 +107,7 @@ class Conversation:
                 if answer is not None:
                     memory.save_turn(message, answer)
                     return answer
-                note = '\n'.join((WEB_CONTEXT, COMPANION_STYLE, CONVERSATION_MODES[mode]))
+                note = '\n'.join((WEB_CONTEXT, COMPANION_STYLE, CONVERSATION_MODES[mode])) + self.governance.reference_context()
                 return respond(memory, message, system_note=note, allow_research=False)
             finally:
                 memory.close()
@@ -117,7 +122,8 @@ class YunaServer(ThreadingHTTPServer):
         if address[0] != '127.0.0.1':
             raise ValueError('O chat web deve escutar apenas em 127.0.0.1.')
         self.root = Path(root).resolve()
-        self.engine = engine if engine is not None else Conversation(root)
+        self.governance = Governance(root)
+        self.engine = engine if engine is not None else Conversation(root, self.governance)
         self.token = secrets.token_urlsafe(32)
         super().__init__(address, Handler)
 
@@ -137,7 +143,7 @@ class Handler(BaseHTTPRequestHandler):
         origin = self.headers.get('Origin')
         return origin is None or origin == 'http://' + self.headers.get('Host', '')
 
-    def send(self, status, content, mime='application/json; charset=utf-8'):
+    def send(self, status, content, mime='application/json; charset=utf-8', extra_headers=None):
         if not isinstance(content, bytes):
             content = json.dumps(content, ensure_ascii=False).encode('utf-8')
         self.send_response(status)
@@ -147,6 +153,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
+        for key, value in (extra_headers or {}).items():
+            self.send_header(key, value)
         self.end_headers()
         try:
             self.wfile.write(content)
@@ -162,6 +170,16 @@ class Handler(BaseHTTPRequestHandler):
             self.send(204, b'')
         elif route == '/api/status':
             self.send(200, {**self.server.engine.status(), 'token': self.server.token})
+        elif route == '/api/governance':
+            self.send(200, {'owner': self.server.governance.owner(), 'token': self.server.token,
+                            'scope': 'local', 'remote_access': False})
+        elif route == '/api/admin/state':
+            if not self.server.governance.authenticated(self.owner_token()):
+                self.send(401, {'error': 'Entre com a senha do responsável.'})
+                return
+            self.send(200, {**self.server.governance.dashboard(),
+                            'owner': self.server.governance.owner(),
+                            'scope': 'local', 'remote_access': False})
         elif route == '/api/history':
             if not secrets.compare_digest(self.headers.get('X-Yuna-Token', ''), self.server.token):
                 self.send(403, {'error': 'Reabra a página local da Yuna.'})
@@ -184,12 +202,22 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send(404, {'error': 'Página não encontrada.'})
 
+    def owner_token(self):
+        try:
+            cookies = SimpleCookie()
+            cookies.load(self.headers.get('Cookie', ''))
+            return cookies['YunaOwner'].value if 'YunaOwner' in cookies else ''
+        except CookieError:
+            return ''
+
     def do_POST(self):
         if not self.valid_host() or not self.valid_origin() or not secrets.compare_digest(
                 self.headers.get('X-Yuna-Token', ''), self.server.token):
-            self.send(403, {'error': 'Reabra a página local da Yuna para conectar o chat.'})
+            self.send(403, {'error': 'Reabra a página local da Yuna para conectar.'})
             return
-        if urlsplit(self.path).path != '/api/chat':
+        route = urlsplit(self.path).path
+        if route not in ('/api/chat', '/api/learning/propose', '/api/learning/withdraw', '/api/learning/status', '/api/admin/login',
+                         '/api/admin/logout', '/api/admin/review'):
             self.send(404, {'error': 'Ação não encontrada.'})
             return
         if self.headers.get_content_type() != 'application/json':
@@ -201,16 +229,56 @@ class Handler(BaseHTTPRequestHandler):
                 self.send(413, {'error': 'Divida essa mensagem em partes menores.'})
                 return
             payload = json.loads(self.rfile.read(length))
-            message = payload.get('message') if isinstance(payload, dict) else None
-            if not isinstance(message, str) or not message.strip():
-                self.send(400, {'error': 'Escreva uma mensagem antes de enviar.'})
-                return
-            mode = payload.get('mode', 'companhia')
-            if not isinstance(mode, str) or mode not in CONVERSATION_MODES:
-                self.send(400, {'error': 'Escolha Conversar, Desabafar ou Pedir conselho.'})
-                return
+            if not isinstance(payload, dict):
+                raise ValueError()
         except (ValueError, UnicodeDecodeError):
             self.send(400, {'error': 'A mensagem não pôde ser lida. Tente novamente.'})
+            return
+        if route == '/api/chat':
+            self.chat(payload)
+            return
+        store = self.server.governance
+        try:
+            if route == '/api/learning/propose':
+                proposal = store.propose(payload.get('text'), payload.get('consent'), payload.get('owner_id'))
+                self.send(201, {**proposal, 'status': 'pending',
+                                'message': 'Texto compartilhado nesta instalação e aguardando revisão.'})
+            elif route == '/api/learning/withdraw':
+                store.withdraw(payload.get('id'), payload.get('receipt'))
+                self.send(200, {'ok': True, 'status': 'withdrawn'})
+            elif route == '/api/learning/status':
+                self.send(200, {'status': store.own_status(payload.get('id'), payload.get('receipt'))})
+            elif route == '/api/admin/login':
+                token = store.login(payload.get('password'))
+                self.send(200, {'ok': True}, extra_headers={
+                    'Set-Cookie': f'YunaOwner={token}; HttpOnly; SameSite=Strict; Path=/api/admin; Max-Age=1800'})
+            elif route == '/api/admin/logout':
+                store.logout(self.owner_token())
+                self.send(200, {'ok': True}, extra_headers={
+                    'Set-Cookie': 'YunaOwner=; HttpOnly; SameSite=Strict; Path=/api/admin; Max-Age=0'})
+            elif route == '/api/admin/review':
+                if not store.authenticated(self.owner_token()):
+                    raise PermissionError('Entre com a senha do responsável.')
+                ident, decision = payload.get('id'), payload.get('decision')
+                if not isinstance(ident, str) or len(ident) > 80 or not isinstance(decision, str):
+                    raise ValueError('Pedido de revisão inválido.')
+                store.review(ident, decision)
+                self.send(200, {'ok': True})
+        except PermissionError as error:
+            self.send(401, {'error': str(error)})
+        except ValueError as error:
+            self.send(400, {'error': str(error)})
+        except sqlite3.Error:
+            self.send(503, {'error': 'A gestão está ocupada. Tente novamente.'})
+
+    def chat(self, payload):
+        message = payload.get('message')
+        mode = payload.get('mode', 'companhia')
+        if not isinstance(message, str) or not message.strip():
+            self.send(400, {'error': 'Escreva uma mensagem antes de enviar.'})
+            return
+        if not isinstance(mode, str) or mode not in CONVERSATION_MODES:
+            self.send(400, {'error': 'Escolha Conversar, Desabafar ou Pedir conselho.'})
             return
         try:
             answer = self.server.engine.reply(message.strip(), mode=mode)

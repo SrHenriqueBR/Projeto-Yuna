@@ -239,6 +239,16 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
 .chat-content:focus-visible{outline:1px solid #b998df;outline-offset:5px;border-radius:10px}
 @media(max-width:580px){.conversation-modes button{font-size:9px;padding:9px 5px;min-width:0;white-space:normal;flex:1 1 0}.conversation-hint{font-size:10px}}
 
+
+.learning-panel{border:1px solid #b38acf38;background:#19182b9c;border-radius:16px;margin-top:18px;color:#d8c5eb}
+.learning-panel summary{cursor:pointer;padding:16px;font-size:12px;font-weight:700}
+.learning-body{padding:0 16px 14px}.learning-body h3{font-size:14px;margin:17px 0 9px}.learning-body p{font-size:11px;line-height:1.75;color:#bdb0cd}
+.learning-body form>label,.learning-body details>label{font-size:11px;display:block;margin:12px 0 7px}
+.learning-body textarea{width:100%;font:inherit;font-size:12px;line-height:1.6;resize:vertical;min-height:70px;background:#0e1220;color:#eedff9;border:1px solid #b190ca50;border-radius:10px;padding:11px}
+.learning-body .learning-consent{display:flex;align-items:flex-start;gap:8px;font-size:10px;line-height:1.65;color:#d5c2e6}.learning-consent input{accent-color:#b38aeb;margin-top:3px;flex-shrink:0}
+.learning-body button{background:#604679;color:#f6e5ff;border:1px solid #bda1d544;border-radius:9px;padding:9px 11px;font:inherit;font-size:10px;margin:8px 5px 0 0}
+#learningMessage{color:#e2c0f4;min-height:18px}#learningReceipt{border-top:1px solid #ffffff18;margin-top:10px}#learningReceipt summary{padding:13px 0;font-size:11px}.learning-body a{color:#d9baf6;text-decoration:underline}
+
 </style>
 </head>
 <body>
@@ -269,6 +279,23 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
    <p class="chat-privacy">Conversa e memórias ficam no seu computador.</p>
    </div>
   </section>
+  <details class="learning-panel">
+   <summary>Como a Yuna ajuda e aprende</summary>
+   <div class="learning-body"><h3>Uma assistente para o seu dia</h3>
+    <p><strong>No chat:</strong> conversar, ajudar a organizar ideias, pensar em opções e guardar preferências que você declarar.</p>
+    <p><strong>No aplicativo para PC:</strong> abrir programas e pastas, criar documentos e usar os recursos locais disponíveis mediante solicitação.</p>
+    <p><strong>Câmera local:</strong> a prévia do aplicativo exige autorização. Uma central para visualizar tela, informações ou câmera de outro computador ainda não está configurada.</p>
+    <h3>Aprender com você, com clareza</h3>
+    <p>Preferências pessoais ficam na memória local. Para contribuir com a base comum do chat desta instalação, escreva abaixo uma dica geral e revise exatamente o que será compartilhado.</p>
+    <p id="learningOwner">Verificando o responsável desta instalação…</p>
+    <form id="learningForm"><label for="learningText">Texto que você quer compartilhar (até 500 caracteres)</label><textarea id="learningText" rows="3" maxlength="500" placeholder="Uma dica geral, sem informações pessoais ou credenciais…" disabled></textarea>
+     <label class="learning-consent"><input type="checkbox" id="learningConsent" disabled><span id="learningConsentLabel">Autorizo compartilhar este texto com o responsável indicado, para revisão e possível uso como referência geral nesta instalação.</span></label>
+     <button type="submit" id="sendLearning" disabled>Enviar para revisão</button></form>
+    <p id="learningMessage" role="status"></p>
+    <details id="learningReceipt"><summary>Consultar ou retirar uma sugestão compartilhada</summary><p>Guarde o comprovante em particular. Ele permite consultar ou retirar somente sua sugestão, mesmo depois de aprovada.</p><label for="receiptText">Comprovante da sugestão</label><textarea id="receiptText" rows="3" spellcheck="false" maxlength="2000" placeholder="Cole aqui o comprovante completo…"></textarea><button type="button" id="restoreReceipt">Carregar comprovante</button><button type="button" id="checkLearning" disabled>Consultar revisão</button><button type="button" id="withdrawLearning" disabled>Retirar meu texto</button></details>
+    <p><a href="./yuna-gestao.html">Painel do responsável desta instalação ↗</a></p>
+   </div>
+  </details>
   <div class="actions-title">Explore as expressões da Yuna</div>
   <div class="actions" aria-label="Expressões">
    <button type="button" class="mood active" data-action="idle" aria-pressed="true">✧ Normal</button>
@@ -611,6 +638,7 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
 </script>
 <script src="./yuna-viva.js" defer></script>
 <script src="./yuna-chat.js" defer></script>
+<script src="./yuna-learning.js" defer></script>
 </body>
 </html>
 

@@ -125,6 +125,47 @@ class WebTests(unittest.TestCase):
         finally:
             engine.lock.release()
 
+    def test_owner_routes_require_login_and_only_consented_text_is_available(self):
+        store = self.server.governance
+        store.configure('Responsável de teste', 'Senha ficticia para teste 123')
+        owner = store.owner()
+        text = 'Uma dica geral para organizar um estudo com pequenas etapas.'
+        status, _, body = self.request('POST', '/api/learning/propose', {'text': text, 'consent': True, 'owner_id': owner['id']})
+        self.assertEqual(status, 201)
+        proof = json.loads(body)
+        self.assertEqual(self.request('GET', '/api/admin/state')[0], 401)
+        self.assertEqual(self.request('POST', '/api/admin/review', {'id':proof['id'],'decision':'approved','owner':True})[0], 401)
+        self.assertEqual(self.request('POST', '/api/admin/login', {'password':'Kaizen'})[0], 401)
+        status, headers, _ = self.request('POST', '/api/admin/login', {'password':'Senha ficticia para teste 123'})
+        self.assertEqual(status, 200)
+        self.assertIn('HttpOnly', headers['Set-Cookie'])
+        cookie = {'Cookie': headers['Set-Cookie'].split(';')[0]}
+        status, _, body = self.request('GET', '/api/admin/state', headers=cookie)
+        result = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(result['proposals'][0]['content'], text)
+        self.assertNotIn('messages', result)
+        self.assertFalse(result['remote_access'])
+        self.assertEqual(self.request('POST', '/api/admin/review', {'id':proof['id'],'decision':'approved'},cookie)[0], 200)
+        self.assertIn(text, store.reference_context())
+        self.assertEqual(self.request('POST', '/api/learning/withdraw', proof)[0], 200)
+        self.assertEqual(store.reference_context(), '')
+        self.assertEqual(self.request('POST', '/api/admin/logout', {}, cookie)[0], 200)
+        self.assertEqual(self.request('GET', '/api/admin/state', headers=cookie)[0], 401)
+
+    def test_shared_reference_is_used_only_after_owner_approval(self):
+        store = self.server.governance
+        store.configure('Responsável de teste', 'Senha ficticia para teste 123')
+        text = 'REFERENCIA_TESTE: dividir um objetivo em etapas facilita revisar o progresso.'
+        proof = store.propose(text, True, store.owner()['id'])
+        engine = Conversation(self.root, store)
+        for approved in (False, True):
+            if approved: store.review(proof['id'], 'approved')
+            with patch('yuna.ask_model', return_value='Vamos pensar em uma etapa.') as model:
+                engine.reply('Como posso organizar uma tarefa?')
+            prompt = model.call_args.args[0][0]['content']
+            self.assertEqual(text in prompt, approved)
+
 
 if __name__ == '__main__':
     unittest.main()

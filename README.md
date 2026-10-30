@@ -4,6 +4,12 @@ Assistente pessoal local para **Windows 10/11**, com conversa em português, mem
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
+## Gestão local de aprendizados
+
+A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`configurar_gestao_yuna.bat`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `iniciar_yuna_web.bat` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
+
+Esse painel gerencia conhecimentos **desta instalação**. Não é uma central remota de usuários e não transmite conversas, tela, câmera ou arquivos ao criador da Yuna. [Funcionamento, configuração e limites](docs/GESTAO_E_APRENDIZADO.md).
+
 ## Conversar com a Yuna pelo navegador
 
 1. Baixe e extraia a versão atual do projeto, preservando a pasta `data` da sua instalação.

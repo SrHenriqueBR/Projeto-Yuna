@@ -7,6 +7,13 @@ on:
       - 'docs/yuna-viva.js'
       - 'docs/yuna-chat.js'
       - 'yuna_web.py'
+      - 'yuna_governance.py'
+      - 'configurar_gestao_yuna.bat'
+      - 'docs/yuna-learning.js'
+      - 'docs/yuna-gestao.html'
+      - 'docs/yuna-gestao.js'
+      - 'tests/test_yuna_governance.py'
+      - 'tests/yuna_learning.test.cjs'
       - 'yuna.py'
       - 'iniciar_yuna_web.bat'
       - 'tests/test_yuna_web.py'
@@ -21,6 +28,13 @@ on:
       - 'docs/yuna-viva.js'
       - 'docs/yuna-chat.js'
       - 'yuna_web.py'
+      - 'yuna_governance.py'
+      - 'configurar_gestao_yuna.bat'
+      - 'docs/yuna-learning.js'
+      - 'docs/yuna-gestao.html'
+      - 'docs/yuna-gestao.js'
+      - 'tests/test_yuna_governance.py'
+      - 'tests/yuna_learning.test.cjs'
       - 'yuna.py'
       - 'iniciar_yuna_web.bat'
       - 'tests/test_yuna_web.py'
@@ -44,6 +58,8 @@ jobs:
         run: |
           node --check docs/yuna-viva.js
           node --check docs/yuna-chat.js
+          node --check docs/yuna-learning.js
+          node --check docs/yuna-gestao.js
           python - <<'PY'
           from pathlib import Path
           import re
@@ -57,6 +73,7 @@ jobs:
         run: |
           python -m unittest discover -s tests -p test_yuna_live_web.py -v
           python -m unittest discover -s tests -p test_yuna_web.py -v
-          node --test tests/yuna_web_controls.test.cjs tests/yuna_chat.test.cjs
+          python -m unittest discover -s tests -p test_yuna_governance.py -v
+          node --test tests/yuna_web_controls.test.cjs tests/yuna_chat.test.cjs tests/yuna_learning.test.cjs
 
 
