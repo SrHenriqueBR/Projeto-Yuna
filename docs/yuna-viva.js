@@ -35,7 +35,7 @@
   const num = (x) => x.toFixed(2);
   const motion = (element, value, origin) => {
     if (!element) return;
-    element.style.transformBox = "view-box";
+    element.style.transformBox = (element.classList.contains("eye") || element.classList.contains("mouth-open")) ? "fill-box" : "view-box";
     if (origin) element.style.transformOrigin = origin;
     element.style.transform = value;
   };
