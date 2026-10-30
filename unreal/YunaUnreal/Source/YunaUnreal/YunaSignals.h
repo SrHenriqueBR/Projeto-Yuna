@@ -41,4 +41,37 @@ struct FYunaSignals
 
     UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
     float Wave = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float BlinkLeft = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float BlinkRight = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float HeadTilt = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float EyeYaw = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float EyePitch = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float BodyBob = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float LeftArm = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float RightArm = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float LeftLeg = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float RightLeg = 0.f;
+
+    UPROPERTY(BlueprintReadOnly, Category="Yuna|Animation")
+    float HairSway = 0.f;
 };
