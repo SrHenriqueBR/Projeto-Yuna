@@ -33,7 +33,7 @@ jobs:
           from pathlib import Path
           import re
           html=Path("docs/yuna-preview.html").read_text(encoding="utf-8")
-          scripts=re.findall(r"<script[^>]*>([\\s\\S]*?)</script>", html)
+          scripts=re.findall(r"<script[^>]*>([\s\S]*?)</script>", html)
           source="\n".join(x for x in scripts if x.strip())
           Path("/tmp/yuna-inline.js").write_text(source, encoding="utf-8")
           PY
