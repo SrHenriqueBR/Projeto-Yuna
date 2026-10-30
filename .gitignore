@@ -10,3 +10,15 @@ avatar3d/node_modules/
 avatar3d/dist/
 avatar3d/.vite/
 avatar3d/**/*.vrm
+
+# Unreal Engine experimental: saídas geradas ou assets pessoais pesados
+unreal/**/Binaries/
+unreal/**/Intermediate/
+unreal/**/Saved/
+unreal/**/DerivedDataCache/
+unreal/**/.vs/
+unreal/**/*.sln
+unreal/**/*.suo
+unreal/**/*.vrm
+unreal/**/Plugins/VRM4U/
+unreal/YunaUnreal/Content/UserAvatars/
