@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { EMOTIONS, clamp, smooth, blinkAt, frameAt, expressionValues } from "../src/motion.mjs";
+import { EMOTIONS, clamp, smooth, blinkAt, ambientGazeAt, frameAt, expressionValues } from "../src/motion.mjs";
 
 test("animation signals are bounded", () => {
   const f = frameAt(12, { pointerX: 999, pointerY: -999, mouthLevel: 44 });
@@ -46,4 +46,42 @@ test("smoothing is gradual; unknown pose falls back safely", () => {
   assert.ok(smooth(0, 1, 6, 0.016) < 1);
   assert.equal(frameAt(0, { pose: "unsupported" }).emotion, "idle");
   assert.equal(frameAt(NaN).mouth, 0);
+});
+
+test("idle shifts its gaze without cursor input and remains bounded", () => {
+  const left = frameAt(4, {pose: "idle"});
+  const right = frameAt(15, {pose: "idle"});
+  assert.ok(left.gazeX < -0.1);
+  assert.ok(right.gazeX > 0.1);
+  assert.ok(Math.abs(left.headYaw) <= 0.16);
+  assert.ok(Math.abs(right.headYaw) <= 0.16);
+  assert.notEqual(ambientGazeAt(4).x, ambientGazeAt(15).x);
+});
+
+test("small idle gestures remain safe, and pointer has priority", () => {
+  const f = frameAt(6, {pointerX: 1, pointerY: -1});
+  assert.equal(f.gazeX, 1);
+  assert.equal(f.gazeY, -1);
+  assert.ok(Math.abs(f.leftArmSwing) < 0.08);
+  assert.ok(Math.abs(f.rightArmSwing) < 0.08);
+  assert.ok(Math.abs(f.hairSwing) < 0.026);
+  assert.ok(Math.abs(f.bodyBob) < 0.01);
+  assert.ok(Math.abs(f.bodySway) < 0.036);
+});
+
+test("blinks vary in timing, including a gentle double blink", () => {
+  assert.ok(blinkAt(9.53) > 0.99);
+  assert.ok(blinkAt(13.62) > 0.99);
+  assert.ok(blinkAt(13.94) > 0.99);
+  assert.equal(blinkAt(7), 0);
+  assert.equal(blinkAt(13.62, true), 0);
+});
+
+test("accessibility reduced motion suppresses all automatic idle motion", () => {
+  const f = frameAt(15, {reducedMotion: true});
+  for (const key of ["blink", "gazeX", "gazeY", "headYaw", "headPitch",
+                    "headTilt", "bodySway", "bodyBob", "breath",
+                    "leftArmSwing", "rightArmSwing", "hairSwing"]) {
+    assert.equal(f[key], 0, key);
+  }
 });
