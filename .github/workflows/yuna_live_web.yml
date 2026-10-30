@@ -1,0 +1,42 @@
+name: Prévia web Yuna Viva
+
+on:
+  pull_request:
+    paths:
+      - 'docs/yuna-preview.html'
+      - 'docs/yuna-viva.js'
+      - 'tests/test_yuna_live_web.py'
+      - '.github/workflows/yuna_live_web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/yuna-preview.html'
+      - 'docs/yuna-viva.js'
+      - 'tests/test_yuna_live_web.py'
+      - '.github/workflows/yuna_live_web.yml'
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validar sintaxe JavaScript
+        run: |
+          node --check docs/yuna-viva.js
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path("docs/yuna-preview.html").read_text(encoding="utf-8")
+          scripts=re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", html)
+          source="\n".join(x for x in scripts if x.strip())
+          Path("/tmp/yuna-inline.js").write_text(source, encoding="utf-8")
+          PY
+          node --check /tmp/yuna-inline.js
+      - name: Testar HTML e controles do avatar
+        run: python -m unittest tests.test_yuna_live_web -v
