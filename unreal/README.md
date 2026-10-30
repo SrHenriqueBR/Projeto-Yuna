@@ -64,11 +64,11 @@ não substitui o trabalho artístico de uma personagem VTuber finalizada.
 5. Instale uma versão do **VRM4U** correspondente à sua versão do Unreal; consulte as releases oficiais: https://github.com/ruyo/VRM4U/releases . Extraia em **unreal/YunaUnreal/Plugins/VRM4U/**, de modo que o arquivo VRM4U.uplugin fique diretamente nessa pasta. A instalação e as licenças são independentes deste repositório.
 6. Crie ou exporte seu próprio personagem anime como um arquivo .vrm com direitos de uso adequados. Importe-o no Unreal via VRM4U. Não fazemos download de modelos de terceiros nem os redistribuímos.
 7. Crie um Blueprint derivado da classe **AYunaAvatarActor** e associe ao componente **AvatarMesh** o Skeletal Mesh da personagem. Coloque esse Blueprint no nível.
-8. Confira no Skeletal Mesh os nomes dos morph targets e atualize no ator **BlinkMorphName**, **MouthMorphName** e **HappyMorphName**. Os defaults são Blink, A e Joy, mas diferentes VRMs usam nomes distintos.
-9. Crie um **Animation Blueprint** com classe pai **UYunaAnimInstance**, use uma pose idle e nós **Transform (Modify) Bone** para olhar, cabeça, tronco e braços. Os sinais são **Signals.HeadYaw**, **Signals.HeadPitch**, **Signals.Breath**, **Signals.BodySway**, **Signals.Wave** e **Signals.Pose**. Os nomes e o retarget de ossos dependem da malha importada.
-10. Clique **Play** no Unreal e depois, no aplicativo Yuna Desktop, clique **Conectar Yuna Unreal**. No Windows, esse clique também tenta abrir o arquivo .uproject. Teste botões de emoção e reprodução de voz na Yuna.
+8. Para **ver os primeiros movimentos sem AnimBlueprint**, deixe **bDirectBonePreview** ativado (padrão). Verifique os ossos encontrados em **Yuna | Bones**; se não houver movimentos de cabeça/braços, informe manualmente seus nomes no ator.
+9. Clique **Play** no Unreal e depois, no aplicativo Yuna Desktop, clique **Conectar Yuna Unreal**. No Windows, esse clique também tenta abrir o arquivo .uproject. Teste **Acenar**, **Feliz**, **Dormir** e reprodução de voz.
+10. Para expressões faciais reais, **desmarque bDirectBonePreview** e crie um **Animation Blueprint** derivado de **UYunaAnimInstance** com nós **Transform (Modify) Bone**, usando `Signals`. Configure os morph targets **BlinkMorphName**, **MouthMorphName**, **HappyMorphName** (defaults Blink, A, Joy). Em rigs com piscadas separadas, configure **LeftBlinkMorphName** e **RightBlinkMorphName**. Movimentos de cabeça/olhos e física de cabelo dependem da sua hierarquia de ossos, rig e assets.
 
-O ator faz pequenas oscilações enquanto está em repouso, mesmo quando a ponte Python não foi ativada. Entretanto, cabelo com física, gestos articulados e expressões faciais completas dependem de rig, spring bones e Animation Blueprints configurados, e não de uma imagem JPG/PNG.
+O ator calcula movimentos ambientes mesmo sem a ponte Python; o corpo passa a se mover no modo de ossos diretos quando uma malha rigada está vinculada. Cabelo com física e expressões faciais completas ainda exigem rig adequado, spring bones e Animation Blueprints configurados — nunca uma imagem JPG/PNG isolada.
 
 ## Testar a integração sem Unreal
 
@@ -77,7 +77,7 @@ Na raiz do repositório, execute estes comandos:
     py -3 -m unittest tests.test_unreal_state_bridge -v
     py -3 -m unittest tests.test_unreal_desktop -v
 
-O segundo requer PySide6, se instalado. Os testes da ponte não abrem rede nem executam ações do Windows. O editor Unreal exige validação de compilação no Windows com o SDK instalado.
+O segundo requer PySide6, se instalado. O fluxo de GitHub Actions **Movimento C++ da Yuna** também compila o cabeçalho de cálculos em C++17 com g++ e executa testes; isso **não** compila o ator pela Unreal Build Tool. Os testes da ponte não abrem rede nem executam ações do Windows. O editor Unreal exige validação de compilação no Windows com o SDK instalado.
 
 ## Estrutura principal
 
