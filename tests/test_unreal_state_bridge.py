@@ -48,7 +48,7 @@ class UnrealBridgeTests(unittest.TestCase):
         self.assertEqual(
             set(initial), {"version", "session", "updated_at", "revision",
                            "gesture_seq", "pose", "emotion", "intensity",
-                           "speaking", "mouth_level"})
+                           "speaking", "has_amplitude", "mouth_level"})
         self.assertNotIn("conversation", self.bridge.path.read_text())
         self.assertFalse(list(self.bridge.path.parent.glob(".yuna_unreal_*.tmp")))
 
@@ -68,6 +68,7 @@ class UnrealBridgeTests(unittest.TestCase):
         self.assertTrue(self.bridge.publish(snap, event="speech.level",
                                             has_amplitude=True))
         self.assertAlmostEqual(self.read()["mouth_level"], 0.8)
+        self.assertTrue(self.read()["has_amplitude"])
         self.now[1] += 0.02
         snap = self.event("speech.level", speech_id="a1", position_ms=120, amplitude=0.7)
         self.assertFalse(self.bridge.publish(snap, event="speech.level"))
@@ -79,6 +80,7 @@ class UnrealBridgeTests(unittest.TestCase):
         snap = self.event("speech.ended", speech_id="a1")
         self.bridge.publish(snap, event="speech.ended")
         self.assertFalse(self.read()["speaking"])
+        self.assertFalse(self.read()["has_amplitude"])
         self.assertEqual(self.read()["mouth_level"], 0.0)
 
     def test_file_cleared_on_stop_without_deleting_other_session(self):
