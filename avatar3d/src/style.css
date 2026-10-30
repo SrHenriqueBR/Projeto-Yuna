@@ -41,3 +41,11 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 .power-monitor[data-mode="low"] .power-fill,.power-monitor[data-mode="critical"] .power-fill{background:#ed8395}
 .power-monitor[data-mode="charging"] .power-fill,.power-monitor[data-mode="full"] .power-fill{background:#91d9b4}
 @media(prefers-reduced-motion:reduce){.power-fill{transition:none}}
+
+/* Ajuda para instalar um VRM anime sem ocultar o estúdio de aparência. */
+.anime-tip{margin:14px 0 20px;padding:13px 14px;border-radius:12px;
+  border:1px solid #8664bf66;background:#251c36;color:#cfc4e3}
+.anime-tip strong{color:#f1e6ff}
+.anime-tip a{color:#ddc5ff;text-decoration:underline;text-underline-offset:3px}
+.anime-tip a:focus-visible{outline:2px solid #cca6ff;outline-offset:2px}
+.anime-tip code{font-size:11px;overflow-wrap:anywhere;color:#eddcff}
