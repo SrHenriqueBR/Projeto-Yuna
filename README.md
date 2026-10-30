@@ -1,6 +1,6 @@
-# Projeto Yuna — versão 0.26
+# Projeto Yuna — versão 0.43
 
-Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador e avatar chibi **2D**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
+Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
@@ -207,27 +207,38 @@ Automação de controles, compreensão visual e compatibilidade com jogos
 precisam de autorização específica por sessão, mecanismo de parada e
 testes offline antes de manipular teclado ou gamepad.
 
-### Avatar 3D VRM experimental (opcional)
+### Yuna Anime 3D / VRM opcional (0.43)
 
-A versão 2D continua como padrão. Para testar o protótipo **3D opcional**
-(com movimentos leves de cabeça, olhos, respiração, expressões e gestos),
-instale **Node.js 22 LTS**, entre em `avatar3d/` e execute `npm install`.
-Depois execute `iniciar_yuna_3d.bat` na raiz ou `npm run dev`
-na pasta `avatar3d`, e abra `http://127.0.0.1:5173`.
+A interface 2D continua como padrão. O renderizador **Three.js +
+@pixiv/three-vrm** pode exibir um avatar anime VRM com esqueleto articulado.
+Na versão 0.43, ele pisca em intervalos variados, respira, muda de
+postura, move braços e cabelo e olha ao redor mesmo sem mover o mouse.
+A física do cabelo depende do modelo VRM importado.
 
-Depois de iniciar o navegador 3D, clique em **◇ Conectar Yuna 3D** na Yuna Desktop para vincular a voz local (porta dinâmica e token de sessão). Essa ponte transmite somente movimentos, expressão e amplitude — **nunca conversas ou áudio bruto**. O link é opcional e fecha ao encerrar a janela.\n\nO protótipo inclui uma **personagem anime geométrica original e personalizável**.
-No editor do navegador, altere cabelo, penteado, olhos, roupa, acessórios
-e presets. Essas escolhas são guardadas localmente no navegador, sem
-alterar VRMs importados. Com a ponte 3D ativada, comandos de visual
-reconhecidos pela Yuna Desktop também atualizam essa prévia 3D.
+**O renderizador não inclui um modelo anime artístico pronto:** na
+ausência de `yuna.vrm`, aparece uma prévia geométrica simplificada.
+Para ter rosto, cabelo e roupas realmente anime, crie um avatar
+próprio no VRoid Studio e exporte `yuna.vrm`:
 
-O protótipo mostra uma prévia geométrica original enquanto não há modelo.
-Importe **seu próprio arquivo .vrm**, com direitos de uso, para animar
-uma personagem rigada. Ainda **não existe ligação** com a fala do
-QMediaPlayer, com o cérebro Python/Ollama ou com o AvatarController.
-O modo 3D não liga sozinho no Windows e não é instalado pelo assistente
-padrão: preserve `data/` e `assets/` ao atualizar. Instruções e limites:
-[`avatar3d/README.md`](avatar3d/README.md).
+1. Instale **Node.js 22 LTS** para a interface 3D.
+2. Na pasta `avatar3d/`, execute `npm install` uma vez.
+3. Coloque seu arquivo `yuna.vrm` em `avatar3d/public/yuna.vrm`
+   para carregamento automático; ou importe o VRM manualmente pelo botão.
+4. Na raiz, execute `iniciar_yuna_3d.bat`. Abra
+   `http://127.0.0.1:5173` no navegador.
+5. Se quiser sincronizar voz e expressões, abra também
+   `iniciar_yuna.bat` e clique **Conectar Yuna 3D**.
+
+A ponte usa localhost, token temporário e envia apenas estado e amplitude
+da fala, nunca áudio bruto ou conversas. A boca acompanha reprodução
+autorizada de forma aproximada, não faz correspondência precisa de
+fonemas. O navegador não executa comandos no computador.
+
+**Guias:** [criar uma Yuna realmente anime](docs/COMO_CRIAR_YUNA_ANIME.md),
+[renderizador e VRM](avatar3d/README.md). O documento de anime compara
+VRoid Studio, Unity VRoid Character Customization e CharacterGen e
+explica as licenças. Os modelos pessoais VRM não são enviados ao
+GitHub e devem ser preservados em backups locais.
 
 ### Voz e boca animada (0.25)
 
@@ -264,7 +275,10 @@ Serviços externos têm políticas, disponibilidade e limites próprios. Use var
 
 ## Evolução VTuber (planejamento)
 
-Está disponível o [plano de arquitetura do avatar VTuber](docs/PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **Esses renderizadores novos ainda não estão implementados.** O modo leve permanecerá disponível para máquinas de 8 GB.
+Está disponível o [plano de arquitetura do avatar VTuber](docs/PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **O renderizador VRM 3D experimental já existe**, mas ainda não há personagem
+anime artística fornecida, caminhada livre pela área de trabalho ou
+sincronização labial por fonemas. O modo leve permanecerá disponível para
+máquinas de 8 GB.
 
 ## Estrutura do código
 
