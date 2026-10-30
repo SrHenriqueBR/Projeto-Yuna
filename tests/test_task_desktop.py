@@ -22,9 +22,9 @@ class DesktopTaskStopTests(unittest.TestCase):
                 worker.submit("pedido novo")
                 self.assertTrue(cancelled())
                 return "resposta antiga"
+            worker.queue.put(None)
             self.assertFalse(cancelled())
             self.assertTrue(callbacks[0]())
-            worker.queue.put(None)
             return "resposta nova"
 
         with patch("yuna_desktop.Memory") as memory, patch("yuna_desktop.Computer"), \

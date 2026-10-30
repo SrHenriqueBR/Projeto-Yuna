@@ -15,6 +15,42 @@ permissions:
   contents: read
 
 jobs:
+  encerrar_execucoes_antigas:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Encerrar somente as duas execuções substituídas desta atualização
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.error, urllib.request
+          base = 'https://api.github.com/repos/SrHenriqueBR/Projeto-Yuna/actions/runs/'
+          headers = {'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                     'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'}
+          runs = {41118527019: '8c5040ce45dd1f5e11a30a2306993ace129d6818',
+                  41118779357: '77831ea3ed2e9b6c0b25e86d76a7df287fea18f2'}
+          for ident, expected in runs.items():
+              url = base + str(ident)
+              with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=15) as response:
+                  run = json.load(response)
+              if run['head_sha'] != expected or run['name'] != 'Testes da Yuna':
+                  raise RuntimeError('A execução não corresponde ao teste antigo esperado.')
+              if run['status'] == 'completed':
+                  print('Já encerrada:', ident)
+                  continue
+              try:
+                  request = urllib.request.Request(url + '/cancel', data=b'', headers=headers, method='POST')
+                  with urllib.request.urlopen(request, timeout=15) as response:
+                      print('Cancelamento solicitado:', ident, response.status)
+              except urllib.error.HTTPError as error:
+                  if error.code != 409:
+                      raise
+                  print('Execução já encerrando:', ident)
+          PY
   laboratorio:
     runs-on: ubuntu-latest
     timeout-minutes: 12

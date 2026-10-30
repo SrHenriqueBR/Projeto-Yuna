@@ -114,7 +114,7 @@ HARNESS = r'''
 import json, sys, unittest
 sys.path.insert(0, "/work")
 suite = unittest.defaultTestLoader.discover("/work/tests", pattern="test_*.py")
-result = unittest.TextTestRunner(verbosity=2).run(suite)
+result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(suite)
 print("YUNA_TEST_RESULT=" + json.dumps({"tests": result.testsRun,
     "ok": result.wasSuccessful(), "skipped": len(result.skipped)}), flush=True)
 sys.exit(0 if result.wasSuccessful() and result.testsRun and not result.skipped else 1)
@@ -126,7 +126,7 @@ from pathlib import Path
 root = Path(sys.argv[1])
 sys.path.insert(0, str(root))
 suite = unittest.defaultTestLoader.discover(str(root / "tests"), pattern="test_lab_contract.py")
-result = unittest.TextTestRunner(verbosity=2).run(suite)
+result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(suite)
 print("YUNA_TEST_RESULT=" + json.dumps({"tests": result.testsRun,
     "ok": result.wasSuccessful(), "skipped": len(result.skipped)}), flush=True)
 sys.exit(0 if result.wasSuccessful() and result.testsRun and not result.skipped else 1)

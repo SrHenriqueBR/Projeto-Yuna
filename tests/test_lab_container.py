@@ -54,6 +54,13 @@ class ContainerContract(unittest.TestCase):
             self.assertEqual(report["status"], "tests_passed", report)
             self.assertEqual(report["attempts"][-1]["tests"], 10)
             self.assertEqual((root / lab.TARGETS[0]).read_text(encoding="utf-8"), original)
+            # Docker transporta stdout/stderr por canais distintos. Repetir o
+            # resultado detecta marcadores perdidos por mistura desses canais.
+            for attempt in range(3):
+                with self.subTest(repetition=attempt):
+                    result = runner.run(folder / "workspace")
+                    self.assertEqual(result.status, "passed", result.detail)
+                    self.assertEqual(result.tests, 10)
 
 
 if __name__ == "__main__":
