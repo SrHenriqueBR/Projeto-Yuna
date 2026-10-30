@@ -1,0 +1,41 @@
+name: Laboratório e tarefas da Yuna
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '.github/workflows/testes-laboratorio.yml'
+  pull_request:
+    paths:
+      - '**.py'
+      - '.github/workflows/testes-laboratorio.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  laboratorio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Autoteste da base instalada
+        run: python development_lab.py --autoteste
+      - name: Testar laboratório e limites de execução
+        run: python -m unittest discover -s tests -p 'test_development_lab.py' -v
+      - name: Testar sequências de tarefas
+        run: python -m unittest discover -s tests -p 'test_task_runner.py' -v
+      - name: Testar perfis de inferência
+        run: python -m unittest discover -s tests -p 'test_inference_config.py' -v
+      - name: Testar pesquisa pública
+        run: python -m unittest discover -s tests -p 'test_web_research.py' -v
+      - name: Preparar imagem de testes no CI
+        run: docker pull python:3.12-slim
+      - name: Comprovar teste real em contêiner sem rede e com montagem somente leitura
+        env:
+          YUNA_TEST_DOCKER: '1'
+        run: python -m unittest discover -s tests -p 'test_lab_container.py' -v

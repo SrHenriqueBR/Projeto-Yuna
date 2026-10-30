@@ -85,14 +85,16 @@ class DesktopWorker(Thread):
         self.signals = signals
         self.queue = Queue()
         self._cancelled = False
+        self._generation = 0
 
     def submit(self, message):
         self._cancelled = False
-        self.queue.put(("chat", message))
+        self.queue.put(("chat", message, self._generation))
 
     def cancel_pending(self):
-        """Descarta respostas futuras e tarefas pendentes; não mata ações em curso."""
+        """Descarta a fila e interrompe operações cooperativas entre etapas."""
         self._cancelled = True
+        self._generation += 1
         with self.queue.mutex:
             self.queue.queue.clear()
 
@@ -106,6 +108,7 @@ class DesktopWorker(Thread):
         self.queue.put(("refresh",))
 
     def stop(self):
+        self.cancel_pending()
         self.queue.put(None)
 
     def run(self):
@@ -133,8 +136,12 @@ class DesktopWorker(Thread):
                         if not question:
                             continue
                         self.signals.status.emit("Yuna está pensando...")
-                        answer = handle_message(memory, question, computer)
-                        if not self._cancelled:
+                        generation = task[2]
+                        answer = handle_message(
+                            memory, question, computer, progress=self.signals.status.emit,
+                            cancelled=lambda: generation != self._generation,
+                        )
+                        if generation == self._generation:
                             self.signals.replied.emit(answer, False)
                         self.signals.status.emit("Pronta • conversa local")
                     elif kind == "analyze":
@@ -153,6 +160,8 @@ class DesktopWorker(Thread):
                         self.signals.status.emit("Documento guardado na biblioteca local")
                     elif kind == "refresh":
                         self.signals.library.emit(LIBRARY.entries())
+                except InterruptedError:
+                    self.signals.status.emit("Operação cancelada entre etapas")
                 except Exception as exc:
                     self.signals.error.emit(diagnose_failure(exc).message())
                     self.signals.status.emit("Operação não concluída")
@@ -790,6 +799,11 @@ class YunaDesktop(QMainWindow):
         self.set_busy(False)
         if is_document:
             self.say("Terminei de analisar o documento. O resultado está na tela.", private=True)
+        elif ("Código em uso e GitHub preservados." in answer or answer.startswith((
+                "Sequência de tarefas:", "Autoteste da base:", "O autoteste da base falhou."))):
+            # Caminhos e resultados de ferramentas ficam na janela, inclusive
+            # quando a pessoa escolheu uma voz externa para a conversa comum.
+            self.say("Confira o resultado e os detalhes na janela da Yuna.")
         elif not any(term in answer.lower() for term in ("c:\\", "chave api", "token:")):
             self.say(answer)
 
@@ -1162,6 +1176,7 @@ class YunaDesktop(QMainWindow):
         self.set_busy(False)
         self.status.setText("Parada solicitada • operações externas em curso podem continuar")
         self.add_message("Yuna", "Parei a voz e descartei as tarefas pendentes. "
+                         "Sequências e testes do laboratório serão interrompidos. "
                          "Uma operação já iniciada pode precisar terminar; "
                          "não vou afirmar que ela foi cancelada sem confirmação.")
 

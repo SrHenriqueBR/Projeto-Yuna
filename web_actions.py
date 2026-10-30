@@ -15,12 +15,30 @@ from urllib.parse import quote, urlencode
 import urllib.error
 import urllib.request
 import webbrowser
+from collections import OrderedDict
+from threading import Lock
+import time
 from computer import command_text, normalize
 
 UA = "Projeto-Yuna/0.12 (assistente pessoal; pesquisa pública por solicitação)"
 SAFE_SITES = {"youtube": "https://www.youtube.com",
               "google": "https://www.google.com",
               "wikipedia": "https://pt.wikipedia.org"}
+_CACHE = OrderedDict()
+_CACHE_LOCK = Lock()
+_CACHE_SECONDS = 120
+
+
+def public_search_query(query):
+    """Só o texto explicitamente pedido; não acrescentar histórico ou arquivos."""
+    if not isinstance(query, str) or not 1 <= len(query.strip()) <= 160:
+        raise ValueError("Use uma pesquisa com 1 a 160 caracteres.")
+    value = query.strip()
+    if re.search(r"(?i)\b(?:senha|password|cpf|token|chave\s+api|pix|endereco\s+pessoal|"
+                 r"cartao\s+de\s+credito)\b|[\w.+-]+@[\w.-]+\.[a-z]{2,}|"
+                 r"(?:[a-z]:\\|\\\\)|[\r\n\x00]", value):
+        raise ValueError("Essa pesquisa pode conter dados privados. Use apenas um assunto público.")
+    return value
 
 
 def _chrome_binary():
@@ -63,36 +81,68 @@ def media_key(action):
 
 
 def wikipedia_lookup(query):
-    query = query.strip()
-    if not query or len(query) > 160:
+    if not isinstance(query, str) or not 1 <= len(query.strip()) <= 160:
         raise ValueError("Use uma pesquisa com 1 a 160 caracteres.")
-    if re.search(r"(?i)\b(senha|password|cpf|token|chave\s+api|pix|endereco\s+pessoal)\b", query):
+    try:
+        query = public_search_query(query)
+    except ValueError:
         return "Essa pesquisa pode incluir dados privados; não vou enviá-los à Wikipédia."
+    key = query.casefold()
+    with _CACHE_LOCK:
+        cached = _CACHE.get(key)
+        if cached and time.monotonic() - cached[0] < _CACHE_SECONDS:
+            _CACHE.move_to_end(key)
+            return cached[1] + "\n(Cache local de até 2 minutos.)"
     params = urlencode({"q": query, "limit": 3})
     url = "https://pt.wikipedia.org/w/rest.php/v1/search/page?" + params
     request = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
-            results = json.load(response)
+            raw = response.read(256000 + 1)
+            if len(raw) > 256000:
+                raise ValueError("Resposta de pesquisa muito grande.")
+            results = json.loads(raw)
     except (urllib.error.URLError, TimeoutError, ValueError, OSError) as exc:
         return "Não consegui consultar a Wikipédia agora. Tente uma busca no navegador."
-    pages = results.get("pages", [])
+    pages = results.get("pages", []) if isinstance(results, dict) else []
     if not isinstance(pages, list) or not pages:
         return "Nenhum resultado encontrado na Wikipédia em português."
     lines = []
     for item in pages[:3]:
+        if not isinstance(item, dict):
+            continue
         title = item.get("title", "")
         desc = item.get("description", "") or ""
-        excerpt = re.sub(r"<[^>]+>", "", item.get("excerpt", "") or "")
+        excerpt = item.get("excerpt", "") or ""
+        if not all(isinstance(part, str) for part in (title, desc, excerpt)):
+            continue
+        excerpt = re.sub(r"<[^>]+>", "", excerpt)
         pageurl = "https://pt.wikipedia.org/wiki/" + quote(str(item.get("key", title)).replace(" ", "_"), safe="")
         lines.append(f"{title}: {html.unescape(desc)}. {html.unescape(excerpt)[:240]}\nFonte: {pageurl}")
-    return "\n\n".join(lines)
+    if not lines:
+        return "Nenhum resultado válido encontrado na Wikipédia."
+    result = "\n\n".join(lines)
+    with _CACHE_LOCK:
+        _CACHE[key] = (time.monotonic(), result)
+        _CACHE.move_to_end(key)
+        while len(_CACHE) > 32:
+            _CACHE.popitem(last=False)
+    return result
 
 
 def handle_web_command(message, session=None):
     value = command_text(message)
     if re.search(r"\b(nao|nunca)\b", value) or re.match(r"^(?:como|por que|porque|se eu|o que acontece)\b", value):
         return None
+
+    # Web ampla abre resultados no navegador. Não afirmar que leu os sites.
+    match = re.fullmatch(r"(?:/web\s+|(?:pesquise|pesquisa|procure|busque)\s+"
+                         r"(?:na web|na internet)\s+(?:sobre\s+)?)(.+)", value)
+    if match:
+        query = public_search_query(match[1])
+        opened = open_allowed_url("https://www.google.com/search?" + urlencode({"q": query}),
+                                  chrome=bool(getattr(session, "prefer_chrome", False)))
+        return opened + "\nOs resultados ficam no navegador; não li o conteúdo dessas páginas."
 
     if re.fullmatch(r"(?:pausa|pause|pausar|pare|parar)\s*(?:o video|a musica|o som|a reproducao)?", value):
         return media_key("pause")
@@ -105,9 +155,7 @@ def handle_web_command(message, session=None):
     match = re.search(r"\b(?:pesquise|pesquisa|pesquisar|procure|buscar|busque)\s+(.+?)"
                       r"\s+(?:no|na)\s+(youtube|google)\s*$", value)
     if match:
-        query, engine = match[1].strip(), match[2]
-        if len(query) > 160:
-            return "Resuma a pesquisa em até 160 caracteres."
+        query, engine = public_search_query(match[1]), match[2]
         chrome = ("chrome" in value or bool(getattr(session, "prefer_chrome", False)))
         if engine == "youtube":
             return open_allowed_url("https://www.youtube.com/results?search_query=" + quote(query), chrome=chrome)
@@ -129,6 +177,9 @@ def handle_web_command(message, session=None):
 
     match = re.search(r"^(?:pesquise|pesquisa|pesquisar|busque|buscar|procure)\s+(.+?)"
                       r"\s+(?:na|pela|pela\s+internet\s+na)\s+wikipedia$", value)
+    if match:
+        return "Resultados da Wikipédia:\n" + wikipedia_lookup(match[1])
+    match = re.fullmatch(r"(?:pesquise|pesquisa)\s+sobre\s+(.+)", value)
     if match:
         return "Resultados da Wikipédia:\n" + wikipedia_lookup(match[1])
 

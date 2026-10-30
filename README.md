@@ -4,6 +4,23 @@ Assistente pessoal local para **Windows 10/11**, com conversa em português, mem
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
+## Laboratório de código, autotestes e tarefas
+
+A Yuna pode escrever uma melhoria pequena e testes com o **Ollama local**,
+conferir a proposta em uma cópia e tentar corrigir uma falha uma vez. Abra
+**`laboratorio_yuna.bat`** ou use `/laboratorio`. A execução de código gerado
+exige Docker local e uma imagem já disponível; sem Docker, o resultado é
+apenas rascunho com verificação de sintaxe. As propostas ficam em
+`data/laboratorio/`, sem substituir o código em uso nem publicar alterações.
+
+Para testar os módulos instalados de linguagem e intenções, abra
+**`testar_yuna.bat`** ou diga **“Yuna, teste sua base”**. Esse autoteste não
+exige Ollama ou Docker. No modo PC, também pode pedir **“abra Downloads e
+depois abra Steam”**, pesquisar com **“pesquise na web sobre Python”** e
+escolher **`/desempenho rapido`** para favorecer respostas curtas.
+
+[Como usar, requisitos e limites do laboratório e das tarefas](docs/LABORATORIO_E_TAREFAS.md).
+
 ## Gestão local de aprendizados
 
 A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`configurar_gestao_yuna.bat`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `iniciar_yuna_web.bat` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
@@ -194,6 +211,11 @@ Atalhos úteis para terminal e diagnóstico:
 | Comando | Função |
 | --- | --- |
 | **/ajuda** | Lista comandos disponíveis |
+| **/autoteste** | Testa os módulos instalados de linguagem e intenções |
+| **/laboratorio ARQUIVO \| OBJETIVO** | Gera código e testes em cópia; execução isolada exige Docker |
+| **/tarefas PEDIDO** | Executa até cinco etapas explícitas em sequência |
+| **/desempenho rapido**, **/desempenho equilibrado** | Ajusta tamanho das respostas e permanência do modelo em RAM |
+| **/web ASSUNTO**, **/pesquisar ASSUNTO** | Abre Google ou consulta Wikipédia com fontes |
 | **/apps**, **/apps atualizar** | Lista e atualiza aplicativos do menu Iniciar |
 | **/abrir steam**, **/abrir downloads** | Abre aplicativo ou pasta permitida |
 | **/buscar NOME**, **/buscar tudo NOME** | Busca nomes na pasta do usuário ou nos discos fixos |

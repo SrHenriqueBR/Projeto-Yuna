@@ -185,6 +185,9 @@ class DialogueThread(Thread):
                     # Também não transmitir caminhos completos à voz online.
                     if message.strip().casefold() in ("/versao", "/diagnostico"):
                         pass
+                    elif ("Código em uso e GitHub preservados." in answer or answer.startswith((
+                            "Sequência de tarefas:", "Autoteste da base:", "O autoteste da base falhou."))):
+                        self.output.speech.emit("Confira o resultado e os detalhes na janela da Yuna.")
                     elif (classify_public_request(message) is not None
                           or parse_memory_intent(message) is not None
                           or message.strip().casefold().startswith(("/github", "/melhorar", "/openai",
