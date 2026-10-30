@@ -55,19 +55,19 @@ class LabTests(unittest.TestCase):
         runner = self.runner(lab.TestResult("passed", "baseline", 9), lab.TestResult("passed", "candidate", 10))
         folder = lab.develop(self.root, lab.TARGETS[0], "Melhorar concordância da fala", Mock(return_value=self.candidate()), runner=runner)
         self.assertEqual((self.root / lab.TARGETS[0]).read_text(encoding="utf-8"), self.original)
-        report = json.loads((folder / "relatorio.json").read_text())
+        report = json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))
         self.assertEqual(report["status"], "tests_passed")
         self.assertIs(report["applied"], False)
         files = {str(path.relative_to(folder / "workspace")).replace("\\", "/")
                  for path in (folder / "workspace").rglob("*") if path.is_file()}
         self.assertEqual(files, set(lab.TARGETS + (lab.CONTRACT, "tests/test_generated.py")))
         self.assertEqual((folder / "workspace" / lab.CONTRACT).read_bytes(), (self.root / lab.CONTRACT).read_bytes())
-        self.assertIn("+def lab_example", (folder / "tentativa_1/mudanca.diff").read_text())
+        self.assertIn("+def lab_example", (folder / "tentativa_1/mudanca.diff").read_text(encoding="utf-8"))
 
     def test_no_docker_never_executes_generated_python_or_claims_test_pass(self):
         runner = self.runner(lab.TestResult("not_run", "Docker ausente"), lab.TestResult("not_run", "Docker ausente"), available=False)
         folder = lab.develop(self.root, lab.TARGETS[0], "Criar um auxiliar de exemplo", Mock(return_value=self.candidate("\nraise RuntimeError('NEVER EXECUTE ON HOST')\n")), runner=runner)
-        report = json.loads((folder / "relatorio.json").read_text())
+        report = json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))
         self.assertEqual(report["status"], "not_run")
         self.assertEqual(report["attempts"][0]["syntax"], "passed")
         self.assertIn("NÃO realizados", lab.report_text(folder))
@@ -76,7 +76,7 @@ class LabTests(unittest.TestCase):
         runner = self.runner(lab.TestResult("failed", "regression failed", 9))
         ask = Mock(side_effect=AssertionError("Do not draft"))
         folder = lab.develop(self.root, lab.TARGETS[0], "Melhorar concordância da fala", ask, runner=runner)
-        self.assertEqual(json.loads((folder / "relatorio.json").read_text())["status"], "baseline_failed")
+        self.assertEqual(json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))["status"], "baseline_failed")
         ask.assert_not_called()
 
     def test_failed_draft_gets_one_revision_with_actual_code_and_feedback(self):
@@ -89,7 +89,7 @@ class LabTests(unittest.TestCase):
         feedback = json.loads(ask.call_args.args[0][-1]["content"])["previous_attempt_feedback"]
         self.assertIn("AssertionError: expected 42", feedback)
         self.assertIn("lab_example", feedback)
-        self.assertEqual(len(json.loads((folder / "relatorio.json").read_text())["attempts"]), 2)
+        self.assertEqual(len(json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))["attempts"]), 2)
 
     def test_invalid_model_output_is_bounded_and_not_executed(self):
         runner = self.runner(lab.TestResult("passed", "baseline", 9))
@@ -97,7 +97,7 @@ class LabTests(unittest.TestCase):
         folder = lab.develop(self.root, lab.TARGETS[0], "Melhorar concordância da fala", ask, runner=runner)
         self.assertEqual(ask.call_count, 2)
         self.assertEqual(runner.run.call_count, 1)
-        self.assertEqual(json.loads((folder / "relatorio.json").read_text())["status"], "invalid")
+        self.assertEqual(json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))["status"], "invalid")
 
     def test_privileged_paths_and_removed_exports_are_rejected(self):
         for path in ("yuna.py", "yuna_governance.py", "../secret.py", "/etc/passwd", "camera_viewer.py"):
@@ -116,7 +116,7 @@ class LabTests(unittest.TestCase):
         ask.assert_not_called()
         runner.prepare.assert_not_called()
         report = next((self.root / "data/laboratorio").glob("*/relatorio.json"))
-        self.assertEqual(json.loads(report.read_text())["status"], "cancelled")
+        self.assertEqual(json.loads(report.read_text(encoding="utf-8"))["status"], "cancelled")
 
     def test_real_output_and_time_limits(self):
         code, output, problem = lab._bounded([sys.executable, "-c", "print('a' * 100000)"], timeout=5)

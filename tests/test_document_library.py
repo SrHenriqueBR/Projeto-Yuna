@@ -131,10 +131,15 @@ class LibraryTests(unittest.TestCase):
     def test_app_is_graphic_and_uses_shared_memory(self):
         root = Path(__file__).resolve().parents[1]
         app = (root / "yuna_desktop.py").read_text(encoding="utf-8")
-        ast.parse(app)
+        tree = ast.parse(app)
         self.assertIn("class YunaDesktop(QMainWindow)", app)
         self.assertIn("Memory(ROOT / \"data\" / \"yuna.db\")", app)
-        self.assertIn("handle_message(memory, question, computer)", app)
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                 and isinstance(node.func, ast.Name) and node.func.id == "handle_message"]
+        self.assertTrue(any(
+            [arg.id if isinstance(arg, ast.Name) else None for arg in call.args[:3]]
+            == ["memory", "question", "computer"] for call in calls
+        ), "A interface deve usar o motor compartilhado com a mesma memória e computador.")
         self.assertIn("self.player = QMediaPlayer(self)", app)
         self.assertIn("QFileDialog.getOpenFileName(", app)
         self.assertIn("QMessageBox.question(", app)
