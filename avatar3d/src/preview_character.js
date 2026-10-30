@@ -315,12 +315,12 @@ export function createAnimePreview(style = {}) {
         frame.bodySway * 0.22 + (frame.hipShift || 0), 3, dt);
       root.rotation.z = smooth(root.rotation.z, frame.bodySway, 3.5, dt);
       rightArm.rotation.z = smooth(rightArm.rotation.z,
-        frame.emotion === "wave" ? -2.1 + frame.wave :
+        frame.emotion === "wave" ? -2.1 * (frame.motionStrength ?? 1) + frame.wave :
         -0.14 + frame.rightArmSwing - frame.bodySway, 7, dt);
       leftArm.rotation.z = smooth(leftArm.rotation.z,
         0.14 + frame.leftArmSwing - frame.bodySway, 5, dt);
       rightForearm.rotation.z = smooth(rightForearm.rotation.z,
-        frame.emotion === "wave" ? 0.85 : -(frame.rightElbow || 0), 7, dt);
+        frame.emotion === "wave" ? 0.85 * (frame.motionStrength ?? 1) : -(frame.rightElbow || 0), 7, dt);
       leftForearm.rotation.z = smooth(leftForearm.rotation.z,
         frame.leftElbow || 0, 7, dt);
       rightArm.rotation.x = smooth(rightArm.rotation.x,
