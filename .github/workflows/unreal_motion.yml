@@ -1,0 +1,23 @@
+name: Movimento C++ da Yuna
+
+on:
+  pull_request:
+    paths:
+      - 'unreal/**'
+      - '.github/workflows/unreal_motion.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'unreal/**'
+      - '.github/workflows/unreal_motion.yml'
+
+jobs:
+  cpp17-math:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compilar e testar movimento independente da Unreal
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -pedantic -O2 \
+            unreal/tests/test_yuna_motion.cpp -o /tmp/yuna_motion
+          /tmp/yuna_motion
