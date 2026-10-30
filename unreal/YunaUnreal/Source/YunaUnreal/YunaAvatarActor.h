@@ -89,6 +89,8 @@ private:
     double LastValidStateAt = -1000.0;
     double PoseExpiresAt = 0.0;
     int64 LastGestureSeq = -1;
+    FString LastSession;
+    FTransform BaseAvatarMeshTransform = FTransform::Identity;
     float DesiredEmotionIntensity = 0.f;
     float TargetMouth = 0.f;
     FString DesiredPose = TEXT("idle");
