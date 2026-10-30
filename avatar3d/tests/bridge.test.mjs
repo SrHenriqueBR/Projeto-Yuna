@@ -32,7 +32,11 @@ test("strips private/unexpected fields and bounds amplitude", () => {
 
 test("maps reactions conservatively", () => {
   assert.equal(reactionPose(normalizeRemoteState({...state, pose:"talk", emotion:"surprised"})), "surprised");
-  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"angry", emotion:"neutral"})), "idle");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"angry", emotion:"neutral"})), "angry");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"walk", emotion:"neutral"})), "walk");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"sit", emotion:"neutral"})), "sit");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"wink", emotion:"neutral"})), "wink");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"talk", speaking:true})), "talk");
   assert.equal(normalizeRemoteState(null), null);
 });
 
