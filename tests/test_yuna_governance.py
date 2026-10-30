@@ -1,4 +1,5 @@
 import json
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -34,9 +35,11 @@ class GovernanceTests(unittest.TestCase):
         self.store.sessions[token] = 0
         self.assertFalse(self.store.authenticated(token))
         with self.assertRaises(ValueError): self.configure()
-        with sqlite3.connect(self.store.path) as db:
+        with closing(sqlite3.connect(self.store.path)) as db:
             encoded = db.execute('SELECT password_hash FROM owner').fetchone()[0]
         self.assertNotIn(self.password, encoded)
+        with self.assertRaises(sqlite3.ProgrammingError):
+            db.execute('SELECT 1')
 
     def test_sharing_requires_exact_recipient_consent_and_no_sensitive_data(self):
         owner = self.configure()
