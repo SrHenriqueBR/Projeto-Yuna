@@ -187,6 +187,9 @@ footer a{color:#bcabea;text-decoration:underline}
    <button type="button" class="mood" data-action="angry" aria-pressed="false">⚡ Brava</button>
    <button type="button" class="mood" data-action="wave" aria-pressed="false">👋 Acenar</button>
    <button type="button" class="mood" data-action="sleep" aria-pressed="false">☾ Dormir</button>
+   <button type="button" class="mood" data-action="curious" aria-pressed="false">✦ Curiosa</button>
+   <button type="button" class="mood" data-action="walk" aria-pressed="false">♫ Andar</button>
+   <button type="button" class="mood" data-action="surprised" aria-pressed="false">! Surpresa</button>
   </div>
   <div class="controls-row">
    <button type="button" class="primary" id="voice" aria-label="Ouvir fala de demonstração">▶ Ouvir a Yuna falar</button>
@@ -350,7 +353,10 @@ footer a{color:#bcabea;text-decoration:underline}
   shy:"Ei... não fica me olhando desse jeito! Eu fico toda sem graça, sabia? >///<",
   angry:"Hmpf! Não pensa que pode ficar clicando em mim o dia inteiro, Kaizen! ⚡",
   wave:"Oiii, Kaizen! Eu tô aqui! Olha, já consigo acenar pra você! 👋",
-  sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾"
+  sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾",
+  curious:"Hm? O que será que há daquele lado? Quero descobrir! ✦",
+  walk:"Estou passeando! Ainda não ando pela sua área de trabalho, mas consigo fazer o gesto! ♫",
+  surprised:"Ah! Essa eu não esperava! ✨"
  };
  var current="idle";
  var speechTimer=0;
@@ -421,5 +427,6 @@ footer a{color:#bcabea;text-decoration:underline}
  });
 })();
 </script>
+<script src="./yuna-viva.js" defer></script>
 </body>
 </html>
