@@ -1,4 +1,4 @@
-# Avatar 3D VRM da Yuna — protótipo experimental
+# Avatar anime 3D da Yuna — Three.js e VRM
 
 Este módulo é **opcional**, independente da Yuna Desktop em Python. Usa
 Three.js + `@pixiv/three-vrm` e funciona em navegador moderno com WebGL.
@@ -15,8 +15,18 @@ Three.js + `@pixiv/three-vrm` e funciona em navegador moderno com WebGL.
    as expressões. Até 80 MB por arquivo. Também é possível soltar o arquivo
    na área de visualização.
 
-Sem `.vrm`, a aplicação mostra uma **personagem anime geométrica original**
-com aparência editável. É uma prévia, não o modelo VRM artístico definitivo.
+Sem `.vrm`, a aplicação mostra uma **prévia geométrica original**
+com aparência editável. É uma demonstração, não o modelo anime definitivo.
+
+**Para deixar a Yuna realmente anime, com modelo articulado criado no
+VRoid Studio**, siga o guia completo:
+[`docs/COMO_CRIAR_YUNA_ANIME.md`](../docs/COMO_CRIAR_YUNA_ANIME.md).
+
+O estúdio importa o arquivo VRM do próprio usuário pelo botão
+**Importar minha Yuna .VRM**. Opcionalmente, se você copiar seu
+arquivo para `avatar3d/public/yuna.vrm`, ele será carregado
+automaticamente na próxima inicialização local. Preserve esse arquivo
+privado ao atualizar o projeto; não o inclua no GitHub.
 
 Para validar o código: `npm test` e `npm run build`.
 
@@ -97,7 +107,8 @@ não inicia jogos automaticamente.
 
 ## Controles
 
-- Mova o cursor: movimentos leves de cabeça e olhos.
+- Sem mover o mouse: a Yuna respira, pisca e alterna olhares e posturas de modo sutil.
+- Mova o cursor: ela dá prioridade ao ponteiro para os movimentos de cabeça e olhos.
 - Arraste com o mouse: gira a câmera; roda: zoom.
 - Botões: neutra, feliz, curiosa, surpresa, tímida e acenar.
 - Barra **Prévia da fala**: abertura de boca de demonstração (não é áudio real).
