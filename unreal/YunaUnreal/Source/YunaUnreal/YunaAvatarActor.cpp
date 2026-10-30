@@ -84,6 +84,7 @@ void AYunaAvatarActor::BeginPlay()
 {
     Super::BeginPlay();
     LastValidStateAt = -1000.0;
+    BaseAvatarMeshTransform = AvatarMesh->GetRelativeTransform();
     SyncDirectBonePreview();
 }
 
@@ -136,8 +137,10 @@ bool AYunaAvatarActor::ReadLocalState()
     double Version = 0.0, Timestamp = 0.0, Mouth = 0.0, Intensity = 0.0;
     double GestureSequence = 0.0;
     bool Speaking = false, HasAmplitude = false;
-    FString Pose, Emotion;
-    if (!Data->TryGetNumberField(TEXT("version"), Version) || Version != 1.0 ||
+    FString Pose, Emotion, Session;
+    if (!Data->TryGetStringField(TEXT("session"), Session) ||
+        Session.IsEmpty() || Session.Len() > 64 ||
+        !Data->TryGetNumberField(TEXT("version"), Version) || Version != 1.0 ||
         !Data->TryGetNumberField(TEXT("updated_at"), Timestamp) ||
         !FMath::IsFinite(Timestamp) ||
         FMath::Abs(static_cast<double>(FDateTime::UtcNow().ToUnixTimestamp()) - Timestamp) > 3.0 ||
@@ -158,6 +161,12 @@ bool AYunaAvatarActor::ReadLocalState()
     if (!IsAllowedPose(Pose)) Pose = TEXT("idle");
     if (!IsAllowedEmotion(Emotion)) Emotion = TEXT("neutral");
 
+    if (LastSession != Session)
+    {
+        LastSession = Session;
+        LastGestureSeq = -1;
+        PoseExpiresAt = 0.0;
+    }
     const int64 NewSequence = static_cast<int64>(GestureSequence);
     if (LastGestureSeq != NewSequence)
     {
@@ -223,7 +232,7 @@ bool AYunaAvatarActor::SyncDirectBonePreview()
         CachedDirectAsset = Asset;
         ResolveBones();
     }
-    DirectBoneMesh->SetRelativeTransform(AvatarMesh->GetRelativeTransform());
+    DirectBoneMesh->SetRelativeTransform(BaseAvatarMeshTransform);
     AvatarMesh->SetVisibility(false);
     DirectBoneMesh->SetVisibility(true);
     return true;
@@ -277,11 +286,11 @@ void AYunaAvatarActor::UpdateAnimation(float DeltaSeconds)
     {
         DirectBoneMesh->CopyPoseFromSkeletalComponent(AvatarMesh);
         DirectBoneMesh->SetRelativeLocation(
-            AvatarMesh->GetRelativeLocation() +
+            BaseAvatarMeshTransform.GetLocation() +
             FVector(0.f, Signals.BodySway * 9.f,
                     (Signals.Breath + Signals.BodyBob) * 30.f));
         DirectBoneMesh->SetRelativeRotation(
-            AvatarMesh->GetRelativeRotation() +
+            BaseAvatarMeshTransform.Rotator() +
             FRotator(0.f, Signals.BodySway * 30.f, 0.f));
         RotateBone(ResolvedHead,
             FRotator(Signals.HeadPitch, Signals.HeadYaw, Signals.HeadTilt));
@@ -301,8 +310,11 @@ void AYunaAvatarActor::UpdateAnimation(float DeltaSeconds)
     {
         // O modo Animation Blueprint preserva morph targets, física e retargeting.
         AvatarMesh->SetRelativeLocation(
+            BaseAvatarMeshTransform.GetLocation() +
             FVector(0.f, 0.f, (Signals.Breath + Signals.BodyBob) * 30.f));
-        AvatarMesh->SetRelativeRotation(FRotator(0.f, Signals.BodySway * 30.f, 0.f));
+        AvatarMesh->SetRelativeRotation(
+            BaseAvatarMeshTransform.Rotator() +
+            FRotator(0.f, Signals.BodySway * 30.f, 0.f));
         AvatarMesh->SetMorphTarget(MouthMorphName, Signals.Mouth);
         if (LeftBlinkMorphName.IsNone() || RightBlinkMorphName.IsNone())
         {
