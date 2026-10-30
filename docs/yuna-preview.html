@@ -185,6 +185,49 @@ button:disabled{cursor:not-allowed;opacity:.55}
  .stage-footer{bottom:13px;left:12px;right:auto;max-width:calc(100% - 24px);font-size:8px}
 }
 
+
+/* Conversa ao lado da personagem. */
+.info{justify-content:flex-start;padding-top:12px}
+h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
+.lead{line-height:1.6;margin-bottom:18px;font-size:13px}
+.stage-panel{position:sticky;top:24px;align-self:start}
+.stage-panel .bubble{position:absolute;bottom:75px;left:50%;transform:translateX(-50%);z-index:6;width:calc(100% - 44px);min-height:0;padding:15px 18px;pointer-events:none;background:#17192bec}
+.stage-panel #speech{font-size:13px;min-height:0;line-height:1.5}
+.stage-panel .bubble-head{margin-bottom:6px}.stage-panel .speaker{font-size:10px}
+.stage-panel .bubble-type{font-size:8px}
+.chat-panel{background:linear-gradient(140deg,#211c35f5,#13172bf2);border:1px solid #a48ac645;border-radius:23px;padding:20px;box-shadow:0 18px 50px #04060d30}
+.chat-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px}
+.chat-top h2{font-size:19px;margin:0 0 6px;letter-spacing:-.03em}.chat-top h2 span{color:#c39ef7}
+#chatConnection{font-size:10px;color:#bdb3d4;margin:0;line-height:1.5}
+.chat-reconnect{background:transparent;color:#d6c9ef;font-size:10px;border:1px solid #a58bc44f;border-radius:9px;padding:8px}
+.chat-setup{border:1px solid #a18bcc42;background:#a58beb0a;border-radius:12px;padding:12px;margin-bottom:12px}
+.chat-setup[hidden]{display:none}.chat-setup p{font-size:12px;line-height:1.6;margin:0 0 10px;color:#cec1e4}
+.chat-setup a{font-size:11px;text-decoration:underline;text-underline-offset:3px;display:inline-block;margin:0 12px 4px 0;color:#e8d7ff}
+.chat-messages{height:250px;overflow-y:auto;overscroll-behavior:contain;padding:4px 3px 10px;scrollbar-color:#6d568b transparent;scrollbar-width:thin}
+.chat-empty{font-size:17px;color:#ded3ed;line-height:1.7;padding:24px 5px;margin:0;text-align:center}.chat-empty small{font-size:11px;color:#a99ebd}
+.chat-message{max-width:95%;border-radius:15px 15px 15px 4px;padding:12px 14px;margin-bottom:12px;background:#ffffff08;border:1px solid #ffffff0c}
+.chat-message.from-user{margin-left:auto;background:#7e5abd24;border-color:#bd98f22a;border-radius:15px 15px 4px 15px}
+.chat-message strong{font-size:10px;color:#c6a4f3;letter-spacing:.05em}.chat-message.from-user strong{color:#9cc8ed}
+.chat-message p{font-size:13px;line-height:1.65;margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.chat-prompts{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 12px}
+.chat-prompts button{border:1px solid #a58bc432;background:#9e7fc80a;color:#c8b9dc;border-radius:999px;padding:7px 9px;font-size:10px}
+#chatForm{border:1px solid #ab8fca50;border-radius:14px;background:#0d1120a6;overflow:hidden}
+#chatForm:focus-within{border-color:#b993f0;box-shadow:0 0 0 2px #b993f014}
+#chatInput{display:block;width:100%;resize:vertical;min-height:70px;max-height:220px;border:0;padding:13px 14px;background:transparent;color:#f4eaff;font:inherit;font-size:13px;line-height:1.6;outline:none}
+#chatInput::placeholder{color:#968aa9}.chat-compose-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 10px 10px}
+.chat-compose-footer small{font-size:9px;color:#887e9a}.chat-compose-footer button{padding:9px 15px;border:0;border-radius:9px;background:linear-gradient(120deg,#ac83ed,#7a65ce);color:white;font-weight:750;font-size:12px}
+.chat-error{font-size:12px;color:#f1b8c9;line-height:1.6;margin:10px 0}.chat-error:empty{display:none}
+.chat-bottom{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:13px;color:#b4a6c8;font-size:10px}
+.chat-bottom label{display:flex;gap:6px;align-items:center}.chat-bottom input{accent-color:#aa7ce9}.chat-bottom button{font-size:10px;border:0;background:transparent;color:#cbb7e4;padding:5px}
+.chat-privacy{font-size:9px;color:#857991;margin:9px 0 0}.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.chat-activity{position:absolute;z-index:5;top:94px;right:18px;color:#c6b4e2;font-size:10px;background:#18192a99;padding:7px 10px;border-radius:10px}
+[data-chat-state=thinking] .chat-activity{color:#f1d6ff;animation:chatPulse 1.4s infinite alternate}
+[data-chat-state=replying] .blush{opacity:.65}
+#stage.live-mode[data-mood=laugh] .mouth-open{opacity:1}#stage.live-mode[data-mood=laugh] .mouth-smile{opacity:0}
+@keyframes chatPulse{to{opacity:.45}}
+@media(max-width:970px){.stage-panel{position:relative;top:0}.chat-panel{max-width:680px}.stage-panel .bubble{max-width:480px}}
+@media(max-width:580px){.chat-panel{padding:15px;border-radius:18px}.chat-messages{height:240px}.chat-activity{top:100px;right:12px;font-size:9px}.stage-panel .bubble{bottom:95px;width:calc(100% - 24px);padding:12px}.stage-panel #speech{font-size:11px}.bubble-type{display:none}}
+
 </style>
 </head>
 <body>
@@ -194,14 +237,20 @@ button:disabled{cursor:not-allowed;opacity:.55}
 </header>
 <main class="main">
  <section class="info" aria-label="Controle da prévia">
-  <div class="eyebrow">Protótipo de personagem anime</div>
-  <h1>Yuna<br><em>em anime.</em></h1>
-  <p class="lead">Uma silhueta mais humana, traços delicados e a mesma personalidade. Conheça a nova Yuna em estilo anime: cabelos longos, olhos violetas e movimentos suaves. Experimente as expressões ou aproxime o rosto.</p>
-  <div class="bubble" aria-live="polite">
-   <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
-   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨</p>
-  </div>
-  <div class="actions-title">Como a Yuna está se sentindo?</div>
+  <div class="eyebrow">Seu espaço com a Yuna</div>
+  <h1>Yuna <em>por perto.</em></h1>
+  <p class="lead">Um espaço para trocar ideias, fazer planos e conversar com a Yuna no seu computador. Mais expressões, pequenos gestos e companhia em cada conversa.</p>
+  <section class="chat-panel" aria-labelledby="chatTitle">
+   <div class="chat-top"><div><h2 id="chatTitle">Converse comigo <span>♡</span></h2><p id="chatConnection" role="status">Verificando conexão…</p></div><button type="button" id="connectChat" class="chat-reconnect">Reconectar</button></div>
+   <div class="chat-setup" id="chatSetup" hidden><p id="chatDetail"></p><a href="http://127.0.0.1:8787/" target="_blank" rel="noopener noreferrer">Abrir chat local ↗</a><a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Baixar o projeto</a></div>
+   <div class="chat-messages" id="chatMessages" role="log" aria-label="Conversa com a Yuna" aria-live="polite" aria-relevant="additions"><p class="chat-empty">O que vamos conversar hoje?<br><small>Seu histórico aparece aqui quando o chat local é conectado.</small></p></div>
+   <div class="chat-prompts" aria-label="Sugestões de conversa"><button type="button" data-chat-prompt="Oi, Yuna! Vamos conversar um pouco?">Dar um oi</button><button type="button" data-chat-prompt="Me ajude a organizar meu dia.">Planejar meu dia</button><button type="button" data-chat-prompt="Me conte uma curiosidade interessante.">Uma curiosidade</button></div>
+   <form id="chatForm"><label class="sr-only" for="chatInput">Mensagem para a Yuna</label><textarea id="chatInput" placeholder="Escreva para a Yuna…" rows="2" disabled></textarea><div class="chat-compose-footer"><small>Enter envia · Shift+Enter pula linha</small><button type="submit" id="sendChat" disabled>Enviar ↗</button></div></form>
+   <p id="chatError" class="chat-error" role="alert"></p>
+   <div class="chat-bottom"><label><input type="checkbox" id="readReplies"> Ler respostas em voz alta</label><button type="button" id="stopChatVoice">Parar voz</button></div>
+   <p class="chat-privacy">Conversa e memórias ficam no seu computador.</p>
+  </section>
+  <div class="actions-title">Explore as expressões da Yuna</div>
   <div class="actions" aria-label="Expressões">
    <button type="button" class="mood active" data-action="idle" aria-pressed="true">✧ Normal</button>
    <button type="button" class="mood" data-action="happy" aria-pressed="false">♡ Feliz</button>
@@ -212,9 +261,11 @@ button:disabled{cursor:not-allowed;opacity:.55}
    <button type="button" class="mood" data-action="curious" aria-pressed="false">✦ Curiosa</button>
    <button type="button" class="mood" data-action="walk" aria-pressed="false">♫ Andar</button>
    <button type="button" class="mood" data-action="surprised" aria-pressed="false">! Surpresa</button>
+   <button type="button" class="mood" data-action="dance" aria-pressed="false">♪ Dançar</button>
+   <button type="button" class="mood" data-action="laugh" aria-pressed="false">☺ Rir</button>
   </div>
   <div class="controls-row">
-   <a class="primary" href="./yuna-3d-viva.html" style="display:inline-flex;align-items:center;text-decoration:none;" aria-label="Abrir laboratório 3D da Yuna">✦ Ver Yuna em 3D</a>
+   <a class="primary" href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html" style="display:inline-flex;align-items:center;text-decoration:none;" aria-label="Abrir laboratório 3D da Yuna">✦ Ver Yuna em 3D</a>
    <button type="button" class="primary" id="voice" aria-label="Ouvir fala de demonstração">▶ Ouvir a Yuna falar</button>
    <button type="button" class="secondary" id="look">✦ Surpreenda-me</button>
   </div>
@@ -226,11 +277,11 @@ button:disabled{cursor:not-allowed;opacity:.55}
    <button type="button" id="pauseMotion" aria-pressed="false">Ⅱ Pausar movimentos</button>
    <small id="modeHint">Animação 2D por camadas, não uma foto balançando</small>
   </div>
-  <p class="notice"><strong>Demonstração visual interativa em 2D.</strong> Os botões mostram falas prontas e expressões. Para conversar com a IA, use o aplicativo Yuna no Windows. A fala de teste depende das vozes do navegador; algumas podem precisar de internet.</p>
+  <p class="notice">O chat funciona pelo <strong>iniciar_yuna_web.bat + Ollama</strong> no seu notebook. No link público, explore a personagem e siga as instruções para conectar. A leitura em voz alta depende das vozes do navegador.</p>
  </section>
  <section class="stage-panel live-mode" id="stage" data-mood="idle" aria-label="Yuna em estilo anime: rosto, mãos, pernas e cabelo articulados">
   <div class="aurora"></div><div class="halo"></div><div class="starfield" id="stars" aria-hidden="true"></div>
-  <div class="stage-label">YUNA / ESTUDO DE PERSONAGEM <small>DEMONSTRAÇÃO ANIMADA NA WEB</small></div><div class="motion-chip" id="motionChip">● MOVIMENTOS ATIVOS</div>
+  <div class="stage-label">YUNA / ESTUDO DE PERSONAGEM <small>DEMONSTRAÇÃO ANIMADA NA WEB</small></div><div class="motion-chip" id="motionChip">● MOVIMENTOS ATIVOS</div><div class="chat-activity" id="chatActivity">Pronta para interagir</div>
   <img id="portrait" class="poster" src="./yuna-portrait.webp" alt="Retrato ilustrado da Yuna: personagem anime de olhos violetas, cabelo escuro e laço lilás" decoding="async" fetchpriority="high">
   <span class="portrait-label" id="portraitLabel">✧ AVATAR ARTICULADO 2D</span>
   <svg id="figure" class="character" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" role="img" aria-labelledby="avatarTitle">
@@ -390,10 +441,14 @@ button:disabled{cursor:not-allowed;opacity:.55}
     </g>
    </g>
   </svg>
+  <div class="bubble" aria-live="polite">
+   <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
+   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨</p>
+  </div>
   <div class="stage-footer" id="stageFooter">✧ ROSTO · MÃOS · PERNAS · CABELO</div>
  </section>
 </main>
-<footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é uma referência estática; o modo articulado é um desenho vetorial separado. Esta página não acessa câmera, microfone, memória ou arquivos do computador.</footer>
+<footer>Prévia em SVG com partes móveis para o <a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Projeto Yuna</a>. O retrato original é uma referência estática; o modo articulado é um desenho vetorial separado. No modo local, as conversas são salvas no seu computador. Esta interface não controla programas, câmera ou microfone.</footer>
 <script>
 (function(){
  "use strict";
@@ -419,7 +474,9 @@ button:disabled{cursor:not-allowed;opacity:.55}
   sleep:"Zzz... Só mais cinco minutinhos, vai... Eu também preciso descansar. ☾",
   curious:"Hm? O que será que há daquele lado? Quero descobrir! ✦",
   walk:"Estou passeando! Ainda não ando pela sua área de trabalho, mas consigo fazer o gesto! ♫",
-  surprised:"Ah! Essa eu não esperava! ✨"
+  surprised:"Ah! Essa eu não esperava! ✨",
+  dance:"Uma pausa para dançar um pouquinho? Vem comigo! ♪",
+  laugh:"Hahaha! Essa foi boa! Você me pegou de surpresa. ♡"
  };
  var current="idle";
  var speechTimer=0;
@@ -440,7 +497,8 @@ button:disabled{cursor:not-allowed;opacity:.55}
   button.addEventListener("click",function(){setMood(button.dataset.action)});
  });
  function resetMouth(){
-  figure.classList.remove("is-speaking");stage.classList.remove("is-speaking");
+  figure.classList.remove("is-speaking");
+  if(window.yunaVoiceOwner!=="chat")stage.classList.remove("is-speaking");
   window.clearTimeout(speechTimer);utterance=null;
   voice.textContent="▶ Ouvir a Yuna falar";
   voice.setAttribute("aria-label","Ouvir fala de demonstração");
@@ -453,7 +511,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
  function speak(){
   if(!voiceAvailable){feedback.textContent="Este navegador não oferece voz de demonstração. As expressões continuam disponíveis.";return;}
   if(utterance){stopSpeech();return;}
-  stopSpeech();feedback.textContent="";
+  stopSpeech();window.yunaVoiceOwner="demo";feedback.textContent="";
   var generation=voiceGeneration;
   try{
   var phrase=new SpeechSynthesisUtterance(moods[current]);
@@ -466,7 +524,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
   utterance=phrase;
   voice.textContent="■ Parar fala";voice.setAttribute("aria-label","Parar fala de demonstração");
   phrase.onstart=function(){
-   if(generation!==voiceGeneration)return;
+   if(generation!==voiceGeneration || window.yunaVoiceOwner!=="demo")return;
    figure.classList.add("is-speaking");stage.classList.add("is-speaking");
    window.clearTimeout(speechTimer);
    speechTimer=window.setTimeout(function(){
@@ -533,6 +591,8 @@ button:disabled{cursor:not-allowed;opacity:.55}
 })();
 </script>
 <script src="./yuna-viva.js" defer></script>
+<script src="./yuna-chat.js" defer></script>
 </body>
 </html>
+
 

@@ -156,3 +156,19 @@ test('a caminhada move pernas e joelhos e a pose normal os reinicia', () => {
   assert.equal(app.parts['.leg-left'].style.transform, 'rotate(0deg)');
   assert.equal(app.parts['.shin-left'].style.transform, 'rotate(0deg)');
 });
+
+test('dança, riso e atenção ao chat mantêm movimentos finitos e respeitam a pausa', () => {
+  const app = setup();
+  for (const mood of ['dance','laugh','idle']) {
+    app.ids.stage.dataset.mood = mood;
+    app.ids.stage.dataset.chatState = 'thinking'; app.tick(); app.tick();
+    for (const part of Object.values(app.parts)) {
+      if (part.style.transform) assert.doesNotMatch(part.style.transform, /NaN|Infinity/);
+    }
+  }
+  app.ids.pauseMotion.emit('click');
+  const pose = app.parts['.float'].style.transform; app.tick();
+  assert.equal(app.parts['.float'].style.transform,pose);
+  assert.equal(app.frames.size,0);
+});
+

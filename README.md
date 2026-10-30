@@ -4,6 +4,19 @@ Assistente pessoal local para **Windows 10/11**, com conversa em português, mem
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
+## Conversar com a Yuna pelo navegador
+
+1. Baixe e extraia a versão atual do projeto, preservando a pasta `data` da sua instalação.
+2. Abra o Ollama com o modelo que você já usa na Yuna. Sem um modelo instalado, execute `ollama pull qwen2.5:3b`; o instalador também oferece `qwen2.5:1.5b` para máquinas de 8 GB.
+3. Abra **`iniciar_yuna_web.bat`**. O navegador entra em **http://127.0.0.1:8787/**. Mantenha a janela do launcher aberta enquanto conversa.
+
+O painel usa o modelo local e o histórico SQLite da Yuna (`data/yuna.db`). Reabrir a página restaura as conversas; pedidos explícitos de memória são guardados pelo mesmo sistema do aplicativo. Não exige chave de API nem serviço de IA pago. Texto e respostas não são encaminhados para uma API em nuvem.
+
+A personagem acena ao chegar, acompanha a escrita, muda de postura enquanto pensa, reage à resposta e oferece dança e riso. A leitura das respostas em voz alta é opcional; a disponibilidade da voz depende do navegador. A pausa e a preferência por movimento reduzido continuam disponíveis.
+
+O **link público** mostra a interface e as expressões, com instruções de conexão. Para receber respostas reais, abra a versão local pelo launcher. Esse modo de chat conversa e guarda memórias; para abrir programas e usar as ferramentas do computador, utilize a interface desktop existente. O servidor aceita conexões apenas no próprio computador e não disponibiliza seus arquivos pessoais.
+
+
 ## Yuna 0.48 — movimentos 3D mais naturais
 
 **[Abrir o laboratório 3D no navegador](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html)**
@@ -78,7 +91,7 @@ articulado**: personagem anime desenhada em SVG com partes separadas,
 controladas por JavaScript em `docs/yuna-viva.js`. A cabeça, os
 olhos e pálpebras, a boca, os braços e as mechas do cabelo se mexem
 independentemente. Ela pisca, olha para o cursor, respira, acena,
-faz reações, e abre a boca somente durante a fala demonstrativa.
+faz reações, dança, ri e move a boca durante a leitura em voz alta.
 Você pode **Pausar movimentos** ou alternar para **Retrato original**,
 uma imagem estática usada como referência de aparência.
 
@@ -95,9 +108,9 @@ câmeras opcionais e recursos existentes continuam nos controles atuais.
 Nenhum Node.js ou WebEngine novo é necessário para esse painel.
 Se o arquivo do retrato faltar, o aplicativo funciona com fallback.
 
-A página **não é o avatar VRM final** e **não conecta ao Ollama**.
-Não acessa câmera, microfone, arquivos locais nem dados da Yuna.
-É hospedada a partir deste repositório público pelo visualizador
+A prévia pública não é o avatar VRM final. O chat conecta ao Ollama quando a página é aberta pelo `iniciar_yuna_web.bat`, no próprio notebook.
+O link público não acessa câmera, microfone, arquivos locais nem dados da Yuna.
+A demonstração é hospedada a partir deste repositório público pelo visualizador
 terceirizado raw.githack.com, que pode mostrar uma confirmação na
 primeira visita. O código-fonte está em
 [`docs/yuna-preview.html`](docs/yuna-preview.html).
@@ -414,3 +427,4 @@ Os testes são executados no GitHub Actions com interface Qt offscreen. Eles nã
 **Segurança:** a pasta **data/** não é criptografada; backups também devem ser privados. A Yuna não possui controle autônomo irrestrito do computador, não instala códigos criados pelo próprio modelo e não fica ativa com a máquina desligada.
 
 **Histórico:** a evolução das versões 0.7–0.24 continua disponível no histórico de commits e pull requests do GitHub. Este README descreve a versão atual, evitando instruções contraditórias de lançamentos antigos.
+

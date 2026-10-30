@@ -150,8 +150,15 @@
       seconds += dt;
       const mood = stage.dataset.mood || "idle";
       const sleeping = mood === "sleep";
+      const chatState = stage.dataset.chatState || "idle";
+      const thinking = chatState === "thinking";
+      const attentive = chatState === "typing";
+      const replying = chatState === "replying";
+      const dancing = mood === "dance";
+      const laughing = mood === "laugh";
       const pointerIsActive = lastPointer > 0 && now - lastPointer < 1600;
-      const target = pointerIsActive ? [pointerX, pointerY] : idleLook(seconds);
+      const target = thinking ? [-.35, -.45] : attentive ? [-.45, .15] :
+        pointerIsActive ? [pointerX, pointerY] : idleLook(seconds);
       lookX = lerp(lookX, target[0], clamp(dt * 5, 0, 1));
       lookY = lerp(lookY, target[1], clamp(dt * 5, 0, 1));
       eyeX = lerp(eyeX, lookX * 1.8, clamp(dt * 7, 0, 1));
@@ -164,27 +171,29 @@
         (mood === "shy" ? -3 : mood === "happy" ? 1.5 : mood === "wave" ? 2 : 0);
       const nod = lookY * 3 + Math.sin(t * .48) * 1.2;
       motion(root, "translate(" + num(sway * .8) + "px," +
-        num(breath * 1.5 - 1) + "px) rotate(" + num(sway * .25) + "deg)", "300px 800px");
+        num(breath * 2.2 - 1 + (laughing ? Math.sin(t * 16) * 1.1 : 0)) + "px) rotate(" + num(sway * .25) + "deg)", "300px 800px");
       motion(head, "translate(" + num(lookX * 1.1) + "px," +
         num(-nod * .18) + "px) rotate(" + num(tilt) + "deg)", "300px 232px");
       motion(hairBack, "rotate(" + num(Math.sin(t * .9 + 1) * 1.6) + "deg)", "300px 105px");
       motion(hairFront, "rotate(" + num(Math.sin(t * 1.1 + .2) * 1.2) + "deg)", "300px 100px");
       motion(hairSide, "rotate(" + num(Math.sin(t * .82 + 2) * 1.6 - tilt * .18) + "deg)", "300px 155px");
-      const right = mood === "wave" ? -55 + Math.sin(t * 2) * 2 :
-        mood === "angry" ? -19 : Math.sin(t * .95 + 1.9) * 1.4;
+      const greeting = mood === "idle" && t < 3.4 && !thinking && !attentive;
+      const right = mood === "wave" || greeting ? -55 + Math.sin(t * 2) * 2 :
+        mood === "angry" ? -19 : replying ? -12 + Math.sin(t * 2) * 3 :
+        Math.sin(t * .95 + 1.9) * 2.7;
       const left = mood === "shy" ? -22 : mood === "angry" ? 20 :
         Math.sin(t * .92 + .2) * 1.6;
       motion(armRight, "rotate(" + num(right) + "deg)", "362px 278px");
       motion(armLeft, "rotate(" + num(left) + "deg)", "238px 278px");
-      motion(forearmRight, "rotate(" + num(mood === "wave" ? -116 + Math.sin(t * 6) * 7 : 0) + "deg)", "390px 384px");
+      motion(forearmRight, "rotate(" + num(mood === "wave" || greeting ? -116 + Math.sin(t * 6) * 7 : replying ? -24 : 0) + "deg)", "390px 384px");
       motion(forearmLeft, "rotate(" + num(mood === "shy" ? -12 : 0) + "deg)", "214px 386px");
-      motion(handRight, "rotate(" + num(mood === "wave" ? Math.sin(t * 8) * 9 : 0) + "deg)", "384px 470px");
+      motion(handRight, "rotate(" + num(mood === "wave" || greeting ? Math.sin(t * 8) * 9 : 0) + "deg)", "384px 470px");
       motion(legLeft, "rotate(0deg)", "274px 529px");
       motion(legRight, "rotate(0deg)", "327px 529px");
       motion(shinLeft, "rotate(0deg)", "275px 687px");
       motion(shinRight, "rotate(0deg)", "326px 687px");
       const blinkValue = sleeping ? 1 : blink(t);
-      const eyeScale = clamp(1 - blinkValue * .96, .04, 1);
+      const eyeScale = clamp((1 - blinkValue * .96) * (laughing ? .65 : 1), .04, 1);
       for (const eye of eyes) motion(eye, "scaleY(" + num(eyeScale) + ")");
       for (const iris of irises) motion(iris,
         "translate(" + num(eyeX) + "px," + num(eyeY) + "px)");
@@ -192,9 +201,19 @@
       const talking = stage.classList.contains("is-speaking");
       const level = talking ?
         clamp(.5 + Math.sin(t * 17) * .27 + Math.sin(t * 11) * .2, .1, 1) :
-        mood === "surprised" ? 1 : .1;
+        mood === "surprised" ? 1 : laughing ? .55 + Math.sin(t * 12) * .2 : .1;
       motion(mouth, "scaleY(" + num(level) + ")");
 
+      if (dancing) {
+        const beat = Math.sin(t * 5);
+        motion(root, "translate(" + num(beat * 12) + "px," + num(-Math.abs(Math.cos(t * 5)) * 4) + "px) rotate(" + num(beat * 2.4) + "deg)", "300px 800px");
+        motion(armLeft, "rotate(" + num(20 + beat * 10) + "deg)", "238px 278px");
+        motion(armRight, "rotate(" + num(-20 + beat * 10) + "deg)", "362px 278px");
+        motion(forearmLeft, "rotate(-35deg)", "214px 386px");
+        motion(forearmRight, "rotate(35deg)", "390px 384px");
+        motion(legLeft, "rotate(" + num(beat * 3) + "deg)", "274px 529px");
+        motion(legRight, "rotate(" + num(beat * 3) + "deg)", "327px 529px");
+      }
       if (mood === "walk") {
         motion(root, "translate(" + num(Math.sin(t * 1.5) * 6) + "px," +
           num(-Math.abs(Math.sin(t * 4)) * 2) + "px) rotate(" +
@@ -211,3 +230,4 @@
       frameId = window.requestAnimationFrame(frame);
   }
 })();
+

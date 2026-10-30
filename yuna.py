@@ -616,7 +616,7 @@ def conversation_history(memory, budget=6500):
     return selected
 
 
-def respond(memory, message):
+def respond(memory, message, *, system_note="", allow_research=True):
     facts = json.dumps({
         'memorias_confirmadas_do_usuario': [text for _, text in memory.facts()],
         'falas_antigas_do_usuario': memory.recall(message),
@@ -625,19 +625,19 @@ def respond(memory, message):
     }, ensure_ascii=False)
     # Reflexões geradas pela IA continuam salvas, mas não são fatos nem exemplos de fala.
     notes = ''
-    query = public_question_to_query(message) if os.environ.get('YUNA_AUTO_RESEARCH', '1') == '1' else None
+    query = public_question_to_query(message) if allow_research and os.environ.get('YUNA_AUTO_RESEARCH', '1') == '1' else None
     if query:
         public_refs = wikipedia_lookup(query)
         if 'Fonte:' in public_refs:
             notes = '\nFontes públicas para esta pergunta: ' + public_refs[:1800]
-    messages = [{'role': 'system', 'content': SYSTEM + '\n' + persona_instructions(load_preferences(ROOT)) + '\n' + memory.affect.style_instructions()
+    messages = [{'role': 'system', 'content': SYSTEM + '\n' + system_note + '\n' + persona_instructions(load_preferences(ROOT)) + '\n' + memory.affect.style_instructions()
                  + '\nDados do usuário: ' + facts + notes}]
     messages += conversation_history(memory) + [{'role': 'user', 'content': message}]
     answer = ask_model(messages)
     if speech_issue(answer):
         # Uma única revisão. Não altera ferramentas, JSON, documentos ou citações.
         revision = [
-            {'role': 'system', 'content': SYSTEM + '\n' + persona_instructions(load_preferences(ROOT)) + '\nRevise SOMENTE a resposta abaixo. '
+            {'role': 'system', 'content': SYSTEM + '\n' + system_note + '\n' + persona_instructions(load_preferences(ROOT)) + '\nRevise SOMENTE a resposta abaixo. '
              'Corrija português brasileiro, concordância, sujeitos e identidade (sou Yuna, Kaizen criou o projeto, usuário atual não verificado), preservando o sentido. Não acrescente fatos, '
              'ações, promessas ou intimidade. Retorne apenas a resposta revisada.'},
             {'role': 'user', 'content': json.dumps(
@@ -884,4 +884,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 

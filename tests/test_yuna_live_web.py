@@ -32,6 +32,9 @@ class LiveWebPreviewTests(unittest.TestCase):
         parser = Tags()
         parser.feed(html)
         self.assertIn("./yuna-viva.js", parser.scripts)
+        self.assertIn("./yuna-chat.js", parser.scripts)
+        for control in ('chatForm', 'chatInput', 'sendChat', 'chatMessages', 'chatActivity'):
+            self.assertIn(control, parser.ids)
         self.assertIn('class="stage-panel live-mode"', html)
         self.assertIn("modeLive", parser.ids)
         self.assertIn("modePortrait", parser.ids)
@@ -48,7 +51,7 @@ class LiveWebPreviewTests(unittest.TestCase):
         self.assertIn("eyeX", script)
         self.assertIn("setPortraitMode(false)", script)
         for mood in ("idle", "happy", "shy", "angry", "wave", "sleep",
-                     "curious", "walk", "surprised"):
+                     "curious", "walk", "surprised", "dance", "laugh"):
             self.assertTrue(any(b.get("data-action") == mood for b in parser.buttons))
 
     def test_no_privileged_browser_access(self):
@@ -63,3 +66,4 @@ class LiveWebPreviewTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

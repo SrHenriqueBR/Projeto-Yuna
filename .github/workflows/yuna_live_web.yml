@@ -5,6 +5,12 @@ on:
     paths:
       - 'docs/yuna-preview.html'
       - 'docs/yuna-viva.js'
+      - 'docs/yuna-chat.js'
+      - 'yuna_web.py'
+      - 'yuna.py'
+      - 'iniciar_yuna_web.bat'
+      - 'tests/test_yuna_web.py'
+      - 'tests/yuna_chat.test.cjs'
       - 'tests/test_yuna_live_web.py'
       - 'tests/yuna_web_controls.test.cjs'
       - '.github/workflows/yuna_live_web.yml'
@@ -13,6 +19,12 @@ on:
     paths:
       - 'docs/yuna-preview.html'
       - 'docs/yuna-viva.js'
+      - 'docs/yuna-chat.js'
+      - 'yuna_web.py'
+      - 'yuna.py'
+      - 'iniciar_yuna_web.bat'
+      - 'tests/test_yuna_web.py'
+      - 'tests/yuna_chat.test.cjs'
       - 'tests/test_yuna_live_web.py'
       - 'tests/yuna_web_controls.test.cjs'
       - '.github/workflows/yuna_live_web.yml'
@@ -31,6 +43,7 @@ jobs:
       - name: Validar sintaxe JavaScript
         run: |
           node --check docs/yuna-viva.js
+          node --check docs/yuna-chat.js
           python - <<'PY'
           from pathlib import Path
           import re
@@ -43,5 +56,7 @@ jobs:
       - name: Testar HTML e controles do avatar
         run: |
           python -m unittest discover -s tests -p test_yuna_live_web.py -v
-          node --test tests/yuna_web_controls.test.cjs
+          python -m unittest discover -s tests -p test_yuna_web.py -v
+          node --test tests/yuna_web_controls.test.cjs tests/yuna_chat.test.cjs
+
 

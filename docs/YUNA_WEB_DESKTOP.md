@@ -20,7 +20,7 @@
 ## Como funciona
 
 - **Mesma arte, sem divergência de identidade:** navegador usa `./yuna-portrait.webp`; desktop lê `ROOT/docs/yuna-portrait.webp`.
-- **Web:** avatar SVG de corpo inteiro com proporções mais humanas e traço anime, incluindo cabeça, cabelo, braços, cotovelos, mãos, pernas, joelhos, olhos e boca articulados; expressões e falas prontas. “Ver rosto” aproxima a personagem para conferir as expressões e retorna ao corpo inteiro. O botão de retrato mostra a ilustração de referência. A pausa interrompe os movimentos dos dois modos e os efeitos de fundo, e a preferência por movimento reduzido é respeitada ao abrir a página. Abas ocultas suspendem o ciclo de animação. A página não conversa com o Ollama.
+- **Web:** avatar SVG de corpo inteiro com proporções mais humanas e traço anime, incluindo cabeça, cabelo, braços, cotovelos, mãos, pernas, joelhos, olhos e boca articulados; expressões e falas prontas. “Ver rosto” aproxima a personagem para conferir as expressões e retorna ao corpo inteiro. O botão de retrato mostra a ilustração de referência. A pausa interrompe os movimentos dos dois modos e os efeitos de fundo, e a preferência por movimento reduzido é respeitada ao abrir a página. Abas ocultas suspendem o ciclo de animação. No link público, a página demonstra as expressões. No modo local pelo launcher web, o painel conversa com o Ollama.
 - **Voz na web:** o botão alterna entre ouvir e parar. Trocar a expressão interrompe a fala anterior; falhas ou ausência de início da voz geram um aviso sem apagar a legenda. A disponibilidade e o timbre dependem das vozes do navegador, e algumas podem precisar de internet.
 - **Desktop:** pequena oscilação do retrato, botões de humor que também atualizam o `AvatarController` já existente, conversa e recursos locais preservados. Os botões não enviam mensagens ao modelo sem você pedir.
 - **Fallback:** se o arquivo da arte estiver ausente ou seu Qt não conseguir decodificá-lo, os recursos da Yuna continuam disponíveis com a apresentação antiga.
@@ -38,3 +38,16 @@ Nenhuma informação pessoal é publicada pela página de demonstração. Não a
 
 Execute `python -m unittest discover -s tests -p test_yuna_live_web.py -v` e `node --test tests/yuna_web_controls.test.cjs`. Os testes de JavaScript simulam a animação e as respostas do serviço de voz, incluindo pausa, alternância de modo, aba oculta e eventos atrasados de áudio. Confira também o layout no navegador em tela estreita e o áudio no dispositivo de destino.
 
+
+
+## Chat local e novas reações
+
+Abra `iniciar_yuna_web.bat` com o Ollama em execução. O endereço local padrão é `http://127.0.0.1:8787/`. A primeira resposta pode demorar enquanto o modelo é carregado; o painel indica quando Yuna está pensando. Enter envia a mensagem; Shift+Enter adiciona uma linha. “Ler respostas em voz alta” é opcional, e “Parar voz” interrompe a leitura.
+
+O chat reutiliza `data/yuna.db` e `data/conhecimentos.json`. Guarde essa pasta ao atualizar. O servidor serve apenas os arquivos da interface e as rotas de conversa; não publica a pasta `data`. Cada pergunta é processada de uma vez. O modelo do chat não executa programas nem pesquisa na web.
+
+No link público não há um modelo de texto hospedado: os campos indicam como abrir a conversa local. A página pública não tenta descobrir servidores, modelos ou arquivos no computador do visitante. O serviço local não aceita chamadas de outras origens do navegador.
+
+A animação ganhou saudação inicial, atenção durante a escrita, postura de pensamento e gestos ao responder, além de dança e riso selecionáveis. Os movimentos são visuais e não representam sentimentos reais. A voz do navegador pode depender de serviços de voz externos; a leitura vem desligada.
+
+Testes: `python -m unittest discover -s tests -p test_yuna_web.py -v` e `node --test tests/yuna_web_controls.test.cjs tests/yuna_chat.test.cjs`. Os testes de respostas utilizam o modelo simulado; avalie a qualidade das respostas reais com o Ollama instalado no notebook.
