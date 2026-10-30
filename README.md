@@ -1,4 +1,4 @@
-# Projeto Yuna — versão 0.43
+# Projeto Yuna — versão 0.44
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
@@ -9,10 +9,19 @@ A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Exec
 **[Abrir a prévia web da Yuna](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-preview.html)**
 
 Esta página é uma **prévia ilustrada 2.5D**, gratuita e sem instalação.
-Mostra a direção artística anime com animação de respiração, cabelo,
-olhos, emoções e gestos. Experimente os botões *Feliz*, *Tímida*,
-*Brava*, *Acenar* e *Dormir*. Há também um botão de teste de fala com
-a voz disponível no próprio navegador, quando suportada.
+A personagem agora utiliza **o mesmo retrato anime** da janela principal
+do Windows, em `docs/yuna-portrait.webp`. A web exibe movimento de
+enquadramento, efeitos visuais e frases demonstrativas nos botões
+*Feliz*, *Tímida*, *Brava*, *Acenar* e *Dormir*, além de teste de voz
+do navegador (se houver voz instalada). As expressões do retrato não
+são deformadas: não há rigging/visemas no arquivo de imagem.
+
+No **Windows**, `iniciar_yuna.bat` abre a conversa real com uma
+**terceira coluna de apresentação anime**, os mesmos estados de humor,
+e o retrato oscilando suavemente. A voz real, anexos, memória, Ollama,
+câmeras opcionais e recursos existentes continuam nos controles atuais.
+Nenhum Node.js ou WebEngine novo é necessário para esse painel.
+Se o arquivo do retrato faltar, o aplicativo funciona com fallback.
 
 A página **não é o avatar VRM final** e **não conecta ao Ollama**.
 Não acessa câmera, microfone, arquivos locais nem dados da Yuna.

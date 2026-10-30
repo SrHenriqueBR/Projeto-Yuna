@@ -4,6 +4,7 @@ O launcher padrão inicia esta interface sem abrir console CMD. O motor de
 conversa e SQLite são os mesmos da mascote e do modo terminal.
 """
 import html
+import math
 import socket
 from pathlib import Path
 from queue import Queue
@@ -14,7 +15,7 @@ from PySide6.QtCore import Qt, QTimer, Signal, QObject, QUrl
 from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence, QDesktopServices
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
-    QApplication, QComboBox, QFileDialog, QFrame, QHBoxLayout, QLabel, QInputDialog,
+    QApplication, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QInputDialog,
     QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
     QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget
 )
@@ -159,10 +160,17 @@ class DesktopWorker(Thread):
 
 
 STYLE = """
-QMainWindow { background: #11101a; }
-QWidget { font-family: "Segoe UI"; font-size: 12px; color: #eae8f2; }
-QFrame#sidebar { background: #191726; border-right: 1px solid #302b44; }
-QFrame#header { background: #181625; border-bottom: 1px solid #302b44; }
+QMainWindow { background: #0a0b19; }
+QWidget { font-family: "Segoe UI"; font-size: 12px; color: #f2efff; }
+QFrame#sidebar { background: #121024; border-right: 1px solid #40315f; }
+QFrame#header { background: #17152e; border-bottom: 1px solid #49366e; }
+QFrame#hero { background: #161326; border-right: 1px solid #4c3b70; }
+QLabel#heroSpeech { background: #231c39; color: #f1e8ff; border: 1px solid #735ba6;
+                    border-radius: 17px; padding: 15px; font-size: 13px; }
+QPushButton#heroMood { background: #221b38; border: 1px solid #574577;
+                      border-radius: 11px; padding: 9px; font-size: 11px; }
+QPushButton#heroMood[active="true"] { background: #6945a7; border-color: #bb9bfc; }
+QPushButton#heroMood:hover { background: #49326e; }
 QLabel#brand { font-size: 23px; font-weight: 700; color: #f4ecff; }
 QLabel#subtle { color: #aaa3bd; }
 QLabel#section { color: #b8a9ea; font-size: 12px; font-weight: 700; }
@@ -193,11 +201,14 @@ class YunaDesktop(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"Yuna {VERSION} • Espaço pessoal")
-        self.resize(1160, 765)
-        self.setMinimumSize(830, 550)
+        self.resize(1300, 790)
+        self.setMinimumSize(1020, 610)
         self.setStyleSheet(STYLE)
         self.pending_path = None
         self.avatar_window = None
+        self.hero_timer = None
+        self._hero_tick = 0
+        self.hero_buttons = {}
         self.avatar_controller = AvatarController()
         self.avatar_bridge = None  # opt-in: zero portas abertas sem ação do usuário
         self._avatar_event_sequence = 0
@@ -278,20 +289,28 @@ class YunaDesktop(QMainWindow):
         sidebar.setContentsMargins(20, 24, 20, 20)
         sidebar.setSpacing(13)
 
-        logo = QLabel("☾  YUNA")
+        logo = QLabel("✧  YUNA")
         logo.setObjectName("brand")
         sidebar.addWidget(logo)
 
         avatar = QLabel("🖤")
+        portrait_path = ROOT / "docs" / "yuna-portrait.webp"
+        self.hero_source = QPixmap(str(portrait_path)) if portrait_path.is_file() else QPixmap()
         avatar.setAlignment(Qt.AlignmentFlag.AlignCenter)
         avatar.setFixedHeight(190)
         avatar.setStyleSheet(
             "background:#242036;border:1px solid #403352;"
             "border-radius:17px;font-size:50px"
         )
-        # O GIF é opcional e permanece no diretório de imagens do usuário.
+        # Um único retrato oficial define a identidade visual do web e Windows.
+        # GIFs antigos permanecem como fallback quando faltar o arquivo.
         self.avatar_movie = None
-        for filename in ("yuna.gif", "yuna_idle.gif", "yuna_animada.gif"):
+        if not self.hero_source.isNull():
+            avatar.setPixmap(self.hero_source.scaled(
+                180, 180, Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation))
+        for filename in (() if not self.hero_source.isNull() else
+                         ("yuna.gif", "yuna_idle.gif", "yuna_animada.gif")):
             candidate = ASSETS / filename
             if candidate.is_file():
                 movie = QMovie(str(candidate))
@@ -301,7 +320,7 @@ class YunaDesktop(QMainWindow):
                     movie.start()
                     self.avatar_movie = movie
                     break
-        if self.avatar_movie is None:
+        if self.avatar_movie is None and self.hero_source.isNull():
             for filename in ("yuna_idle.png", "yuna_wave.png"):
                 candidate = ASSETS / filename
                 if candidate.is_file():
@@ -314,7 +333,7 @@ class YunaDesktop(QMainWindow):
                         break
         sidebar.addWidget(avatar)
 
-        self.sidebar_caption = QLabel(f"Modelo local: {MODEL}")
+        self.sidebar_caption = QLabel(f"✦ ONLINE LOCAL  ·  {MODEL}")
         self.sidebar_caption.setObjectName("subtle")
         self.sidebar_caption.setWordWrap(True)
         sidebar.addWidget(self.sidebar_caption)
@@ -472,11 +491,122 @@ class YunaDesktop(QMainWindow):
         controls.addWidget(hint)
         content.addWidget(footer)
 
+        # Identidade visual anime compartilhada com docs/yuna-preview.html.
+        # Painel é somente de apresentação: nenhuma ação extra ou câmera.
+        hero = QFrame()
+        hero.setObjectName("hero")
+        hero.setMinimumWidth(240)
+        hero.setMaximumWidth(500)
+        visual = QVBoxLayout(hero)
+        visual.setContentsMargins(16, 21, 16, 18)
+        visual.setSpacing(11)
+        hero_title = QLabel("✦  YUNA / ANIME")
+        hero_title.setStyleSheet(
+            "font-size:15px;font-weight:800;color:#d5b7ff;letter-spacing:1px")
+        visual.addWidget(hero_title)
+        subtitle = QLabel("Sempre ao seu lado, Kaizen ♡")
+        subtitle.setStyleSheet("font-size:12px;color:#b5a8d6")
+        visual.addWidget(subtitle)
+        self.hero_image = QLabel()
+        self.hero_image.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.hero_image.setMinimumHeight(240)
+        self.hero_image.setMaximumHeight(480)
+        self.hero_image.setStyleSheet(
+            "background:#211b39;border:1px solid #65518f;border-radius:20px")
+        self.hero_image.setToolTip(
+            "A mesma arte da prévia web. É uma ilustração com movimento suave, não um VRM.")
+        if self.hero_source.isNull():
+            self.hero_image.setText(
+                "Retrato anime indisponível.\\nA conversa continua funcionando.")
+            self.hero_image.setWordWrap(True)
+        else:
+            self._paint_hero_portrait()
+            self.hero_timer = QTimer(self)
+            self.hero_timer.setInterval(180)
+            self.hero_timer.timeout.connect(self._animate_hero_portrait)
+            self.hero_timer.start()
+        visual.addWidget(self.hero_image, 1)
+        self.hero_speech = QLabel("Opa, Kaizen! O que vamos fazer hoje? ✨")
+        self.hero_speech.setObjectName("heroSpeech")
+        self.hero_speech.setWordWrap(True)
+        self.hero_speech.setMinimumHeight(80)
+        visual.addWidget(self.hero_speech)
+        mood_labels = (
+            ("idle", "✧ Normal"), ("happy", "♡ Feliz"), ("shy", "✿ Tímida"),
+            ("angry", "⚡ Brava"), ("wave", "👋 Acenar"), ("sleepy", "☾ Dormir"),
+        )
+        mood_grid = QGridLayout()
+        mood_grid.setSpacing(7)
+        for i, (mode, title) in enumerate(mood_labels):
+            mood_button = QPushButton(title)
+            mood_button.setObjectName("heroMood")
+            mood_button.setProperty("active", mode == "idle")
+            mood_button.clicked.connect(
+                lambda _checked=False, selected=mode: self.select_hero_mood(selected))
+            self.hero_buttons[mode] = mood_button
+            mood_grid.addWidget(mood_button, i // 3, i % 3)
+        visual.addLayout(mood_grid)
+        demo = QPushButton("▶  Ouvir a Yuna")
+        demo.setObjectName("primary")
+        demo.setToolTip("Usa a voz selecionada na janela principal, sem abrir microfone.")
+        demo.clicked.connect(lambda: self.say(self.hero_speech.text()))
+        visual.addWidget(demo)
+        disclaimer = QLabel("Retrato ilustrado 2.5D • Sem câmera nem microfone ativos")
+        disclaimer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        disclaimer.setWordWrap(True)
+        disclaimer.setStyleSheet("font-size:10px;color:#a59bbb")
+        visual.addWidget(disclaimer)
         splitter.addWidget(side)
+        splitter.addWidget(hero)
         splitter.addWidget(center)
         splitter.setStretchFactor(0, 0)
         splitter.setStretchFactor(1, 1)
-        splitter.setSizes([282, 878])
+        splitter.setStretchFactor(2, 2)
+        splitter.setSizes([245, 395, 660])
+
+    def _paint_hero_portrait(self, factor=1.0):
+        """Redimensiona somente uma arte local, sem rede ou leitura de câmera."""
+        if self.hero_source.isNull():
+            return
+        width = max(230, min(420, self.hero_image.width() or 360))
+        height = max(240, min(470, self.hero_image.height() or 400))
+        size = max(200, int(min(width - 8, height - 8) * factor))
+        scaled = self.hero_source.scaled(
+            size, size, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        self.hero_image.setPixmap(scaled)
+
+    def _animate_hero_portrait(self):
+        if not self.hero_image.isVisible() or self.hero_source.isNull():
+            return
+        # Suave ilusão 2.5D, 5 quadros por segundo; não imita rigging VRM.
+        self._hero_tick += 1
+        breath = 1.0 + math.sin(self._hero_tick * 0.24) * 0.012
+        self._paint_hero_portrait(breath)
+
+    def select_hero_mood(self, mood):
+        """Reações visuais compartilhadas; não enviam texto ao Ollama."""
+        reactions = {
+            "idle": ("Opa, Kaizen! O que vamos fazer hoje? ✨", "idle", "neutral"),
+            "happy": ("Hehe! Que bom te ver feliz! ♡", "happy", "happy"),
+            "shy": ("Ei, não fica me olhando assim! ♡", "shy", "shy"),
+            "angry": ("Hmpf! Você gosta de me provocar, né? ⚡", "angry", "annoyed"),
+            "wave": ("Oiii! Estou aqui! 👋", "wave", "happy"),
+            "sleepy": ("Zzz... Só mais cinco minutinhos...", "sleepy", "neutral"),
+        }
+        if mood not in reactions:
+            return
+        phrase, pose, emotion = reactions[mood]
+        self.hero_speech.setText(phrase)
+        for name, button in self.hero_buttons.items():
+            button.setProperty("active", name == mood)
+            button.style().unpolish(button)
+            button.style().polish(button)
+        self._avatar_event("avatar.pose", pose=pose)
+        self._avatar_event("avatar.emotion", emotion=emotion, intensity=0.65)
+        if self.avatar_window is not None:
+            self.avatar_window.set_pose(pose, 4, phrase)
 
     def attach_events(self):
         self.signals.loaded.connect(self.load_history)
@@ -1330,6 +1460,8 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        if self.hero_timer is not None:
+            self.hero_timer.stop()
         self.game_session.stop()
         if self.camera_viewer is not None:
             self.camera_viewer.close()
