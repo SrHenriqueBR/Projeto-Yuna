@@ -28,6 +28,7 @@ from self_model import VERSION
 from voice import synthesize_windows, synthesize_edge, speech_text, wave_envelope, mouth_level_at
 from avatar_controller import AvatarController
 from avatar3d_bridge import Avatar3DBridge
+from unreal_state_bridge import UnrealStateBridge
 from battery_life import BatteryCompanion, read_battery, public_battery
 from avatar_reactions import reaction_for_text
 from action_diagnostics import diagnose_failure
@@ -211,6 +212,7 @@ class YunaDesktop(QMainWindow):
         self.hero_buttons = {}
         self.avatar_controller = AvatarController()
         self.avatar_bridge = None  # opt-in: zero portas abertas sem ação do usuário
+        self.unreal_bridge = None  # opt-in: troca de estado local, SEM rede
         self._avatar_event_sequence = 0
         self._speech_generation = 0
         self._active_speech_id = None
@@ -258,6 +260,18 @@ class YunaDesktop(QMainWindow):
         self.battery_timer.timeout.connect(self.poll_battery)
         self.battery_timer.start()
         QTimer.singleShot(2000, self.poll_battery)
+        # Heartbeat só do estado visual: o Unreal descarta snapshots antigos.
+        self.unreal_heartbeat = QTimer(self)
+        self.unreal_heartbeat.setInterval(1000)
+        self.unreal_heartbeat.timeout.connect(self.poll_unreal_bridge)
+        self.unreal_heartbeat.start()
+
+    def poll_unreal_bridge(self):
+        if self.unreal_bridge is not None:
+            self.unreal_bridge.publish(
+                self.avatar_controller.snapshot,
+                has_amplitude=bool(self._audio_levels),
+            )
 
     def poll_battery(self):
         """Informa bateria real sem emitir voz automaticamente."""
@@ -349,6 +363,12 @@ class YunaDesktop(QMainWindow):
         self.avatar3d_button.setToolTip(
             "Conecta o avatar VRM do navegador à voz da Yuna, somente em 127.0.0.1.")
         sidebar.addWidget(self.avatar3d_button)
+        self.unreal_button = QPushButton("◇  Conectar Yuna Unreal")
+        self.unreal_button.setObjectName("ghost")
+        self.unreal_button.setToolTip(
+            "Envia somente gestos e amplitude da fala para o Unreal local, por JSON. "
+            "Não abre microfone, câmera ou porta de rede.")
+        sidebar.addWidget(self.unreal_button)
         self.camera_button = QPushButton("◉  Ver câmera autorizada")
         self.camera_button.setObjectName("ghost")
         self.camera_button.setToolTip(
@@ -622,6 +642,7 @@ class YunaDesktop(QMainWindow):
 
         self.avatar_button.clicked.connect(self.toggle_avatar)
         self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
+        self.unreal_button.clicked.connect(self.toggle_unreal_bridge)
         self.camera_button.clicked.connect(self.open_camera_viewer)
         self.remote_camera_button.clicked.connect(self.open_remote_camera_invitation)
         self.inline_video_button.clicked.connect(self.request_embedded_video)
@@ -714,7 +735,7 @@ class YunaDesktop(QMainWindow):
 
     def show_answer(self, answer, is_document):
         self.add_message("Yuna", answer, accent=is_document)
-        if not is_document and (self.avatar_window is not None or self.avatar_bridge is not None):
+        if not is_document and (self.avatar_window is not None or self.avatar_bridge is not None or self.unreal_bridge is not None):
             if self.avatar_window is not None:
                 self.avatar_window.reload_appearance()
             request = self.last_avatar_request
@@ -825,6 +846,39 @@ class YunaDesktop(QMainWindow):
         self.avatar_bridge = bridge
         self.avatar3d_button.setText("■  Desconectar Yuna 3D")
         self.status.setText("Yuna 3D vinculada • somente estados de animação locais")
+
+    def toggle_unreal_bridge(self):
+        """Liga a ponte C++/Unreal manualmente; o editor continua opcional."""
+        if self.unreal_bridge is not None:
+            self.unreal_bridge.stop()
+            self.unreal_bridge = None
+            self.unreal_button.setText("◇  Conectar Yuna Unreal")
+            self.status.setText("Yuna Unreal desligada • modo Python preservado")
+            return
+        project = ROOT / "unreal" / "YunaUnreal" / "YunaUnreal.uproject"
+        if not project.is_file():
+            QMessageBox.information(
+                self, "Projeto Unreal não encontrado",
+                "Atualize a pasta unreal/YunaUnreal do GitHub. "
+                "A conversa e o avatar atuais continuam disponíveis."
+            )
+            return
+        try:
+            bridge = UnrealStateBridge(ROOT).start(self.avatar_controller.snapshot)
+        except OSError:
+            self.status.setText(
+                "Não consegui criar o estado local do Unreal na pasta data.")
+            return
+        self.unreal_bridge = bridge
+        self.unreal_button.setText("■  Desconectar Yuna Unreal")
+        self.status.setText(
+            "Yuna Unreal vinculada • estados locais sem rede • configure o modelo no editor")
+        # O botão apenas solicita abertura explícita; associação .uproject é
+        # opcional, e falha não derruba a ponte ou o chat.
+        if sys.platform == "win32":
+            if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(project))):
+                self.status.setText(
+                    "Ponte Unreal ativa. Abra unreal/YunaUnreal/YunaUnreal.uproject manualmente.")
 
     def open_camera_viewer(self):
         """Abre somente uma câmera explicitamente escolhida e aprovada."""
@@ -1336,6 +1390,14 @@ class YunaDesktop(QMainWindow):
                 appearance=load_style(ROOT) if name in
                 ("avatar.pose", "avatar.emotion") else None,
             )
+        if accepted and self.unreal_bridge is not None:
+            # Falha de escrita é isolada; uma pane no editor não interrompe o chat.
+            if not self.unreal_bridge.publish(
+                self.avatar_controller.snapshot, event=name,
+                has_amplitude=bool(self._audio_levels),
+            ):
+                if name != "speech.level":
+                    self.status.setText("Ponte Unreal: falha ao atualizar estado local")
         return accepted
 
     def _stop_avatar_speech(self):
@@ -1460,6 +1522,8 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        if self.unreal_heartbeat is not None:
+            self.unreal_heartbeat.stop()
         if self.hero_timer is not None:
             self.hero_timer.stop()
         self.game_session.stop()
@@ -1472,6 +1536,9 @@ class YunaDesktop(QMainWindow):
         if self.avatar_bridge is not None:
             self.avatar_bridge.stop()
             self.avatar_bridge = None
+        if self.unreal_bridge is not None:
+            self.unreal_bridge.stop()
+            self.unreal_bridge = None
         if self.avatar_window is not None:
             self.avatar_window.close()
         self.worker.stop()

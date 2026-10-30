@@ -1,8 +1,30 @@
-# Projeto Yuna — versão 0.44
+# Projeto Yuna — versão 0.45
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+
+## Yuna Unreal 0.45 — personagem 3D C++ (experimental)
+
+Foi adicionado um projeto **Unreal Engine 5** em `unreal/YunaUnreal/`,
+com ator `AYunaAvatarActor`, classe `UYunaAnimInstance` para
+Animation Blueprints e uma ponte Python/Qt **somente de estados visuais**.
+Na janela da Yuna há o botão **◇ Conectar Yuna Unreal**.
+Ao ativá-lo, a Yuna publica em `data/yuna_unreal_state.json` apenas
+pose, emoção, amplitude de voz e marca temporal; **não abre portas** e
+não compartilha conversas, memórias ou comandos locais.
+
+A **estrutura de integração está implementada**, mas ainda precisa
+de **Unreal Engine instalado, compilação C++ no Windows, modelo VRM
+anime rigado e configuração de Animation Blueprint no editor**.
+Sem o modelo, o ator não mostra uma personagem pronta. O editor e os
+assets não são instalados automaticamente pelo projeto.
+
+[Guia completo de instalação e limitações do Yuna Unreal](unreal/README.md).
+
+A versão web segue independente em HTML/Three.js/VRM; Pixel Streaming
+do Unreal para navegador **não foi implementado**. O modo de 8 GB
+continua leve e sem Unreal.
 
 ## Veja a Yuna anime no navegador — demonstração interativa
 

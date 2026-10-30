@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.7",
+  "Category": "Games",
+  "Description": "Yuna: avatar anime UE5 em C++ com ponte somente-leitura ao Python local.",
+  "Modules": [
+    {
+      "Name": "YunaUnreal",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
