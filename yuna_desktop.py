@@ -139,7 +139,7 @@ class DesktopWorker(Thread):
                         generation = task[2]
                         answer = handle_message(
                             memory, question, computer, progress=self.signals.status.emit,
-                            cancelled=lambda: generation != self._generation,
+                            cancelled=lambda generation=generation: generation != self._generation,
                         )
                         if generation == self._generation:
                             self.signals.replied.emit(answer, False)
