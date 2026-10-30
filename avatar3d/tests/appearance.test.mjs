@@ -86,8 +86,13 @@ test("every hairstyle and costume creates a distinct valid rig", () => {
       });
       assert.equal(figure.appearance.hair_style, hair_style);
       assert.ok(figure.headPivot.children.length > 12);
-      figure.animate(frameAt(2, {pose:"wave", reducedMotion:true}), 0, 0);
-      assert.equal(figure.rightArm.rotation.z, -2.1);
+      // A nova animação interpola os gestos para evitar estalos.
+      // Verifique a pose final depois de quadros suficientes.
+      const wave = frameAt(2, {pose:"wave", reducedMotion:true});
+      for (let i = 0; i < 90; i++) {
+        figure.animate(wave, 0, 0, 1 / 60);
+      }
+      assert.ok(Math.abs(figure.rightArm.rotation.z + 2.1) < 0.001);
       figure.dispose();
     }
   }
