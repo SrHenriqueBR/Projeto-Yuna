@@ -25,6 +25,9 @@ const reducedInput = document.querySelector("#reducedMotion");
 const mouthInput = document.querySelector("#mouth");
 const poseButtons = [...document.querySelectorAll("[data-pose]")];
 const MAX_VRM_BYTES = 80 * 1024 * 1024;
+// O usuário pode instalar sua personagem original em public/yuna.vrm.
+// Vite serve este arquivo APENAS no servidor local; não há download de terceiros.
+const LOCAL_ANIME_VRM = "/yuna.vrm";
 const OS_REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function status(text) {
@@ -379,8 +382,9 @@ async function loadLocalVrm(file) {
     if (vrm.lookAt) vrm.lookAt.target = lookAtTarget;
     preview.root.visible = false;
     updatePose("idle");
-    renderStatus.textContent = "VRM local ativo";
-    status("Modelo carregado nesta aba: " + file.name + ". Teste os gestos e o olhar.");
+    renderStatus.textContent = "Yuna anime · VRM ativo";
+    status("Yuna anime carregada: " + file.name +
+      ". Piscadas, respiração e gestos estão ativos. Cabelo físico depende do rig VRM.");
   } catch {
     status("Não consegui carregar este VRM. Verifique o arquivo e tente outro.");
   } finally {
@@ -388,6 +392,28 @@ async function loadLocalVrm(file) {
     modelInput.value = "";
   }
 }
+/** Carrega automaticamente somente um modelo LOCAL do usuário, se disponível.
+ * Sem arquivo, mantém a prévia geométrica. Nunca consulta modelos externos.
+ */
+async function loadInstalledAnimeVrm() {
+  try {
+    const response = await fetch(LOCAL_ANIME_VRM, {method: "HEAD", cache: "no-store"});
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    const bytes = Number(response.headers.get("content-length") || "0");
+    if (!response.ok || contentType.includes("text/html") ||
+        (bytes > 0 && bytes > MAX_VRM_BYTES) || loadSerial !== 0) return;
+    const downloaded = await fetch(LOCAL_ANIME_VRM, {cache: "no-store"});
+    if (!downloaded.ok || loadSerial !== 0) return;
+    const blob = await downloaded.blob();
+    if (!blob.size || blob.size > MAX_VRM_BYTES || loadSerial !== 0) return;
+    await loadLocalVrm(new File([blob], "yuna.vrm", {
+      type: "application/octet-stream"
+    }));
+  } catch {
+    // Sem modelo opcional, a prévia original funciona normalmente.
+  }
+}
+loadInstalledAnimeVrm();
 modelInput.addEventListener("change", () => loadLocalVrm(modelInput.files?.[0]));
 stage.addEventListener("dragover", (event) => {
   if ([...(event.dataTransfer?.types || [])].includes("Files")) event.preventDefault();
