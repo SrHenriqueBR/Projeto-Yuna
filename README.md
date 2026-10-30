@@ -4,6 +4,28 @@ Assistente pessoal local para **Windows 10/11**, com conversa em português, mem
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
+## Veja a Yuna anime no navegador — demonstração interativa
+
+**[Abrir a prévia web da Yuna](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-preview.html)**
+
+Esta página é uma **prévia ilustrada 2.5D**, gratuita e sem instalação.
+Mostra a direção artística anime com animação de respiração, cabelo,
+olhos, emoções e gestos. Experimente os botões *Feliz*, *Tímida*,
+*Brava*, *Acenar* e *Dormir*. Há também um botão de teste de fala com
+a voz disponível no próprio navegador, quando suportada.
+
+A página **não é o avatar VRM final** e **não conecta ao Ollama**.
+Não acessa câmera, microfone, arquivos locais nem dados da Yuna.
+É hospedada a partir deste repositório público pelo visualizador
+terceirizado raw.githack.com, que pode mostrar uma confirmação na
+primeira visita. O código-fonte está em
+[`docs/yuna-preview.html`](docs/yuna-preview.html).
+
+Para hospedar diretamente no GitHub Pages, o proprietário pode ativar
+**Settings → Pages → Deploy from a branch → main → /docs**.
+Depois de publicada, a mesma página terá o endereço
+`https://srhenriquebr.github.io/Projeto-Yuna/yuna-preview.html`.
+
 ## Instalação em outro Windows — assistente 0.26
 
 1. Instale o **Python 3.11 ou 3.12 de 64 bits** com o **Python Launcher**: https://www.python.org/downloads/windows/
