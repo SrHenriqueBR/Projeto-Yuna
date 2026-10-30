@@ -260,6 +260,18 @@ class YunaDesktop(QMainWindow):
         self.battery_timer.timeout.connect(self.poll_battery)
         self.battery_timer.start()
         QTimer.singleShot(2000, self.poll_battery)
+        # Heartbeat só do estado visual: o Unreal descarta snapshots antigos.
+        self.unreal_heartbeat = QTimer(self)
+        self.unreal_heartbeat.setInterval(1000)
+        self.unreal_heartbeat.timeout.connect(self.poll_unreal_bridge)
+        self.unreal_heartbeat.start()
+
+    def poll_unreal_bridge(self):
+        if self.unreal_bridge is not None:
+            self.unreal_bridge.publish(
+                self.avatar_controller.snapshot,
+                has_amplitude=bool(self._audio_levels),
+            )
 
     def poll_battery(self):
         """Informa bateria real sem emitir voz automaticamente."""
@@ -1510,6 +1522,8 @@ class YunaDesktop(QMainWindow):
         self.status.setText("Falha no microfone: " + str(error)[:180])
 
     def closeEvent(self, event):
+        if self.unreal_heartbeat is not None:
+            self.unreal_heartbeat.stop()
         if self.hero_timer is not None:
             self.hero_timer.stop()
         self.game_session.stop()
