@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#11101b" />
   <meta name="referrer" content="no-referrer" />
-  <title>Yuna Anime 3D — avatar VRM</title>
+  <title>Yuna Anime 3D — Animação Viva VRM</title>
 </head>
 <body>
   <div class="app">
@@ -18,8 +18,8 @@
       <div class="hint">Arraste o mouse para girar · Roda para aproximar · Mova o cursor para mudar o olhar</div>
       <aside class="controls" aria-label="Controles do avatar">
         <div class="eyebrow">ESTÚDIO DE PERSONAGEM ANIME</div>
-        <h1>Uma Yuna<br><em>viva em 3D.</em></h1>
-        <p>A Yuna respira, pisca e olha ao redor sem precisar mover o mouse. Use um modelo VRM anime articulado para substituir a prévia geométrica. Nenhuma câmera ou microfone é ativado.</p>
+        <h1>Yuna em 3D,<br><em>gestos de verdade.</em></h1>
+        <p>Ela respira, olha ao redor, muda de postura, move braços e pernas e responde às suas expressões. Com um VRM humanoide, essas animações usam as articulações do modelo. Nenhuma câmera ou microfone é ativado.</p>
         <p class="anime-tip"><strong>Quer deixar com visual anime de verdade?</strong>
           Crie a personagem gratuitamente no
           <a href="https://vroid.com/en/studio" target="_blank" rel="noopener noreferrer">VRoid Studio</a>,
@@ -74,13 +74,22 @@
           <button data-pose="surprised">Surpresa</button>
           <button data-pose="shy">Tímida</button>
           <button data-pose="wave">Acenar</button>
+          <button data-pose="walk">Caminhar</button>
+          <button data-pose="sit">Descansar</button>
+          <button data-pose="sleepy">Sonolenta</button>
+          <button data-pose="angry">Brava</button>
+          <button data-pose="wink">Piscar olho</button>
+          <button data-pose="laugh">Rir</button>
         </div>
         <div class="section-label">MOVIMENTOS</div>
         <label class="setting"><span>Reduzir animações <small>(desativa movimentos naturais)</small></span><input id="reducedMotion" type="checkbox"></label>
+        <label class="setting"><span>Intensidade dos gestos <small>(0 a 100%)</small></span>
+          <input id="motionIntensity" type="range" min="0" max="100" value="90" step="10" aria-label="Intensidade dos movimentos do corpo em porcentagem">
+        </label>
         <label class="setting"><span>Limite de FPS</span><select id="fps"><option value="30">30 FPS</option><option value="60">60 FPS</option></select></label>
         <label class="setting"><span>Prévia da fala <small>(demonstração)</small></span><input id="mouth" type="range" min="0" max="100" value="0" aria-label="Abertura de boca para demonstração"></label>
         <button id="resetCamera" class="secondary">Redefinir câmera</button>
-        <div id="message" class="message" role="status" aria-live="polite">Sem modelo .VRM instalado, a Yuna mostra uma prévia geométrica simplificada. Importe seu modelo anime para usar rosto, cabelo e esqueleto 3D.</div>
+        <div id="message" class="message" role="status" aria-live="polite">Movimentos 3D de corpo inteiro disponíveis. A personagem geométrica é uma prévia; importe seu VRM humanoide para aplicar as animações em um modelo anime de verdade.</div>
       </aside>
     </main>
     <footer>VRM carregado apenas nesta aba · A Yuna 2D continua independente · Não inclua modelos sem licença</footer>
