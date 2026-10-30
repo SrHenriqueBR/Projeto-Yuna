@@ -18,10 +18,14 @@ async function setup({local = true, failure = false, reply} = {}) {
     return item;
   }
   const ids = Object.fromEntries(['chatForm','chatInput','sendChat','connectChat','chatConnection',
-    'chatMessages','chatSetup','chatDetail','chatError','readReplies','stage','chatActivity','stopChatVoice'].map(id => [id,node()]));
+    'chatMessages','chatSetup','chatDetail','chatError','readReplies','stage','chatActivity','stopChatVoice',
+    'chatConversation','conversationHint','chatEmptyTitle','chatEmptyNote'].map(id => [id,node()]));
   const prompts = [node()]; prompts[0].dataset.chatPrompt = 'Olá, Yuna!';
+  const modes = ['companhia','desabafo','conselho'].map(mode => {
+    const button = node(); button.dataset.conversationMode=mode; button.id='mode-'+mode; return button;
+  });
   const calls = [], timers = new Map(); let sequence = 0;
-  const document = {getElementById: id => ids[id], querySelectorAll: () => prompts, createElement: () => node()};
+  const document = {getElementById: id => ids[id], querySelectorAll: selector => selector === '[data-conversation-mode]' ? modes : prompts, createElement: () => node()};
   const window = {addEventListener() {}, setTimeout(fn) { const id=++sequence; timers.set(id,fn); return id; }, clearTimeout: id => timers.delete(id)};
   const fetch = async (url, options) => {
     calls.push({url, options});
@@ -37,7 +41,7 @@ async function setup({local = true, failure = false, reply} = {}) {
   vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../docs/yuna-chat.js'),'utf8'),
     {window, document, fetch, AbortController, location:{protocol:local?'http:':'https:',hostname:local?'127.0.0.1':'raw.githack.com'}});
   await new Promise(resolve => setImmediate(resolve));
-  return {ids, prompts, calls, submit: () => ids.chatForm.emit('submit',{preventDefault(){}})};
+  return {ids, prompts, modes, calls, submit: () => ids.chatForm.emit('submit',{preventDefault(){}})};
 }
 
 test('página pública explica como conectar e não procura serviços no computador', async () => {
@@ -54,6 +58,7 @@ test('conversa envia mensagem e sessão local e trata a resposta apenas como tex
   app.ids.chatInput.value = 'Oi!'; await app.ids.chatInput.emit('input'); await app.submit();
   const request = app.calls.find(call => call.url === '/api/chat');
   assert.equal(JSON.parse(request.options.body).message,'Oi!');
+  assert.equal(JSON.parse(request.options.body).mode,'companhia');
   assert.equal(request.options.headers['X-Yuna-Token'],'session-token');
   assert.equal(app.ids.chatMessages.children.length,2);
   assert.equal(app.ids.chatMessages.children[1].children[1].textContent,'Olá! <img src=x onerror=alert(1)>');
@@ -80,4 +85,27 @@ test('envio duplo é bloqueado enquanto a personagem pensa', async () => {
   assert.equal(app.ids.chatInput.disabled,true);
   complete({ok:true,json:async()=>({answer:'Aqui está.'})}); await first;
   assert.equal(app.ids.chatInput.disabled,false);
+});
+
+test('modo conselho vai ao servidor e alternar o modo preserva a conversa', async () => {
+  const app = await setup();
+  await app.modes[2].emit('click');
+  assert.equal(app.modes[2].getAttribute('aria-selected'),'true');
+  assert.match(app.ids.chatInput.placeholder,/situação/);
+  assert.equal(app.calls.filter(call=>call.url==='/api/chat').length,0);
+  app.ids.chatInput.value='Estou pensando numa escolha.'; await app.submit();
+  assert.equal(JSON.parse(app.calls.find(call=>call.url==='/api/chat').options.body).mode,'conselho');
+  await app.modes[1].emit('click');
+  assert.equal(app.ids.chatMessages.children.length,2);
+  assert.equal(app.modes[1].getAttribute('aria-selected'),'true');
+});
+
+test('abas respondem ao teclado e não enviam mensagens ao selecionar um modo', async () => {
+  const app = await setup({local:false});
+  await app.modes[0].emit('keydown',{key:'ArrowRight',preventDefault(){}});
+  assert.equal(app.modes[1].getAttribute('aria-selected'),'true');
+  assert.equal(app.modes[1].focused,true);
+  assert.equal(app.ids.chatConversation.getAttribute('aria-labelledby'),'mode-desabafo');
+  assert.match(app.ids.chatInput.placeholder,/pesando/);
+  assert.equal(app.calls.length,0);
 });

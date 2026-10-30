@@ -23,6 +23,24 @@ WEB_CONTEXT = (
     'do computador, oriente a pessoa a abrir o aplicativo desktop da Yuna. '
     'Converse com vivacidade, curiosidade e bom humor, sem exagerar nem repetir bordões.'
 )
+COMPANION_STYLE = (
+    'CANTINHO DA YUNA: seja uma personagem feminina acolhedora, espontânea e curiosa. '
+    'Fale de si no feminino, com português natural e carinho leve, sem bordões repetidos. '
+    'Leve a sério o que a pessoa diz, sem julgá-la nem concordar com tudo só para agradar. '
+    'Não invente vivências humanas, sentimentos reais ou lembranças. '
+    'Conselhos são possibilidades com motivos; a decisão pertence ao usuário. '
+    'Em assuntos de alto impacto, reconheça limites e não invente diagnósticos ou certezas.'
+)
+CONVERSATION_MODES = {
+    'companhia': 'MODO CONVERSAR: troque ideias com leveza e interesse pelo assunto atual. '
+                 'Responda ao que foi dito; uma pergunta curta pode ajudar a conversa a continuar.',
+    'desabafo': 'MODO DESABAFAR: acolha primeiro o que a pessoa contou, sem minimizar. '
+                'Não despeje soluções sem ela pedir. Faça no máximo uma pergunta delicada '
+                'para entender melhor ou saber se ela quer sugestões.',
+    'conselho': 'MODO PEDIR CONSELHO: entenda a situação e o objetivo antes de aconselhar. '
+                'Se faltar contexto, faça uma pergunta. Quando houver contexto, ofereça '
+                'duas ou três possibilidades práticas, explicando as diferenças sem impor uma escolha.',
+}
 ASSETS = {
     '/': 'yuna-preview.html', '/yuna-preview.html': 'yuna-preview.html',
     '/yuna-viva.js': 'yuna-viva.js', '/yuna-chat.js': 'yuna-chat.js',
@@ -68,7 +86,9 @@ class Conversation:
             rows = db.execute("SELECT role, content FROM messages WHERE role IN ('user','assistant') ORDER BY id DESC LIMIT 40").fetchall()
         return [{'role': role, 'content': text} for role, text in reversed(rows)]
 
-    def reply(self, message):
+    def reply(self, message, mode='companhia'):
+        if mode not in CONVERSATION_MODES:
+            raise ValueError('Modo de conversa desconhecido.')
         if not self.lock.acquire(blocking=False):
             raise BusyError('A Yuna está respondendo a outra mensagem. Aguarde um instante.')
         try:
@@ -82,7 +102,8 @@ class Conversation:
                 if answer is not None:
                     memory.save_turn(message, answer)
                     return answer
-                return respond(memory, message, system_note=WEB_CONTEXT, allow_research=False)
+                note = '\n'.join((WEB_CONTEXT, COMPANION_STYLE, CONVERSATION_MODES[mode]))
+                return respond(memory, message, system_note=note, allow_research=False)
             finally:
                 memory.close()
         finally:
@@ -184,11 +205,15 @@ class Handler(BaseHTTPRequestHandler):
             if not isinstance(message, str) or not message.strip():
                 self.send(400, {'error': 'Escreva uma mensagem antes de enviar.'})
                 return
+            mode = payload.get('mode', 'companhia')
+            if not isinstance(mode, str) or mode not in CONVERSATION_MODES:
+                self.send(400, {'error': 'Escolha Conversar, Desabafar ou Pedir conselho.'})
+                return
         except (ValueError, UnicodeDecodeError):
             self.send(400, {'error': 'A mensagem não pôde ser lida. Tente novamente.'})
             return
         try:
-            answer = self.server.engine.reply(message.strip())
+            answer = self.server.engine.reply(message.strip(), mode=mode)
             if not isinstance(answer, str) or not answer.strip():
                 raise RuntimeError('O modelo retornou uma resposta vazia. Tente novamente.')
             self.send(200, {'answer': answer})

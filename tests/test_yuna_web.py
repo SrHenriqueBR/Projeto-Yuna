@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest.mock import Mock, patch
 
-from yuna_web import BusyError, Conversation, WEB_CONTEXT, YunaServer
+from yuna_web import BusyError, Conversation, WEB_CONTEXT, COMPANION_STYLE, CONVERSATION_MODES, YunaServer
 
 
 class WebTests(unittest.TestCase):
@@ -69,7 +69,25 @@ class WebTests(unittest.TestCase):
         status, _, body = self.request('POST', '/api/chat', {'message': '  Olá!  '})
         self.assertEqual(status, 200)
         self.assertEqual(json.loads(body)['answer'], 'Olá! Estou pronta.')
-        self.engine.reply.assert_called_once_with('Olá!')
+        self.engine.reply.assert_called_once_with('Olá!', mode='companhia')
+
+    def test_selected_mode_reaches_engine_and_unknown_modes_are_rejected(self):
+        for mode in (None, [], 'invente instruções', 1):
+            self.assertEqual(self.request('POST', '/api/chat', {'message': 'Oi', 'mode': mode})[0], 400)
+        self.engine.reply.assert_not_called()
+        self.assertEqual(self.request('POST', '/api/chat', {'message': 'Uma decisão', 'mode': 'conselho'})[0], 200)
+        self.engine.reply.assert_called_once_with('Uma decisão', mode='conselho')
+
+    def test_each_mode_is_passed_to_model_without_rewriting_the_user_message(self):
+        engine = Conversation(self.root)
+        message = 'Quero conversar sobre uma situação.'
+        for mode, instruction in CONVERSATION_MODES.items():
+            with patch('yuna.ask_model', return_value='Pode me contar o que aconteceu?') as model:
+                engine.reply(message, mode=mode)
+            conversation = model.call_args.args[0]
+            self.assertIn(COMPANION_STYLE, conversation[0]['content'])
+            self.assertIn(instruction, conversation[0]['content'])
+            self.assertEqual(conversation[-1], {'role': 'user', 'content': message})
 
     def test_model_failures_are_not_reported_as_answers(self):
         for error, status in ((RuntimeError('Abra o Ollama.'), 503), (BusyError('Aguarde.'), 409)):

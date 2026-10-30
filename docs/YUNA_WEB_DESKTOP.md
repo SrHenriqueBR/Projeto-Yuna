@@ -51,3 +51,11 @@ No link público não há um modelo de texto hospedado: os campos indicam como a
 A animação ganhou saudação inicial, atenção durante a escrita, postura de pensamento e gestos ao responder, além de dança e riso selecionáveis. Os movimentos são visuais e não representam sentimentos reais. A voz do navegador pode depender de serviços de voz externos; a leitura vem desligada.
 
 Testes: `python -m unittest discover -s tests -p test_yuna_web.py -v` e `node --test tests/yuna_web_controls.test.cjs tests/yuna_chat.test.cjs`. Os testes de respostas utilizam o modelo simulado; avalie a qualidade das respostas reais com o Ollama instalado no notebook.
+
+## Seu cantinho com a Yuna
+
+No painel de chat, escolha **Conversar**, **Desabafar** ou **Pedir conselho**. A escolha altera tanto as sugestões de assunto quanto as instruções enviadas ao modelo local. Trocar a opção não apaga mensagens nem o texto que você está escrevendo.
+
+Yuna conversa no feminino, com acolhimento e curiosidade. No desabafo, prioriza entender o que foi contado antes de sugerir soluções. No conselho, pede contexto quando necessário e apresenta possibilidades sem impor decisões. A personagem não inventa experiências humanas ou lembranças.
+
+O acesso é o mesmo: abra `iniciar_yuna_web.bat` com o Ollama em execução. O link público permite conhecer as opções; as respostas reais são produzidas na versão local. A qualidade do tom e dos conselhos depende do modelo instalado.

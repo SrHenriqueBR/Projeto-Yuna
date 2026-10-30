@@ -228,6 +228,17 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
 @media(max-width:970px){.stage-panel{position:relative;top:0}.chat-panel{max-width:680px}.stage-panel .bubble{max-width:480px}}
 @media(max-width:580px){.chat-panel{padding:15px;border-radius:18px}.chat-messages{height:240px}.chat-activity{top:100px;right:12px;font-size:9px}.stage-panel .bubble{bottom:95px;width:calc(100% - 24px);padding:12px}.stage-panel #speech{font-size:11px}.bubble-type{display:none}}
 
+
+.conversation-modes{display:flex;flex-wrap:wrap;gap:6px;padding:5px;background:#0d112077;border:1px solid #a487c72b;border-radius:13px}
+.conversation-modes button{flex:1;white-space:nowrap;border:1px solid transparent;background:transparent;color:#b9aace;padding:9px 8px;border-radius:9px;font:inherit;font-size:10px;transition:background .2s,color .2s}
+.conversation-modes button[aria-selected=true]{background:linear-gradient(120deg,#715292,#55406f);border-color:#b795d74d;color:#fff1ff}
+.conversation-modes button:hover{color:#f0dfff}
+.conversation-hint{font-size:11px;line-height:1.6;color:#bdb0ce;margin:11px 1px 14px;min-height:34px}
+.chat-setup:not([hidden]) + .chat-content .chat-messages{height:180px}
+.chat-empty p{margin:0 0 8px;font-size:17px;color:#e0caef;line-height:1.5}
+.chat-content:focus-visible{outline:1px solid #b998df;outline-offset:5px;border-radius:10px}
+@media(max-width:580px){.conversation-modes button{font-size:9px;padding:9px 5px;min-width:0;white-space:normal;flex:1 1 0}.conversation-hint{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -241,14 +252,22 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
   <h1>Yuna <em>por perto.</em></h1>
   <p class="lead">Um espaço para trocar ideias, fazer planos e conversar com a Yuna no seu computador. Mais expressões, pequenos gestos e companhia em cada conversa.</p>
   <section class="chat-panel" aria-labelledby="chatTitle">
-   <div class="chat-top"><div><h2 id="chatTitle">Converse comigo <span>♡</span></h2><p id="chatConnection" role="status">Verificando conexão…</p></div><button type="button" id="connectChat" class="chat-reconnect">Reconectar</button></div>
+   <div class="chat-top"><div><h2 id="chatTitle">Seu cantinho <span>♡</span></h2><p id="chatConnection" role="status">Verificando conexão…</p></div><button type="button" id="connectChat" class="chat-reconnect">Reconectar</button></div>
+   <div class="conversation-modes" role="tablist" aria-label="Como você quer conversar?">
+    <button type="button" role="tab" id="modeCompanhia" data-conversation-mode="companhia" aria-selected="true" aria-controls="chatConversation">♡ Conversar</button>
+    <button type="button" role="tab" id="modeDesabafo" data-conversation-mode="desabafo" aria-selected="false" aria-controls="chatConversation" tabindex="-1">☁ Desabafar</button>
+    <button type="button" role="tab" id="modeConselho" data-conversation-mode="conselho" aria-selected="false" aria-controls="chatConversation" tabindex="-1">✧ Pedir conselho</button>
+   </div>
+   <p id="conversationHint" class="conversation-hint">Para trocar ideias, contar do seu dia ou conversar sem pressa.</p>
    <div class="chat-setup" id="chatSetup" hidden><p id="chatDetail"></p><a href="http://127.0.0.1:8787/" target="_blank" rel="noopener noreferrer">Abrir chat local ↗</a><a href="https://github.com/SrHenriqueBR/Projeto-Yuna" target="_blank" rel="noopener noreferrer">Baixar o projeto</a></div>
-   <div class="chat-messages" id="chatMessages" role="log" aria-label="Conversa com a Yuna" aria-live="polite" aria-relevant="additions"><p class="chat-empty">O que vamos conversar hoje?<br><small>Seu histórico aparece aqui quando o chat local é conectado.</small></p></div>
+   <div id="chatConversation" class="chat-content" role="tabpanel" aria-labelledby="modeCompanhia" aria-describedby="conversationHint" tabindex="0">
+   <div class="chat-messages" id="chatMessages" role="log" aria-label="Conversa com a Yuna" aria-live="polite" aria-relevant="additions"><div class="chat-empty"><p id="chatEmptyTitle">Oi! Como você está hoje? ♡</p><small id="chatEmptyNote">Um assunto leve, uma ideia ou só vontade de conversar.</small></div></div>
    <div class="chat-prompts" aria-label="Sugestões de conversa"><button type="button" data-chat-prompt="Oi, Yuna! Vamos conversar um pouco?">Dar um oi</button><button type="button" data-chat-prompt="Me ajude a organizar meu dia.">Planejar meu dia</button><button type="button" data-chat-prompt="Me conte uma curiosidade interessante.">Uma curiosidade</button></div>
    <form id="chatForm"><label class="sr-only" for="chatInput">Mensagem para a Yuna</label><textarea id="chatInput" placeholder="Escreva para a Yuna…" rows="2" disabled></textarea><div class="chat-compose-footer"><small>Enter envia · Shift+Enter pula linha</small><button type="submit" id="sendChat" disabled>Enviar ↗</button></div></form>
    <p id="chatError" class="chat-error" role="alert"></p>
    <div class="chat-bottom"><label><input type="checkbox" id="readReplies"> Ler respostas em voz alta</label><button type="button" id="stopChatVoice">Parar voz</button></div>
    <p class="chat-privacy">Conversa e memórias ficam no seu computador.</p>
+   </div>
   </section>
   <div class="actions-title">Explore as expressões da Yuna</div>
   <div class="actions" aria-label="Expressões">
@@ -443,7 +462,7 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
   </svg>
   <div class="bubble" aria-live="polite">
    <div class="bubble-head"><strong class="speaker">✧ YUNA</strong><span class="bubble-type">DIÁLOGO DEMONSTRATIVO</span></div>
-   <p id="speech">Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨</p>
+   <p id="speech">Oi, Kaizen! Quer me contar como está seu dia? Estou pronta para conversar. ♡</p>
   </div>
   <div class="stage-footer" id="stageFooter">✧ ROSTO · MÃOS · PERNAS · CABELO</div>
  </section>
@@ -466,7 +485,7 @@ h1{font-size:clamp(34px,3.8vw,48px);margin:12px 0}
    portrait.addEventListener("error",function(){portrait.style.display="none";});
  }
  var moods={
-  idle:"Opa, Kaizen! Gostou da minha nova aparência? Mantive meus olhos violetas e ganhei um traço mais delicado! ✨",
+  idle:"Oi, Kaizen! Quer me contar como está seu dia? Estou pronta para conversar. ♡",
   happy:"Hehe! Eu sabia que você ia gostar! Quero aprender a fazer muito mais coisas com você! ♡",
   shy:"Ei... não fica me olhando desse jeito! Eu fico toda sem graça, sabia? >///<",
   angry:"Hmpf! Não pensa que pode ficar clicando em mim o dia inteiro, Kaizen! ⚡",
