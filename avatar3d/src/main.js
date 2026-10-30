@@ -272,6 +272,14 @@ async function pollBridge() {
 if (bridge) pollBridge();
 
 reducedInput.checked = OS_REDUCED_MOTION;
+if (OS_REDUCED_MOTION && !bridge) {
+  status("O Windows/navegador pediu redução de animações. Desmarque ‘Reduzir animações’ para ver a Yuna se movimentar.");
+}
+reducedInput.addEventListener("change", () => {
+  status(reducedInput.checked
+    ? "Animações reduzidas: piscar, olhar e movimentos de corpo ficam pausados. A boca continua funcionando."
+    : "Animação viva ativada: Yuna respira, pisca em intervalos variados, olha ao redor e muda a postura.");
+});
 fpsSelect.value = "30";
 renderer.domElement.addEventListener("pointermove", (event) => {
   const bounds = renderer.domElement.getBoundingClientRect();
@@ -288,11 +296,13 @@ function createRig(vrm) {
   const bone = (name) => vrm.humanoid?.getNormalizedBoneNode(name) || null;
   const head = bone("head");
   const upperArm = bone("rightUpperArm");
+  const leftArm = bone("leftUpperArm");
   const chest = bone("chest");
   return {
-    head, upperArm, chest,
+    head, upperArm, leftArm, chest,
     originalHead: head?.quaternion.clone(),
     originalArm: upperArm?.quaternion.clone(),
+    originalLeftArm: leftArm?.quaternion.clone(),
     originalChest: chest?.quaternion.clone()
   };
 }
@@ -315,12 +325,16 @@ function animateVrm(frame, dt) {
     }
   }
   applyRotation(rig.head, rig.originalHead, frame.headPitch,
-                frame.headYaw, frame.emotion === "curious" ? -0.08 : 0, dt);
-  applyRotation(rig.upperArm, rig.originalArm, 0, 0,
-                frame.emotion === "wave" ? -1.05 + frame.wave : 0, dt);
-  applyRotation(rig.chest, rig.originalChest, 0, 0, frame.bodySway * 0.5, dt);
+                frame.headYaw, frame.headTilt, dt);
+  applyRotation(rig.upperArm, rig.originalArm, frame.breath * 0.5, 0,
+                frame.emotion === "wave" ? -1.05 + frame.wave :
+                frame.rightArmSwing, dt);
+  applyRotation(rig.leftArm, rig.originalLeftArm, -frame.breath * 0.5, 0,
+                -frame.leftArmSwing, dt);
+  applyRotation(rig.chest, rig.originalChest, frame.breath * 0.65, 0,
+                frame.bodySway * 0.5, dt);
   if (currentVrm.lookAt) {
-    lookAtTarget.position.set(gazeX * 1.1, -gazeY * 0.65, 0);
+    lookAtTarget.position.set(frame.gazeX * 1.1, -frame.gazeY * 0.65, 0);
   }
   currentVrm.update(dt);
 }
@@ -438,7 +452,7 @@ function animate(now) {
     reducedMotion: reducedInput.checked
   });
   if (currentVrm) animateVrm(frame, dt);
-  else preview.animate(frame, gazeX, gazeY, dt);
+  else preview.animate(frame, frame.gazeX, frame.gazeY, dt);
   controls.update();
   renderer.render(scene, camera);
 }
