@@ -37,6 +37,11 @@ test("spoken nods and intensity are strictly gated", () => {
   const idle = performanceFrame(1.5,{pose:"wave",intensity:0});
   assert.equal(idle.rightElbow, 0);
   assert.equal(idle.wave, 0);
+  assert.equal(idle.headYaw, 0);
+  assert.equal(idle.bodySway, 0);
+  assert.equal(idle.breath, 0);
+  assert.equal(idle.gazeX, 0);
+  assert.equal(idle.motionStrength, 0);
   assert.equal(performanceFrame(1.5,{mouthLevel:42}).mouth,1);
   assert.equal(performanceFrame(1.5,{mouthLevel:NaN}).mouth,0);
 });
