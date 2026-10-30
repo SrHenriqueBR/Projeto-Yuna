@@ -82,10 +82,10 @@ export class VrmPerformer {
 
     // Movimento em três articulações: ombro, cotovelo e punho.
     // A acenação levanta somente o braço direito.
-    const liftR = wave ? 1.42 : 0;
+    const liftR = wave ? 1.42 * (frame.motionStrength ?? 1) : 0;
     this.bone("rightUpperArm",
       shy ? -0.30 : angry ? 0.16 : -armR * 0.24,
-      wave ? -0.12 : 0,
+      wave ? -0.12 * (frame.motionStrength ?? 1) : 0,
       -0.96 + liftR - armR * 0.55, dt);
     this.bone("leftUpperArm",
       shy ? -0.30 : angry ? -0.16 : -armL * 0.24,
