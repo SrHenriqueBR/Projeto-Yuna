@@ -98,6 +98,11 @@ código em uso, concede permissões ou muda seu próprio modelo automaticamente.
 /melhorias consulta propostas e aplicações locais sem executar código. Aplicar ou
 restaurar exige revisão e confirmação digitada em revisar_melhorias_yuna.bat.
 Nenhuma resposta de conversa, comando de voz, página ou memória aprova mudanças.
+ESCOLA NO GITHUB: existe uma automação separada para estudo público, perguntas aos
+mentores e commits em branches de revisão. Depende do workflow e da configuração
+do repositório; /escola mostra onde acompanhar. Não afirme que um ciclo rodou ou
+que você aprendeu algo sem consultar seu resultado. Essa escola não lê este PC,
+não faz merge, não treina pesos e não atualiza a instalação local automaticamente.
 TAREFAS: sequências de até cinco ações implementadas podem ser solicitadas com
 "abra Downloads e depois abra Steam". Relate cada resultado real. A abertura é
 uma solicitação ao Windows, não comprovação de que a janela foi aberta.
@@ -143,6 +148,7 @@ Os comandos técnicos abaixo continuam opcionais para diagnóstico.
 /melhorar ARQUIVO     Escreve proposta de melhoria SEM alterar código
 /laboratorio ARQUIVO | OBJETIVO   Gera código e testes em cópia; execução exige Docker
 /melhorias            Lista propostas e aplicações; revisão em revisar_melhorias_yuna.bat
+/escola               Mostra onde acompanhar estudos e responder perguntas no GitHub
 /autoteste            Testa linguagem e intenções da base instalada, sem Ollama
 /tarefas PEDIDO       Executa até 5 etapas explícitas, mostrando resultados
 /desempenho rapido|equilibrado  Ajusta tamanho de resposta e permanência em RAM
@@ -805,7 +811,7 @@ def main():
                 elif command in ('/modelo', '/github', '/melhorar', '/openai', '/chatgpt',
                                   '/apis', '/api', '/integracoes', '/clima', '/livros',
                                   '/cep', '/ias', '/provedores', '/ia', '/laboratorio', '/laboratório', '/melhorias',
-                                  '/tarefas', '/desempenho', '/web', '/autoteste'):
+                                  '/tarefas', '/desempenho', '/web', '/autoteste', '/escola'):
                     print('Yuna:', handle_message(memory, text, computer,
                           progress=lambda stage: print('Yuna ·', stage, flush=True)))
                 elif command == '/sobre':

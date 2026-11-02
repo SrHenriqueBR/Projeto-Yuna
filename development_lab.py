@@ -400,6 +400,12 @@ def report_text(folder):
 
 def handle_development(message, root, ask, *, progress=None, cancelled=None):
     value = message.strip()
+    if value.casefold() in ("/escola", "yuna, mostre sua escola", "mostre sua escola"):
+        return ("Escola da Yuna: estudos públicos e perguntas para os mentores no GitHub.\n"
+                "Acompanhe: https://github.com/SrHenriqueBR/Projeto-Yuna/actions/workflows/escola-yuna.yml\n"
+                "Como responder: https://github.com/SrHenriqueBR/Projeto-Yuna/tree/main/aprendizado\n"
+                "Ela publica em uma branch de revisão. Não faz merge nem atualiza este PC sozinha. "
+                "Esta mensagem não consultou o estado atual das execuções.")
     if value.casefold().rstrip(".!?") in ("/melhorias", "mostre suas melhorias",
                                          "yuna, mostre suas melhorias", "yuna mostre suas melhorias"):
         from lab_review import status_text

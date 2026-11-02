@@ -1,0 +1,79 @@
+name: Escola da Yuna
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 12 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'aprendizado/config.json'
+      - 'aprendizado/respostas.json'
+      - 'school_cycle.py'
+      - 'school_publish.py'
+      - '.github/workflows/escola-yuna.yml'
+
+concurrency:
+  group: escola-yuna
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  estudar:
+    if: github.repository == 'SrHenriqueBR/Projeto-Yuna' && github.ref == 'refs/heads/main' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      bundle: ${{ steps.estudo.outputs.bundle }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verificar configuração e fila de revisão
+        id: fila
+        env:
+          YUNA_GH_TOKEN: ${{ github.token }}
+        run: python school_cycle.py preflight
+      - name: Preparar modelo local no executor do GitHub
+        if: steps.fila.outputs.ready == 'true'
+        run: |
+          docker pull python:3.12-slim
+          docker run -d --name yuna-school --cpus=3 --memory=6g --pids-limit=128 --cap-drop=ALL --security-opt=no-new-privileges:true -p 127.0.0.1:11434:11434 -e OLLAMA_NUM_PARALLEL=1 -e OLLAMA_MAX_LOADED_MODELS=1 ollama/ollama:0.40.13
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:11434/api/tags > /dev/null; then break; fi
+            sleep 2
+          done
+          docker exec yuna-school ollama pull qwen2.5-coder:1.5b
+      - name: Ler referências, formular perguntas e testar uma melhoria
+        if: steps.fila.outputs.ready == 'true'
+        id: estudo
+        run: python school_cycle.py generate
+      - name: Encerrar o modelo
+        if: always()
+        run: docker rm -f yuna-school || true
+
+  publicar:
+    needs: estudar
+    if: needs.estudar.outputs.bundle != '' && github.repository == 'SrHenriqueBR/Projeto-Yuna' && github.ref == 'refs/heads/main' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validar dados e criar commit em branch de revisão
+        env:
+          YUNA_STUDY_BUNDLE: ${{ needs.estudar.outputs.bundle }}
+          YUNA_GH_TOKEN: ${{ github.token }}
+        run: python school_publish.py

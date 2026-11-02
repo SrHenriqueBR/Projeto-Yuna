@@ -4,6 +4,18 @@ Assistente pessoal local para **Windows 10/11**, com conversa em português, mem
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
 
+## Escola da Yuna no GitHub
+
+A Yuna pode estudar documentação pública, formular perguntas para os mentores e
+tentar uma melhoria pequena no próprio código usando um modelo aberto no
+**GitHub Actions**, mesmo com o notebook desligado. Publica os resultados em
+uma branch `yuna/estudo-...` para revisão; não faz merge automaticamente.
+
+A caixa de perguntas fica em **`aprendizado/ciclos/` na branch do estudo**.
+Respondemos em **`aprendizado/respostas.json` no main**. As respostas são públicas
+e usadas como referências nos próximos ciclos. Há agenda diária, botão manual
+e pausa enquanto um estudo espera revisão. [Como acompanhar, responder e pausar](aprendizado/README.md).
+
 ## Laboratório de código, autotestes e tarefas
 
 A Yuna pode escrever uma melhoria pequena e testes com o **Ollama local**,
