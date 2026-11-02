@@ -800,7 +800,8 @@ class YunaDesktop(QMainWindow):
         if is_document:
             self.say("Terminei de analisar o documento. O resultado está na tela.", private=True)
         elif ("Código em uso e GitHub preservados." in answer or answer.startswith((
-                "Sequência de tarefas:", "Autoteste da base:", "O autoteste da base falhou."))):
+                "Sequência de tarefas:", "Autoteste da base:", "O autoteste da base falhou.",
+                "Melhorias da Yuna:"))):
             # Caminhos e resultados de ferramentas ficam na janela, inclusive
             # quando a pessoa escolheu uma voz externa para a conversa comum.
             self.say("Confira o resultado e os detalhes na janela da Yuna.")

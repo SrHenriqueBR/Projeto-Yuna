@@ -11,6 +11,7 @@ import tempfile
 import unittest
 
 import development_lab as lab
+import lab_review
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -61,6 +62,18 @@ class ContainerContract(unittest.TestCase):
                     result = runner.run(folder / "workspace")
                     self.assertEqual(result.status, "passed", result.detail)
                     self.assertEqual(result.tests, 10)
+            # Ciclo de revisão independente: nunca confiar só no relatório ou
+            # reaproveitar o workspace antigo como comprovante de aprovação.
+            review = lab_review.inspect_proposal(root, folder.name)
+            verified = lab_review.verify(root, review)
+            self.assertEqual(verified.baseline.tests, 9)
+            self.assertEqual(verified.candidate.tests, 10)
+            application = lab_review.apply_verified(root, verified, review.approval)
+            self.assertEqual((root / review.target).read_bytes(), review.source)
+            self.assertEqual(lab_review.load_record(root, application)[-1], "applied")
+            lab_review.restore(root, application, "RESTAURAR " + application)
+            self.assertEqual((root / review.target).read_text(encoding="utf-8"), original)
+            self.assertEqual(lab_review.load_record(root, application)[-1], "restored")
 
 
 if __name__ == "__main__":

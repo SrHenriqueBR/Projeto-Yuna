@@ -13,6 +13,13 @@ exige Docker local e uma imagem já disponível; sem Docker, o resultado é
 apenas rascunho com verificação de sintaxe. As propostas ficam em
 `data/laboratorio/`, sem substituir o código em uso nem publicar alterações.
 
+Para incorporar uma proposta, abra **`revisar_melhorias_yuna.bat`**. O programa
+mostra a comparação e os testes, exige um novo teste em Docker e uma confirmação
+digitada antes de aplicar **um módulo**, com backup. Também permite restaurar a
+versão anterior sem Docker ou Ollama. Feche a Yuna para aplicar/restaurar e abra
+novamente depois. **“Yuna, mostre suas melhorias”** ou `/melhorias` consulta o
+histórico local; a conversa não aprova nem aplica código.
+
 Para testar os módulos instalados de linguagem e intenções, abra
 **`testar_yuna.bat`** ou diga **“Yuna, teste sua base”**. Esse autoteste não
 exige Ollama ou Docker. No modo PC, também pode pedir **“abra Downloads e
@@ -213,6 +220,7 @@ Atalhos úteis para terminal e diagnóstico:
 | **/ajuda** | Lista comandos disponíveis |
 | **/autoteste** | Testa os módulos instalados de linguagem e intenções |
 | **/laboratorio ARQUIVO \| OBJETIVO** | Gera código e testes em cópia; execução isolada exige Docker |
+| **/melhorias** | Mostra propostas e aplicações; revisar e restaurar em `revisar_melhorias_yuna.bat` |
 | **/tarefas PEDIDO** | Executa até cinco etapas explícitas em sequência |
 | **/desempenho rapido**, **/desempenho equilibrado** | Ajusta tamanho das respostas e permanência do modelo em RAM |
 | **/web ASSUNTO**, **/pesquisar ASSUNTO** | Abre Google ou consulta Wikipédia com fontes |

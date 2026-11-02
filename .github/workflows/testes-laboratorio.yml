@@ -27,6 +27,8 @@ jobs:
         run: python development_lab.py --autoteste
       - name: Testar laboratório e limites de execução
         run: python -m unittest discover -s tests -p 'test_development_lab.py' -v
+      - name: Testar revisão, aplicação e restauração com backup
+        run: python -m unittest discover -s tests -p 'test_lab_review.py' -v
       - name: Testar sequências de tarefas
         run: python -m unittest discover -s tests -p 'test_task_runner.py' -v
       - name: Testar perfis de inferência

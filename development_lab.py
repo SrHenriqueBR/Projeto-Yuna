@@ -301,6 +301,8 @@ def develop(root, target, objective, ask, *, progress=None, cancelled=None, runn
     runner = runner or DockerTests(cancelled)
     report = {"id": ident, "target": target, "objective": objective.strip(),
               "source_sha256": hashlib.sha256(sources[target].encode()).hexdigest(),
+              "reference_sha256": {path: hashlib.sha256(value.encode("utf-8")).hexdigest()
+                                   for path, value in sources.items()},
               "applied": False, "attempts": [], "status": "preparing"}
 
     def save():
@@ -391,11 +393,17 @@ def report_text(folder):
     artifacts = ("\nRelatório: relatorio.json; compare mudanca.diff na pasta da tentativa."
                  if report.get("candidate") else "\nRelatório: relatorio.json.")
     return (status + ("\n" + reason if reason else "") + "\nPasta: " + str(folder) + artifacts
-            + "\nCódigo em uso e GitHub preservados. Testes não substituem revisão humana.")
+            + "\nCódigo em uso e GitHub preservados. Testes não substituem revisão humana."
+              "\nPara revisar, retestar e aplicar com backup: revisar_melhorias_yuna.bat."
+              " Use /melhorias para consultar o histórico de aplicações.")
 
 
 def handle_development(message, root, ask, *, progress=None, cancelled=None):
     value = message.strip()
+    if value.casefold().rstrip(".!?") in ("/melhorias", "mostre suas melhorias",
+                                         "yuna, mostre suas melhorias", "yuna mostre suas melhorias"):
+        from lab_review import status_text
+        return status_text(root)
     if value.casefold() in ("/autoteste", "yuna, teste sua base", "yuna teste sua base", "teste sua base"):
         if progress:
             progress("Autoteste · verificando módulos de linguagem e intenções da base instalada")
@@ -409,7 +417,8 @@ def handle_development(message, root, ask, *, progress=None, cancelled=None):
                 "Exemplo: /laboratorio language_quality.py | detectar a expressão 'vou consegue'\n"
                 "Módulos: " + ", ".join(TARGETS)
                 + "\nTestes de execução exigem Docker local e imagem python:3.12-slim já disponível."
-                " Não aplico propostas automaticamente.")
+                " Não aplico propostas automaticamente."
+                "\n/melhorias mostra propostas e aplicações. Revisão e restauração: revisar_melhorias_yuna.bat.")
     match = re.fullmatch(r"/laborat[oó]rio\s+(\S+)\s*\|\s*(.+)", value, re.I | re.S)
     if not match:
         match = re.fullmatch(

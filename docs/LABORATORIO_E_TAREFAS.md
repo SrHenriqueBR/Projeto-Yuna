@@ -56,6 +56,55 @@ dos pesos do modelo. Passar em testes não garante ausência de erros ou de
 comportamento indesejado: revise a comparação e amplie a validação antes de
 incorporar uma mudança ao projeto.
 
+## Revisar, aplicar e voltar à versão anterior
+
+Abra **`revisar_melhorias_yuna.bat`**. Ele funciona separadamente da conversa e
+não usa o modelo. Para consultar a lista na Yuna, diga **“Yuna, mostre suas
+melhorias”** ou `/melhorias`.
+
+1. Escolha **R** e copie o **ID da proposta** exibido na lista.
+2. Confira a comparação entre o arquivo instalado e o proposto, junto dos
+   testes adicionais completos. A comparação é refeita dos arquivos reais.
+3. Digite **TESTAR**. O programa testa a base atual e a proposta em uma **nova
+   cópia mínima**, usando Docker local sem rede. Mesmo um relatório antigo
+   marcado como aprovado precisa passar novamente, incluindo testes adicionais.
+4. **Feche a Yuna** e digite a confirmação exata exibida, no formato
+   `APLICAR ID CÓDIGO`. Enter cancela. O código vincula a confirmação à revisão
+   mostrada; não é uma senha nem uma verificação de identidade.
+5. O programa guarda um backup e substitui somente o módulo revisado. **Abra a
+   Yuna novamente** para carregar a melhoria. Não há alteração ao vivo do processo.
+
+Sem Docker, é possível ler propostas e consultar/restaurar aplicações; a opção
+de **aplicar fica bloqueada**. Código e testes gerados nunca são executados no
+Windows pelo programa de revisão. Depois da aplicação, ao reiniciar a Yuna,
+o módulo passa a rodar normalmente com as permissões da sua conta. **Testes
+aprovados não provam que o código é seguro ou correto em todos os casos**: a
+revisão humana continua necessária.
+
+Para desfazer, feche a Yuna, abra o mesmo programa, escolha **V**, informe o
+**ID da aplicação** (é diferente do ID da proposta) e digite
+`RESTAURAR ID`. A restauração não exige Ollama nem Docker e repõe os bytes
+originais, inclusive acentos e quebras de linha. Em várias melhorias sobre o
+mesmo módulo, desfaça da mais recente para a mais antiga.
+
+Se a base, a proposta ou seus testes mudarem durante a revisão, será necessário
+revisar/testar novamente ou gerar uma proposta nova. A restauração também é
+recusada quando o arquivo atual já foi modificado depois ou o backup foi
+alterado: o programa não sobrescreve silenciosamente essa outra versão.
+
+Os backups e registros ficam em **`data/laboratorio_aplicacoes/ID/`**. Preserve
+essa pasta ao atualizar a Yuna. O registro é preparado antes da troca do arquivo
+e o histórico confere os hashes para identificar uma troca interrompida. Um lock
+do sistema impede duas aplicações/restaurações simultâneas por este programa.
+Não edite os arquivos em paralelo com a revisão. Em caso de erro de disco,
+consulte o histórico antes de tentar novamente.
+
+`relatorio.json` da proposta registra a geração; o histórico separado registra
+aplicações e restaurações. Não apague backups de melhorias que ainda pretende
+desfazer. A revisão aceita apenas os mesmos dois módulos de linguagem. Não
+instala pacotes, publica commits, modifica permissões de acesso ou aprova
+pedidos recebidos por voz, modelo, páginas, memórias ou chat web.
+
 ### Requisito para executar código gerado
 
 É necessário **Docker local com contêineres Linux** e a imagem
@@ -153,6 +202,8 @@ contexto continuam determinantes. Para textos mais longos, use `equilibrado`.
 O workflow `testes-laboratorio.yml` verifica o autoteste, o ciclo de propostas,
 falhas, cancelamento, limites de saída, tarefas, cache e perfis. Há também um
 teste com **Docker real**, proposta fixa e modelo simulado, que comprova
-execução dos testes, montagem somente leitura e ausência de rede. Esse teste
+execução dos testes, montagem somente leitura, ausência de rede e o ciclo de
+revisão, aplicação e restauração. Os testes de revisão também cobrem cancelamento,
+mudanças concorrentes, backups inválidos e interrupções durante a troca. Esse teste
 não comprova que o Ollama produzirá uma melhoria correta para qualquer pedido.
 Os demais testes de regressão do projeto continuam necessários.
