@@ -184,7 +184,9 @@ def inspect_proposal(root, ident):
     if base_hashes is not None and base_hashes != {
             path: digest(text_source(value).encode("utf-8")) for path, value in references}:
         raise ValueError("As referências da base mudaram. Gere uma nova proposta.")
-    source = read_bytes(root, folder / candidate / target)
+    # A base instalada usa o limite em bytes do laboratório. Caracteres
+    # multibyte e CRLF não podem gerar um módulo que ela deixaria de ler.
+    source = read_bytes(root, folder / candidate / target, lab.MAX_SOURCE)
     tests = read_bytes(root, folder / candidate / "test_generated.py", 48000)
     attempts = report.get("attempts")
     number = int(candidate[-1])

@@ -292,6 +292,16 @@ class ReviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             review.inspect_proposal(self.root, folder.name)
 
+    def test_multibyte_source_cannot_exceed_installed_lab_byte_limit(self):
+        folder = self.proposal()
+        source = folder / "tentativa_1" / lab.TARGETS[0]
+        source.write_bytes(source.read_bytes() + ("\n# " + "á" * 12000 + "\n").encode("utf-8"))
+        self.assertLess(len(source.read_text(encoding="utf-8")), lab.MAX_SOURCE)
+        self.assertGreater(source.stat().st_size, lab.MAX_SOURCE)
+        with self.assertRaisesRegex(ValueError, "maior que o limite"):
+            review.inspect_proposal(self.root, folder.name)
+        self.assertEqual((self.root / lab.TARGETS[0]).read_bytes(), self.original)
+
     def test_symlink_or_junction_parent_and_linked_source_rejected(self):
         outside = self.root / "outside"
         outside.mkdir()
