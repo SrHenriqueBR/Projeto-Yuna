@@ -1,0 +1,12 @@
+[
+  {
+    "id": "p-c26e2546fa655c89",
+    "pergunta": "Qual é a função `identity_conversation_reply`?",
+    "motivo": "Para responder a essa pergunta, precisamos entender o que a função faz. A função `identity_conversation_reply` é responsável por responder a perguntas de identidade e saudação em uma conversa com a Yuna. Ela recebe uma mensagem e verifica se a mensagem contém uma resposta determinística limitada a"
+  },
+  {
+    "id": "p-5286a988b5312857",
+    "pergunta": "Quais são os padrões conhecidos de linguagem artificial e troca de papéis?",
+    "motivo": "Para responder a essa pergunta, precisamos entender os padrões conhecidos de linguagem artificial e troca de papéis. Os padrões conhecidos incluem palavras e frases específicas que são usadas para indicar que a conversa está relacionada a identidade ou saudação. Além disso, há um conjunto de padrões"
+  }
+]
