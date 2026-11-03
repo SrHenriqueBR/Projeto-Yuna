@@ -172,7 +172,19 @@ class Computer:
 
     def handle(self, text):
         """Return None for ordinary conversation; never run text supplied by the model."""
+        from companion_commands import BANKING_NOTICE, banking_action
+        if banking_action(text):
+            return BANKING_NOTICE
+        from pc_controls import settings_intent, open_settings, performance_report
+        settings = settings_intent(text)
+        if settings:
+            return open_settings(settings)
         value = command_text(text)
+        if value in ('/diagnostico', 'verifique o desempenho do computador',
+                     'otimize o computador', 'otimizar o computador',
+                     'melhore o desempenho do computador'):
+            from desktop import query_windows
+            return performance_report(query_windows('system'))
         if value == '/apps atualizar':
             self.desktop.refresh()
             return self.desktop.list_apps()
@@ -219,3 +231,4 @@ class Computer:
         if value in ('/buscar', 'procure', 'busque'):
             return 'Exemplo: /buscar currículo ou /buscar tudo currículo'
         return None
+

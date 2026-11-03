@@ -1,14 +1,14 @@
 """Prévia voluntária de câmera em janela Qt, sem gravação ou inferência facial.
 
 O OpenCV é opcional e importado somente depois de consentimento. Frames ficam
-na memória da UI, nunca vão a Ollama, nuvem, arquivos ou ao chat.
+na memória da UI. Um quadro só vai ao Ollama local ao clicar em Descrever.
 """
 import os
 import sys
 import threading
 import time
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, Qt, QTimer, Signal, QBuffer, QIODevice
 from PySide6.QtGui import QImage, QPixmap, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QCheckBox, QDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout,
@@ -23,6 +23,7 @@ class CameraSignals(QObject):
     failed = Signal(str)
     finished = Signal()
     motion_detected = Signal()
+    described = Signal(str)
 
 
 class CameraViewer(QDialog):
@@ -37,6 +38,8 @@ class CameraViewer(QDialog):
         self._signals.failed.connect(self.show_error)
         self._signals.finished.connect(self.worker_finished)
         self._signals.motion_detected.connect(self.motion_warning)
+        self._signals.described.connect(self.show_description)
+        self._describing = False
 
         self.setWindowTitle("Yuna • Câmera autorizada")
         self.resize(860, 550)
@@ -65,11 +68,20 @@ class CameraViewer(QDialog):
         self.motion_checkbox.toggled.connect(self.toggle_motion)
         layout.addWidget(self.motion_checkbox)
         buttons = QHBoxLayout()
+        self.describe_button = QPushButton("Descrever este quadro • Ollama local")
+        self.describe_button.setToolTip("Envia somente o quadro atual ao modelo de visão local configurado em YUNA_VISION_MODEL.")
+        self.describe_button.clicked.connect(self.describe_current_frame)
+        buttons.addWidget(self.describe_button)
         self.stop_button = QPushButton("■ Encerrar câmera")
         self.stop_button.clicked.connect(self.close)
         buttons.addStretch()
         buttons.addWidget(self.stop_button)
         layout.addLayout(buttons)
+        self.description = QLabel("")
+        self.description.setTextFormat(Qt.TextFormat.PlainText)
+        self.description.setWordWrap(True)
+        self.description.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        layout.addWidget(self.description)
         self.shortcut = QShortcut(QKeySequence("Ctrl+Shift+X"), self)
         self.shortcut.activated.connect(self.close)
         self._last_frame = None
@@ -214,6 +226,41 @@ class CameraViewer(QDialog):
             Qt.TransformationMode.SmoothTransformation
         ))
 
+    def describe_current_frame(self):
+        if self._stop.is_set() or self._describing or self._last_frame is None:
+            return
+        try:
+            self._permission.check()
+        except PermissionError:
+            self.close()
+            return
+        image = self._last_frame.scaled(960, 720, Qt.AspectRatioMode.KeepAspectRatio)
+        buffer = QBuffer()
+        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+        if not image.save(buffer, "JPEG", 75):
+            self.description.setText("Não consegui preparar este quadro.")
+            return
+        jpeg = bytes(buffer.data())
+        self._describing = True
+        self.describe_button.setEnabled(False)
+        self.description.setText("Descrevendo um quadro no Ollama local…")
+        def work():
+            from camera_description import describe_frame
+            try:
+                answer = describe_frame(jpeg)
+            except Exception:
+                answer = "Não consegui descrever este quadro. Confira a configuração do modelo local."
+            if not self._stop.is_set():
+                self._signals.described.emit(answer)
+        threading.Thread(target=work, daemon=True, name="YunaCameraDescription").start()
+
+    def show_description(self, answer):
+        if self._stop.is_set():
+            return
+        self._describing = False
+        self.describe_button.setEnabled(True)
+        self.description.setText(answer)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if self._last_frame is not None and self.isVisible():
@@ -239,7 +286,9 @@ class CameraViewer(QDialog):
         self._timer.stop()
         self._last_frame = None
         self.preview.clear()
+        self.description.clear()
 
     def closeEvent(self, event):
         self.stop_preview()
         super().closeEvent(event)
+

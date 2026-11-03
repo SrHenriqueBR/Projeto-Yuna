@@ -84,6 +84,9 @@ class Desktop:
     def launch(self, app):
         if not self.catalog or app not in self.catalog:
             raise ValueError('Aplicativo não pertence ao catálogo do Windows.')
+        from companion_commands import BANKING_NOTICE, banking_action
+        if banking_action('abrir ' + app['name'] + ' ' + app['id']):
+            return BANKING_NOTICE
         if os.name != 'nt':
             return 'A abertura de aplicativos exige Windows.'
         explorer = Path(os.environ.get('SystemRoot', r'C:\Windows')) / 'explorer.exe'
@@ -109,3 +112,4 @@ class Desktop:
         """Janelas visíveis em execução; somente leitura, sem capturar teclas ou arquivos."""
         return ('Janelas com título no Windows (não significa que eu tenha visto a imagem da tela):\n'
                 + json.dumps(query_windows('windows'), ensure_ascii=False, indent=2))
+

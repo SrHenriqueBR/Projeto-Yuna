@@ -4,6 +4,7 @@ O launcher padrão inicia esta interface sem abrir console CMD. O motor de
 conversa e SQLite são os mesmos da mascote e do modo terminal.
 """
 import html
+from collections import deque
 import math
 import socket
 from pathlib import Path
@@ -72,8 +73,8 @@ class DesktopSignals(QObject):
     error = Signal(str)
     library = Signal(object)
     saved = Signal(str)
-    audio_ready = Signal(str)
-    audio_error = Signal(str)
+    audio_ready = Signal(str, int)
+    audio_error = Signal(str, int)
     mic_ready = Signal(str)
     mic_error = Signal(str)
 
@@ -96,7 +97,12 @@ class DesktopWorker(Thread):
         self._cancelled = True
         self._generation += 1
         with self.queue.mutex:
+            records = [task for task in self.queue.queue if task and task[0] == "record"]
             self.queue.queue.clear()
+            self.queue.queue.extend(records)
+
+    def record(self, question, answer):
+        self.queue.put(("record", str(question), str(answer)))
 
     def analyze(self, file_path, question):
         self.queue.put(("analyze", str(file_path), question))
@@ -137,13 +143,25 @@ class DesktopWorker(Thread):
                             continue
                         self.signals.status.emit("Yuna está pensando...")
                         generation = task[2]
+                        before = memory.db.execute("SELECT MAX(id) FROM messages").fetchone()[0]
                         answer = handle_message(
                             memory, question, computer, progress=self.signals.status.emit,
                             cancelled=lambda generation=generation: generation != self._generation,
                         )
+                        after = memory.db.execute("SELECT MAX(id) FROM messages").fetchone()[0]
+                        if before == after:
+                            memory.save_turn(question, answer)
                         if generation == self._generation:
                             self.signals.replied.emit(answer, False)
                         self.signals.status.emit("Pronta • conversa local")
+                    elif kind == "record":
+                        memory.save_turn(task[1], task[2])
+                    elif kind == "wake":
+                        from wake_schedule import run_wake_task
+                        self.signals.status.emit("Consultando o agendamento do Windows…")
+                        answer = run_wake_task(task[2], task[3])
+                        memory.save_turn(task[1], answer)
+                        self.signals.replied.emit(answer, False)
                     elif kind == "analyze":
                         source, question = task[1], task[2]
                         self.signals.status.emit("Lendo documento e analisando com Ollama...")
@@ -210,7 +228,8 @@ QScrollBar::handle:vertical { background: #665080; border-radius: 4px; }
 class YunaDesktop(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"Yuna {VERSION} • Espaço pessoal")
+        self.setWindowTitle(f"Yuna.app {VERSION} • Espaço pessoal")
+        self.companion = None
         self.resize(1300, 790)
         self.setMinimumSize(1020, 610)
         self.setStyleSheet(STYLE)
@@ -233,6 +252,7 @@ class YunaDesktop(QMainWindow):
         self.voice_index = 1
         self.persona = load_preferences(ROOT)
         self.voice_busy = False
+        self._speech_queue = deque(maxlen=5)
         self.audio_file = None
         self._audio_levels = []
         self._changing_voice = False
@@ -244,7 +264,7 @@ class YunaDesktop(QMainWindow):
         self.signals = DesktopSignals()
         self.worker = DesktopWorker(self.signals)
         self._stop_requested = False
-        self.game_session = GameSession()  # desabilitado por padrão; sem controle de jogos
+        self.game_session = GameSession()  # autorização temporária, desligada ao iniciar
         self.camera_viewer = None  # câmera nunca é aberta automaticamente
         self.embedded_video = None  # reunião de vídeo sob ação explícita
         self.home_safety_dialog = None  # microfone/SOS desligados por padrão
@@ -261,6 +281,12 @@ class YunaDesktop(QMainWindow):
         self.player.playbackStateChanged.connect(self.playback_state_changed)
         self.player.positionChanged.connect(self.playback_position)
         self.player.errorOccurred.connect(self.playback_error)
+
+        from compact_chat import CompanionController, app_icon
+        self.setWindowIcon(app_icon())
+        self.companion = CompanionController(self)
+        self.compact_button.clicked.connect(self.companion.show_compact)
+        self.signals.status.connect(self.companion.panel.state.setText)
 
         self.worker.start()
         # Leitura local a cada 90 s; não inicia processos nem manipula energia.
@@ -360,6 +386,9 @@ class YunaDesktop(QMainWindow):
         self.sidebar_caption.setObjectName("subtle")
         self.sidebar_caption.setWordWrap(True)
         sidebar.addWidget(self.sidebar_caption)
+
+        self.compact_button = QPushButton("◌  Chat compacto • Yuna.app")
+        sidebar.addWidget(self.compact_button)
 
         self.avatar_button = QPushButton("✦  Mostrar Yuna viva")
         self.avatar_button.setObjectName("primary")
@@ -669,6 +698,8 @@ class YunaDesktop(QMainWindow):
         self.setAcceptDrops(True)
 
     def add_message(self, author, content, *, accent=False):
+        if self.companion is not None:
+            self.companion.panel.add_message(author, content)
         body = QFrame()
         is_user = author in ("Kaizen", "Você")
         body.setMaximumWidth(760)
@@ -720,8 +751,7 @@ class YunaDesktop(QMainWindow):
         else:
             self.add_message(
                 "Yuna",
-                "Olá! 🖤 Estou pronta. Podemos conversar, "
-                "analisar um documento ou trabalhar em uma ideia juntos."
+                "Olá, Kaizen! Em que posso te ajudar hoje? 🖤"
             )
 
     def update_library(self, rows):
@@ -733,6 +763,8 @@ class YunaDesktop(QMainWindow):
             self.files_list.addItem(view)
 
     def set_busy(self, value):
+        if self.companion is not None:
+            self.companion.panel.send.setEnabled(not value)
         self.send_button.setEnabled(not value)
         self.composer.setEnabled(not value)
         self.open_attachment.setEnabled(not value)
@@ -1118,6 +1150,15 @@ class YunaDesktop(QMainWindow):
             self.composer.clear()
             self.emergency_stop()
             return
+        if not self.pending_path and self.companion is not None:
+            try:
+                if self.companion.handle(content):
+                    self.composer.clear()
+                    return
+            except (ValueError, RuntimeError, OSError) as exc:
+                self.composer.clear()
+                self.show_error(str(exc))
+                return
         if not self.pending_path and is_magi_camera_request(content):
             self.composer.clear()
             self.add_message(
@@ -1164,6 +1205,11 @@ class YunaDesktop(QMainWindow):
     def emergency_stop(self):
         """Interrompe áudio e ignora resposta em andamento, sem matar a thread."""
         self.worker.cancel_pending()
+        self._stop_requested = True
+        self._speech_generation += 1
+        self._speech_queue.clear()
+        if self.companion is not None:
+            self.companion.stop()
         self.game_session.stop()
         if self.camera_viewer is not None:
             self.camera_viewer.close()
@@ -1349,7 +1395,10 @@ class YunaDesktop(QMainWindow):
         self.say("Olá! Esta é minha voz atual, com a boca sincronizada. Hehe!")
 
     def say(self, text, private=False):
-        if self.voice_index == 0 or self.voice_busy:
+        if self.voice_index == 0 or (self.companion is not None and self.companion.closing):
+            return
+        if self.voice_busy:
+            self._speech_queue.append((text, private))
             return
         mode = self.voice_index
         presentation = self.persona.presentation
@@ -1360,6 +1409,11 @@ class YunaDesktop(QMainWindow):
         if not speech_text(text):
             return
         self.voice_busy = True
+        self._stop_requested = False
+        self._speech_generation += 1
+        synthesis_generation = self._speech_generation
+        if self.companion is not None:
+            self.companion.wake_paused.set()
         self.status.setText("Preparando a voz...")
         # A boca permanece parada durante a síntese; só começa com o player.
 
@@ -1368,20 +1422,29 @@ class YunaDesktop(QMainWindow):
                 if mode == 1:
                     result = synthesize_windows(text, presentation, voice_style)
                     if result:
-                        self.signals.audio_ready.emit(str(result))
+                        if synthesis_generation == self._speech_generation and not self._stop_requested:
+                            self.signals.audio_ready.emit(str(result), synthesis_generation)
+                        else:
+                            Path(result).unlink(missing_ok=True)
                     else:
-                        self.signals.audio_error.emit("")
+                        self.signals.audio_error.emit("", synthesis_generation)
                 elif mode == 2:
                     result = synthesize_edge(text, presentation, voice_style)
                     if result:
-                        self.signals.audio_ready.emit(str(result))
+                        if synthesis_generation == self._speech_generation and not self._stop_requested:
+                            self.signals.audio_ready.emit(str(result), synthesis_generation)
+                        else:
+                            Path(result).unlink(missing_ok=True)
                     else:
-                        self.signals.audio_error.emit("")
+                        self.signals.audio_error.emit("", synthesis_generation)
             except Exception as exc:
-                self.signals.audio_error.emit(str(exc))
+                self.signals.audio_error.emit(str(exc), synthesis_generation)
         Thread(target=speak, daemon=True).start()
 
-    def play_audio(self, path):
+    def play_audio(self, path, generation=None):
+        if self._stop_requested or (generation is not None and generation != self._speech_generation):
+            Path(path).unlink(missing_ok=True)
+            return
         self.audio_file = Path(path)
         self._audio_levels = (
             wave_envelope(self.audio_file)
@@ -1457,6 +1520,12 @@ class YunaDesktop(QMainWindow):
             self.voice_busy = False
             self._stop_avatar_speech()
             self.status.setText("Pronta • conversa local")
+            self.speak_next()
+
+    def speak_next(self):
+        if self._speech_queue and not self._stop_requested:
+            text, private = self._speech_queue.popleft()
+            self.say(text, private=private)
 
     def playback_error(self, error, detail):
         self.player.stop()
@@ -1473,18 +1542,26 @@ class YunaDesktop(QMainWindow):
                 pass
             self.audio_file = None
 
-    def voice_error(self, error):
+    def voice_error(self, error, generation=None):
+        if generation is not None and generation != self._speech_generation:
+            return
         self.voice_busy = False
+        self._speech_queue.clear()
         self._audio_levels = []
         self._stop_avatar_speech()
         if error:
             self.status.setText("Voz indisponível: " + error[:180])
+            if self.companion is not None:
+                self.companion.show_compact()
+                self.companion.panel.state.setText("Voz indisponível • a resposta está no chat.")
         else:
             self.status.setText("Pronta • conversa local")
 
     def request_microphone(self):
         if self.microphone_busy:
             return
+        if self.companion is not None and self.companion.wake_action.isChecked():
+            self.companion.wake_action.setChecked(False)
         try:
             import importlib.util
             if (importlib.util.find_spec("sounddevice") is None
@@ -1529,6 +1606,9 @@ class YunaDesktop(QMainWindow):
         self.microphone_button.setEnabled(True)
         earlier = self.composer.toPlainText().strip()
         self.composer.setPlainText((earlier + "\n" if earlier else "") + result)
+        if self.companion is not None and self.companion.panel.isVisible():
+            self.companion.panel.input.setPlainText(result)
+            self.companion.panel.input.setFocus()
         self.composer.setFocus()
         self.status.setText("Ditado transcrito localmente • revise antes de enviar")
 
@@ -1536,8 +1616,34 @@ class YunaDesktop(QMainWindow):
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
         self.status.setText("Falha no microfone: " + str(error)[:180])
+        if self.companion is not None:
+            self.companion.show_compact()
+            self.companion.panel.state.setText("Microfone indisponível • continue por texto.")
+
+    def hideEvent(self, event):
+        if self.hero_timer is not None:
+            self.hero_timer.stop()
+        if getattr(self, "avatar_movie", None) is not None:
+            self.avatar_movie.setPaused(True)
+        super().hideEvent(event)
+
+    def showEvent(self, event):
+        if self.hero_timer is not None:
+            self.hero_timer.start()
+        if getattr(self, "avatar_movie", None) is not None:
+            self.avatar_movie.setPaused(False)
+        super().showEvent(event)
 
     def closeEvent(self, event):
+        if self.companion is not None and self.companion.tray_available and not self.companion.closing:
+            self.hide()
+            event.ignore()
+            return
+        if self.companion is not None:
+            self.companion.cleanup()
+        self._stop_requested = True
+        self._speech_generation += 1
+        self._speech_queue.clear()
         if self.unreal_heartbeat is not None:
             self.unreal_heartbeat.stop()
         if self.hero_timer is not None:
@@ -1558,6 +1664,8 @@ class YunaDesktop(QMainWindow):
         if self.avatar_window is not None:
             self.avatar_window.close()
         self.worker.stop()
+        if self.worker.is_alive():
+            self.worker.join(timeout=1)
         self.player.stop()
         self.player.setSource(QUrl())
         self.cleanup_audio()
@@ -1565,10 +1673,22 @@ class YunaDesktop(QMainWindow):
 
 
 def main():
+    if sys.platform == "win32":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ProjetoYuna.Yuna.app")
     app = QApplication(sys.argv)
+    app.setApplicationName("Yuna.app")
     app.setStyle("Fusion")
+    from compact_chat import SingleInstance
+    instance = SingleInstance(app)
+    if not instance.acquire():
+        return 0
     window = YunaDesktop()
-    window.show()
+    app.setQuitOnLastWindowClosed(not window.companion.tray_available)
+    instance.activated.connect(window.companion.show_compact)
+    app.aboutToQuit.connect(instance.close)
+    window.companion.start(background="--background" in sys.argv,
+                           compact="--compact" in sys.argv)
     return app.exec()
 
 

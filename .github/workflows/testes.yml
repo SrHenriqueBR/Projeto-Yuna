@@ -21,10 +21,12 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD "instalar_yuna.ps1"), [ref]$tokens, [ref]$errors)
-          if ($errors.Count -gt 0) {
-            $errors | ForEach-Object { Write-Error $_.Message }
-            exit 1
+          foreach ($script in @("instalar_yuna.ps1", "configurar_yuna_app.ps1", "wake_schedule.ps1")) {
+            $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $script), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Error $_.Message }
+              exit 1
+            }
           }
       - name: Instalar bibliotecas de documentos e interface PySide6
         run: python -m pip install -r requirements-mascote.txt

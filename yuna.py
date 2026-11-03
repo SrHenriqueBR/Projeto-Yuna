@@ -64,9 +64,11 @@ fala que está jogando como Kratos, ele se refere ao protagonista de God of War,
 não à figura mitológica homônima. Atena não é filha de Kratos.
 Quando o usuário pergunta se você quer jogar, responda com curiosidade amigável,
 mas não afirme jogar ou ter acesso a controle sem ferramenta existente.
-Nunca prometa desligar o computador mais tarde, pesquisar enquanto o usuário
-dorme ou editar seu código por conta própria: não existe agendador autônomo
-para essas ações. Não invente jogos, referências ou fontes.
+Na interface desktop, comandos explícitos podem desligar o Windows após contagem
+cancelável ou agendar uma tentativa de despertar da suspensão. Só confirme ações
+retornadas pelas ferramentas. Ligar um PC totalmente desligado depende da BIOS/hardware.
+Não prometa pesquisar enquanto a pessoa dorme nem aplicar código automaticamente.
+Operações bancárias estão desativadas. Não invente jogos, referências ou fontes.
 Responda primeiro ao pedido; só faça uma pergunta quando ela ajudar a conversa.
 Se a pessoa não pedir nada por um tempo, o programa poderá sugerir uma atividade
 pequena. Não diga que você monitorou a tela, viu jogos, acessou arquivos ou
@@ -185,6 +187,14 @@ Busca ignora sistema, caches, links e pastas sem permissão.
 /apps atualizar       Atualiza o catálogo de aplicativos
 /app NUMERO           Abre um aplicativo da lista /apps
 /sistema              Consulta hardware, RAM e discos
+/diagnostico          Consulta RAM/discos e sugere ajustes
+/ajustes inicializacao|armazenamento|energia|modo jogo  Abre ajustes do Windows
+/desligar             No desktop: contagem de 30 s cancelável
+/cancelar desligamento  Cancela a contagem da Yuna
+/despertar [amanhã] [às] HH:MM   No desktop: despertar da suspensão com confirmação
+/despertar cancelar   Remove o horário de despertar
+/jogo                 No desktop: escolher e autorizar jogo por sessão
+/jogo pular|avançar|recuar|esquerda|direita|pausar  Uma tecla curta
 /processos            Lista processos com maior uso de RAM
 /ambiente             Observa títulos de janelas ativas no Windows
 /tela                 Descreve a captura da tela com modelo de visão opcional
@@ -432,6 +442,19 @@ def action_intent(text):
 
 
 def handle_message(memory, text, computer=None, progress=None, cancelled=None):
+    from companion_commands import BANKING_NOTICE, banking_action
+    if banking_action(text):
+        if memory is not None:
+            memory.save_turn(text, BANKING_NOTICE)
+        return BANKING_NOTICE
+    from companion_commands import power_intent, game_intent
+    from wake_schedule import wake_intent
+    if power_intent(text) or game_intent(text) or wake_intent(text):
+        answer = ("Use a Yuna.app no Windows para desligamento, despertar ou controle de jogo. "
+                  "Esses comandos são tratados pela interface desktop. Não executei essa ação aqui.")
+        if memory is not None:
+            memory.save_turn(text, answer)
+        return answer
     requested = text.strip().casefold()
     if requested in ("/ajuda", "/help"):
         return HELP

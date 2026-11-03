@@ -1,8 +1,23 @@
-# Projeto Yuna — versão 0.48
+# Projeto Yuna — versão 0.49
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+
+## Yuna.app — chat compacto e segundo plano
+
+Abra **`configurar_yuna_app.bat`** para criar os atalhos **Yuna.app** e escolher se
+ela inicia junto com o Windows. **`iniciar_yuna.bat`** abre o novo chat compacto;
+fechar recolhe para a bandeja. Quando o áudio está indisponível, o chat aparece
+para continuar por texto. Há escuta local opcional de **“Olá Yuna”**, desligamento
+com contagem cancelável, tentativa agendada de despertar da suspensão, comandos
+curtos para um jogo autorizado, diagnóstico do PC e descrição de um quadro da
+câmera com modelo de visão local opcional. As conversas ficam no banco local.
+
+**Atualize a pasta inteira e preserve `data`.** O nome Yuna.app identifica os
+atalhos e a interface; esta distribuição ainda roda em Python. Despertar depende
+do Windows/hardware e não liga um PC totalmente desligado.
+[Instalação, exemplos, permissões e limites](docs/YUNA_APP.md).
 
 ## Escola da Yuna no GitHub
 

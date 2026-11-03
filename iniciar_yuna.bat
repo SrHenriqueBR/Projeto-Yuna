@@ -46,5 +46,10 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-start "" pyw -3 "%~dp0yuna_launcher.py"
+if "%~1"=="--background" (
+    start "" pyw -3 "%~dp0yuna_launcher.py" --background
+) else (
+    start "" pyw -3 "%~dp0yuna_launcher.py" --compact
+)
 exit /b 0
+

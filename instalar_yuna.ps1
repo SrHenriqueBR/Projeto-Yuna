@@ -152,17 +152,10 @@ if ($LASTEXITCODE -ne 0) {
 }
 Info "Modelo pronto: $model"
 
-if (AskYes "Criar um atalho da Yuna na Area de Trabalho?") {
-    try {
-        $desktop = [Environment]::GetFolderPath("DesktopDirectory")
-        $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desktop "Yuna.lnk"))
-        $shortcut.TargetPath = Join-Path $Root "iniciar_yuna.bat"
-        $shortcut.WorkingDirectory = $Root
-        $shortcut.Description = "Projeto Yuna - assistente local"
-        $shortcut.Save()
-        Info "Atalho Yuna criado para este usuario."
-    } catch {
-        Warn "Nao consegui criar atalho: $($_.Exception.Message)"
+if (AskYes "Criar atalhos Yuna.app na Area de Trabalho e menu Iniciar?") {
+    & (Join-Path $Root "configurar_yuna_app.ps1") -SemPerguntas
+    if (AskYes "Iniciar Yuna.app em segundo plano ao entrar no Windows?") {
+        & (Join-Path $Root "configurar_yuna_app.ps1") -SemPerguntas -IniciarComWindows
     }
 }
 
@@ -172,3 +165,4 @@ if (AskYes "Deseja abrir a Yuna agora?") {
     Start-Process -FilePath (Join-Path $Root "iniciar_yuna.bat") -WorkingDirectory $Root
 }
 exit 0
+

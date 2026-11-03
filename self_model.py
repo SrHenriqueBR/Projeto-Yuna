@@ -1,4 +1,4 @@
-"""Yuna 0.48: identidade verificável e planejamento local, sem execução autônoma.
+"""Yuna 0.49: identidade verificável e planejamento local, sem execução autônoma.
 
 A IA não vê seu próprio código-fonte por introspecção do modelo. Esta descrição
 representa as capacidades IMPLEMENTADAS e é atualizada por quem mantém o projeto.
@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.48"
+VERSION = "0.49"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -51,6 +51,11 @@ def about(memory, model):
         "afeto_simulado": memory.affect.enabled,
         "pensamento_periodico": memory.thinking.enabled,
         "pode": [
+            "ficar na bandeja do Windows como Yuna.app com chat compacto e memória local",
+            "reconhecer chamadas Olá Yuna no desktop com escuta local opcional por sessão",
+            "solicitar desligamento após contagem cancelável e agendar tentativa de despertar da suspensão",
+            "enviar teclas curtas ao jogo autorizado e em foco, a cada pedido explícito",
+            "mostrar câmera autorizada e descrever um quadro com modelo de visão local opcional",
             "conversar e explicar a arquitetura documentada da Yuna",
             "escrever diário fictício local pelo botão da mascote e periodicamente após opt-in",
             "criar Word, Excel, PowerPoint, PDF, TXT e Markdown reais por pedido natural",
@@ -89,7 +94,8 @@ def about(memory, model):
             "consciência ou sentimentos humanos demonstráveis",
             "programação e instalação automática de código",
             "controle irrestrito do computador ou todos os programas sem uma ferramenta autorizada",
-            "microfone e escuta contínua (a mascote tem voz opcional, inclusive Amanda Kelly mediante acesso à API)",
+            "reconhecimento exclusivo da voz de Kaizen, operações bancárias ou jogo autônomo",
+            "ligar um computador totalmente desligado sem suporte/configuração do hardware",
             "leitura direta do próprio código-fonte sem a ferramenta de GitHub",
             "OCR para PDF escaneado sem texto extraível",
             "pesquisa contínua com a Yuna fechada ou leitura de pensamentos",
@@ -109,6 +115,8 @@ def about_text(memory, model):
         "Windows quando você pede. Não leio meus arquivos-fonte automaticamente nem mexo "
         "no sistema por conta própria. Agora também tenho uma mascote flutuante, voz feminina e criação local de Word, Excel, PowerPoint, PDF, TXT e Markdown "
         "no Windows (o terminal segue só por texto).\n"
+        "No desktop Yuna.app há chat compacto na bandeja, escuta local opcional, "
+        "desligamento cancelável, despertar da suspensão e comandos curtos para um jogo autorizado.\n"
         "Minha prioridade de melhoria é conversar naturalmente, evitar perguntas repetidas "
         "e reconhecer meus limites sem respostas defensivas desnecessárias."
     )
@@ -251,3 +259,4 @@ class Thinking:
             with self.db:
                 self.db.execute("DELETE FROM yuna_thoughts")
                 self.db.execute("DELETE FROM yuna_thinking_settings")
+

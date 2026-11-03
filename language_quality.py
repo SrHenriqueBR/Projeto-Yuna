@@ -18,6 +18,8 @@ def normalized(text):
 def identity_conversation_reply(text, history=None):
     """Pequenos turnos onde a identificação não depende de texto inventado por LLM."""
     value = normalized(text)
+    if value in ("ola yuna", "oi yuna", "yuna", "ei yuna"):
+        return "Olá, Kaizen! Em que posso te ajudar hoje? 🖤"
     if value in (
         "ola yuna tudo bem", "ola tudo bem", "oi yuna tudo bem",
         "oi tudo bem", "tudo bem yuna", "yuna tudo bem",
@@ -72,3 +74,4 @@ def has_language_problem(answer):
     prose = re.sub(r"(?m)^\s*>.*$", "", prose)
     prose = re.sub(r'“[^”\n]*”|"[^"\n]*"', "", prose)
     return any(re.search(pattern, prose, re.I) for pattern in BAD_PATTERNS)
+

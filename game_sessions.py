@@ -2,7 +2,7 @@
 
 Este módulo NÃO lê a tela, não gera teclas, não usa gamepad virtual e não
 executa jogos. Somente autoriza propostas validadas de movimentos curtos.
-Um adaptador de controle futuro deverá verificar o processo em foco novamente
+O adaptador game_controls.py verifica o processo em foco novamente
 na hora de executar cada ação, além das checagens abaixo.
 """
 from dataclasses import dataclass
@@ -82,7 +82,7 @@ class GameSession:
             self.stop()
             raise PermissionError("Sessão de jogo não está autorizada ou expirou")
         # O caminho informado pelo modelo ou usuário NÃO autentica o processo:
-        # um futuro adaptador deverá confirmar PID, HWND e executável via Windows.
+        # o adaptador confirma PID, HWND e executável via Windows.
         if normalize_executable(foreground_executable) != self._executable:
             self.stop()
             raise PermissionError("Outro aplicativo está em foco; sessão encerrada")
@@ -109,3 +109,4 @@ class GameSession:
         self._executable = None
         self._expires_at = 0.0
         self._proposed = 0
+
