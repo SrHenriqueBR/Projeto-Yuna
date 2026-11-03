@@ -9,6 +9,13 @@ de revisão. O código em `main` só muda após revisão e merge por uma pessoa.
 · **[Ver estudos aguardando revisão](https://github.com/SrHenriqueBR/Projeto-Yuna/pulls?q=is%3Aopen+head%3Ayuna%2Festudo-)**
 · **[Responder à Yuna](respostas.json)**
 
+O primeiro ciclo real já criou um commit e está no
+**[PR #79](https://github.com/SrHenriqueBR/Projeto-Yuna/pull/79)**.
+A tentativa de código foi rejeitada; as duas dúvidas técnicas foram respondidas
+por Codex em `respostas.json`. Veja a
+[revisão técnica do primeiro estudo](revisoes/41498654209-1.md).
+O estudo continua aberto para Kaizen avaliar antes de liberar outra rodada.
+
 ## Onde ficam as perguntas
 
 Cada execução que conclui um estudo cria uma branch `yuna/estudo-ID-TENTATIVA`.

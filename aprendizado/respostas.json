@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "p-c26e2546fa655c89",
+    "pergunta": "Qual é a função `identity_conversation_reply`?",
+    "resposta": "Em language_quality.py, identity_conversation_reply(text, history=None) produz respostas prontas para alguns pedidos de identidade e saudações. Usa normalized para comparar o texto e retorna None quando não reconhece um caso. Na pergunta ambígua 'E o seu?', consulta até quatro mensagens anteriores para verificar se o assunto era nome. Ela não valida a identidade real da pessoa nem concede permissões; as referências atuais a Kaizen são texto da resposta, não autenticação. A função normalized já normaliza caixa, acentos, pontuação e espaços. Reutilize-a quando esse comportamento servir, em vez de criar outro normalizador equivalente. Esta resposta descreve o código consultado por Codex no estudo 41498654209-1."
+  },
+  {
+    "id": "p-5286a988b5312857",
+    "pergunta": "Quais são os padrões conhecidos de linguagem artificial e troca de papéis?",
+    "resposta": "A tupla BAD_PATTERNS de language_quality.py reúne expressões regulares para frases que o projeto trata como indesejadas, como 'vou pode', 'sou chama', chamar a pessoa de Yuna, dizer 'eu sou Kaizen' e certas flexões masculinas nas falas da assistente. has_language_problem verifica essas expressões e retorna um booleano; não reescreve a resposta. A função exclui da análise os trechos de código, citações e aspas previstos na implementação para evitar marcar falas de terceiros. Isso é uma triagem limitada de padrões, não uma avaliação completa de gramática ou identidade. Antes de ampliar a lista, apresente um exemplo que deve ser detectado e outro que deve continuar válido. Resposta técnica de Codex ao estudo 41498654209-1."
+  }
+]

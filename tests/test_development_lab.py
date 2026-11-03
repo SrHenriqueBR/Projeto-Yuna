@@ -99,6 +99,32 @@ class LabTests(unittest.TestCase):
         self.assertEqual(runner.run.call_count, 1)
         self.assertEqual(json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))["status"], "invalid")
 
+    def test_filename_headers_from_real_school_failure_are_rejected_before_docker(self):
+        for field, header in (("source", "language_quality.py"), ("tests", "language_quality_test.py")):
+            with self.subTest(field=field):
+                bad = json.loads(self.candidate())
+                bad[field] = header + "\n" + bad[field]
+                ask = Mock(side_effect=[json.dumps(bad), self.candidate()])
+                runner = self.runner(lab.TestResult("passed", "base", 9),
+                                     lab.TestResult("passed", "corrected", 10))
+                folder = lab.develop(self.root, lab.TARGETS[0], "Melhorar uma expressão de linguagem", ask, runner=runner)
+                report = json.loads((folder / "relatorio.json").read_text(encoding="utf-8"))
+                self.assertEqual(report["attempts"][0]["status"], "invalid")
+                self.assertEqual(report["status"], "tests_passed")
+                self.assertEqual(runner.run.call_count, 2)  # base e segunda proposta somente
+                feedback = json.loads(json.loads(ask.call_args.args[0][-1]["content"])["previous_attempt_feedback"])
+                self.assertIn("nome do arquivo", feedback["validation_error"])
+                self.assertIn(header, feedback["invalid_output_excerpt"])
+                self.assertEqual((self.root / lab.TARGETS[0]).read_text(encoding="utf-8"), self.original)
+
+    def test_blank_code_fields_are_invalid_without_uncaught_index_error(self):
+        for field in ("source", "tests"):
+            with self.subTest(field=field):
+                data = json.loads(self.candidate())
+                data[field] = " " * 100
+                with self.assertRaises(ValueError):
+                    lab._validate(json.dumps(data), lab.TARGETS[0], self.original)
+
     def test_privileged_paths_and_removed_exports_are_rejected(self):
         for path in ("yuna.py", "yuna_governance.py", "../secret.py", "/etc/passwd", "camera_viewer.py"):
             with self.subTest(path=path), self.assertRaises(ValueError):
