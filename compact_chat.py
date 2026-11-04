@@ -4,6 +4,7 @@ import hashlib
 import html
 import importlib.util
 import os
+import sys
 from pathlib import Path
 from threading import Event, Thread
 
@@ -17,6 +18,8 @@ from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QMenu,
 
 from companion_commands import BANKING_NOTICE, banking_action, game_intent, power_intent
 from pc_controls import ShutdownCountdown
+from plug_monitor import PlugMonitor
+from plug_sense import describe_plugs, plug_intent
 
 
 def app_icon():
@@ -226,6 +229,9 @@ class CompanionController(QObject):
         self.game_pending = False
         self.shutdown = ShutdownCountdown()
         self.audio_missing = None
+        self.plugs = PlugMonitor(self)
+        self.plugs.notice.connect(self.connection_notice)
+        self.plugs.power_changed.connect(window.poll_battery)
         self.panel = CompactChat(self)
         self.panel.submitted.connect(self.submit)
         self.menu = QMenu(self.panel)
@@ -235,6 +241,16 @@ class CompanionController(QObject):
         self.wake_action.setCheckable(True)
         self.wake_action.toggled.connect(self.toggle_wake)
         self.menu.addAction(self.wake_action)
+        self.plug_action = QAction("Perceber USB e energia", self.menu)
+        self.plug_action.setCheckable(True)
+        self.plug_action.setChecked(sys.platform == "win32")
+        self.plug_action.setEnabled(sys.platform == "win32")
+        self.plug_action.toggled.connect(self.toggle_plugs)
+        self.menu.addAction(self.plug_action)
+        self.plug_voice = QAction("Falar avisos de conexões nesta sessão", self.menu)
+        self.plug_voice.setCheckable(True)
+        self.menu.addAction(self.plug_voice)
+        self.menu.addAction("Conexões do computador…", self.show_connections)
         self.menu.addAction("Configurar controle de jogo…", self.configure_game)
         self.menu.addAction("Abrir câmera…", window.open_camera_viewer)
         self.menu.addAction("Diagnóstico do computador", lambda: self.submit("/diagnostico"))
@@ -265,6 +281,7 @@ class CompanionController(QObject):
         self.timer.start()
 
     def start(self, background=False, compact=False):
+        self.toggle_plugs(self.plug_action.isChecked())
         if compact:
             self.show_compact()
         elif background and self.tray_available:
@@ -272,6 +289,41 @@ class CompanionController(QObject):
         else:
             self.show_full()
         self.check_audio()
+
+    def toggle_plugs(self, enabled):
+        if enabled and not self.closing and sys.platform == "win32":
+            self.window.winId()  # Cria HWND mesmo com a janela recolhida na bandeja.
+            self.plugs.start()
+        else:
+            self.plugs.stop()
+
+    def connection_status(self):
+        if sys.platform != "win32":
+            return "A percepção de USB e energia desta versão está disponível no Windows."
+        if not self.plugs.active:
+            return "A percepção está pausada. Ative Perceber USB e energia no menu •••."
+        self.plugs.request_refresh()
+        return describe_plugs(self.plugs.snapshot)
+
+    def show_connections(self):
+        QMessageBox.information(self.panel, "Yuna • conexões", self.connection_status())
+
+    def connection_notice(self, message):
+        if self.closing or not self.plugs.active:
+            return
+        # Avisos efêmeros: não viram comandos, prompts, fatos ou inventário persistente.
+        self.window.add_message("Yuna", message)
+        if self.tray_available and not self.window.isVisible() and not self.panel.isVisible():
+            self.tray.showMessage("Yuna • conexões", message,
+                                  QSystemTrayIcon.MessageIcon.Information, 4000)
+        if (self.plug_voice.isChecked() and not self.window.voice_busy
+                and not self.window.microphone_busy and self.window.send_button.isEnabled()):
+            self.say_connection(message)
+
+    def say_connection(self, message):
+        # A voz Edge opcional é externa: nomes/status reais só vão à voz Windows.
+        self.window.say("Confira as conexões do computador no chat."
+                        if self.window.voice_index == 2 else message)
 
     def show_compact(self):
         if self.closing:
@@ -324,6 +376,12 @@ class CompanionController(QObject):
             self.window.say(answer)
 
     def handle(self, text):
+        if plug_intent(text):
+            self.window.add_message("Você", text)
+            answer = self.connection_status()
+            self.window.add_message("Yuna", answer)
+            self.say_connection(answer)
+            return True
         if banking_action(text):
             self.reply(text, BANKING_NOTICE)
             return True
@@ -508,6 +566,7 @@ class CompanionController(QObject):
             self.window.worker.record("Resultado do comando de jogo", message)
 
     def stop(self):
+        self.plug_voice.setChecked(False)
         self.stop_game()
         self.shutdown.cancel()
         self.panel.power_notice.hide()
@@ -515,6 +574,7 @@ class CompanionController(QObject):
 
     def quit(self):
         self.closing = True
+        self.plugs.stop()
         self.stop()
         self.timer.stop()
         self.panel.hide()
@@ -524,6 +584,7 @@ class CompanionController(QObject):
 
     def cleanup(self):
         self.closing = True
+        self.plugs.stop()
         self.stop()
         self.timer.stop()
         self.panel.hide()

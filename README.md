@@ -1,8 +1,23 @@
-# Projeto Yuna — versão 0.49
+# Projeto Yuna — versão 0.50
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+
+## Percepção de USB e energia
+
+A Yuna percebe conexões/desconexões de dispositivos USB e mudanças no carregador
+enquanto está aberta, inclusive na bandeja. Mostra avisos curtos no chat, agrupa
+eventos próximos e atualiza a reação da bateria. **USB-C** aparece quando o driver
+do hub confirma o conector; dispositivos USB em portas C também são detectados
+como USB quando essa informação não está disponível.
+
+No menu **•••**, use **Conexões do computador**, **Perceber USB e energia** para
+pausar/retomar ou **Falar avisos de conexões nesta sessão** para ouvir os avisos.
+Também pode perguntar **“Yuna, mostre as conexões”**. Não lê pendrives, instala
+drivers nem envia o inventário ao modelo ou à web. Cabos sem dispositivo,
+acessórios somente de carga e o botão físico de ligar podem não produzir um
+evento observável. [Funcionamento e limites](docs/YUNA_APP.md#usb-usb-c-e-alimentação).
 
 ## Yuna.app — chat compacto e segundo plano
 

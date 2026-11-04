@@ -51,6 +51,20 @@ def read_battery():
         return None
 
 
+def read_external_power():
+    """ACLineStatus independente de bateria/percentual; 255 continua desconhecido."""
+    if sys.platform != "win32":
+        return None
+    try:
+        state = _SystemPowerStatus()
+        if (ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(state))
+                and state.ACLineStatus in (0, 1)):
+            return bool(state.ACLineStatus)
+    except (AttributeError, OSError, TypeError, ValueError):
+        pass
+    return None
+
+
 @dataclass(frozen=True)
 class BatteryMood:
     mode: str
@@ -140,3 +154,4 @@ def public_battery(mood):
         "plugged": mood.plugged,
         "mode": mood.mode,
     }
+

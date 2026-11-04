@@ -323,7 +323,11 @@ class YunaDesktop(QMainWindow):
                 has_amplitude=bool(self._audio_levels),
                 battery=public_battery(mood),
             )
-        if mood.announcement:
+        # O monitor de plugs já anuncia a conexão real, inclusive a 100%.
+        # A bateria mantém seus alertas de carga baixa/cheia e a reação visual.
+        charger_notice = (mood.mode == "charging" and self.companion is not None
+                          and self.companion.plugs.active)
+        if mood.announcement and not charger_notice:
             self.add_message("Yuna", mood.announcement)
 
     def setup_ui(self):

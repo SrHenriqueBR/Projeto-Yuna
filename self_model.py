@@ -1,4 +1,4 @@
-"""Yuna 0.49: identidade verificável e planejamento local, sem execução autônoma.
+"""Yuna 0.50: identidade verificável e planejamento local, sem execução autônoma.
 
 A IA não vê seu próprio código-fonte por introspecção do modelo. Esta descrição
 representa as capacidades IMPLEMENTADAS e é atualizada por quem mantém o projeto.
@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.49"
+VERSION = "0.50"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -51,6 +51,7 @@ def about(memory, model):
         "afeto_simulado": memory.affect.enabled,
         "pensamento_periodico": memory.thinking.enabled,
         "pode": [
+            "perceber conexões USB e mudanças de alimentação no desktop Windows, com USB-C quando o driver confirma",
             "ficar na bandeja do Windows como Yuna.app com chat compacto e memória local",
             "reconhecer chamadas Olá Yuna no desktop com escuta local opcional por sessão",
             "solicitar desligamento após contagem cancelável e agendar tentativa de despertar da suspensão",
