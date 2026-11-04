@@ -10,7 +10,7 @@ import socket
 from pathlib import Path
 from queue import Queue
 import sys
-from threading import Thread
+from threading import Event, Thread
 
 from PySide6.QtCore import Qt, QTimer, Signal, QObject, QUrl
 from PySide6.QtGui import QMovie, QPixmap, QTextCursor, QShortcut, QKeySequence, QDesktopServices
@@ -75,8 +75,8 @@ class DesktopSignals(QObject):
     saved = Signal(str)
     audio_ready = Signal(str, int)
     audio_error = Signal(str, int)
-    mic_ready = Signal(str)
-    mic_error = Signal(str)
+    mic_ready = Signal(str, int)
+    mic_error = Signal(str, int)
 
 
 class DesktopWorker(Thread):
@@ -258,6 +258,8 @@ class YunaDesktop(QMainWindow):
         self._changing_voice = False
         self._edge_consent = False
         self.microphone_busy = False
+        self._mic_generation = 0
+        self._mic_cancel = Event()
         self._battery_companion = BatteryCompanion()
         self._battery_mood = self._battery_companion.observe(None)
 
@@ -1150,6 +1152,11 @@ class YunaDesktop(QMainWindow):
             self.composer.clear()
             self.emergency_stop()
             return
+        from companion_commands import power_intent, game_intent
+        if self.companion is not None and (power_intent(content) == "cancel" or game_intent(content) == "stop"):
+            self.composer.clear()
+            self.companion.handle(content)
+            return
         if not self.pending_path and self.companion is not None:
             try:
                 if self.companion.handle(content):
@@ -1208,6 +1215,7 @@ class YunaDesktop(QMainWindow):
         self._stop_requested = True
         self._speech_generation += 1
         self._speech_queue.clear()
+        self.stop_microphone()
         if self.companion is not None:
             self.companion.stop()
         self.game_session.stop()
@@ -1589,30 +1597,53 @@ class YunaDesktop(QMainWindow):
         if confirm != QMessageBox.StandardButton.Yes:
             return
         self.microphone_busy = True
+        self._mic_generation += 1
+        generation = self._mic_generation
+        token = Event()
+        self._mic_cancel = token
         self.microphone_button.setEnabled(False)
         self.status.setText("🎙  Ouvindo por 8 segundos...")
 
         def recording():
             try:
                 from speech_input import listen_once
-                result = listen_once()
-                self.signals.mic_ready.emit(result)
+                result = listen_once(cancelled=token.is_set)
+                if not token.is_set():
+                    self.signals.mic_ready.emit(result, generation)
             except Exception as exc:
-                self.signals.mic_error.emit(str(exc))
+                if not token.is_set():
+                    self.signals.mic_error.emit(str(exc), generation)
         Thread(target=recording, daemon=True).start()
 
-    def microphone_ready(self, result):
+    def stop_microphone(self):
+        self._mic_cancel.set()
+        self._mic_generation += 1
+        if self.microphone_busy:
+            try:
+                import sounddevice as sd
+                sd.stop()
+            except (ImportError, OSError, RuntimeError):
+                pass
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
-        earlier = self.composer.toPlainText().strip()
-        self.composer.setPlainText((earlier + "\n" if earlier else "") + result)
+
+    def microphone_ready(self, result, generation=None):
+        if generation is not None and generation != self._mic_generation:
+            return
+        self.microphone_busy = False
+        self.microphone_button.setEnabled(True)
         if self.companion is not None and self.companion.panel.isVisible():
-            self.companion.panel.input.setPlainText(result)
-            self.companion.panel.input.setFocus()
-        self.composer.setFocus()
+            composer = self.companion.panel.input
+        else:
+            composer = self.composer
+        earlier = composer.toPlainText().strip()
+        composer.setPlainText((earlier + "\n" if earlier else "") + result)
+        composer.setFocus()
         self.status.setText("Ditado transcrito localmente • revise antes de enviar")
 
-    def microphone_error(self, error):
+    def microphone_error(self, error, generation=None):
+        if generation is not None and generation != self._mic_generation:
+            return
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
         self.status.setText("Falha no microfone: " + str(error)[:180])
@@ -1644,6 +1675,7 @@ class YunaDesktop(QMainWindow):
         self._stop_requested = True
         self._speech_generation += 1
         self._speech_queue.clear()
+        self.stop_microphone()
         if self.unreal_heartbeat is not None:
             self.unreal_heartbeat.stop()
         if self.hero_timer is not None:

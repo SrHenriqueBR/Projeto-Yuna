@@ -1,5 +1,6 @@
 """Fluxos reais Qt, sem usar áudio, câmera, teclado ou desligamento do host."""
 import importlib.util
+from contextlib import closing
 import os
 import tempfile
 from pathlib import Path
@@ -97,6 +98,25 @@ class CompanionQtTests(unittest.TestCase):
             model.assert_not_called()
         self.assertIsNone(self.controller.shutdown.remaining())
 
+    def test_attachment_never_intercepts_shutdown_cancel(self):
+        self.controller.shutdown.start()
+        self.window.pending_path = Path("documento.pdf")
+        self.window.set_busy(True)
+        with patch.object(self.window.worker, "analyze") as analyze:
+            self.controller.submit("Yuna cancele o desligamento")
+            analyze.assert_not_called()
+        self.assertIsNone(self.controller.shutdown.remaining())
+
+    def test_dictation_preserves_compact_draft_and_stop_ignores_late_transcript(self):
+        self.controller.show_compact()
+        self.controller.panel.input.setPlainText("rascunho")
+        self.window.microphone_ready("continuação")
+        self.assertEqual(self.controller.panel.input.toPlainText(), "rascunho\ncontinuação")
+        generation = self.window._mic_generation
+        self.window.emergency_stop()
+        self.window.microphone_ready("fala antiga", generation)
+        self.assertEqual(self.controller.panel.input.toPlainText(), "rascunho\ncontinuação")
+
     def test_scheduled_wake_denial_enqueues_nothing(self):
         from PySide6.QtWidgets import QMessageBox
         with patch("compact_chat.QMessageBox.question", return_value=QMessageBox.StandardButton.No), patch.object(
@@ -175,7 +195,7 @@ class CompanionQtTests(unittest.TestCase):
                 return "resposta do chat"
             with patch("yuna_desktop.handle_message", side_effect=handle):
                 worker.run()
-            with sqlite3.connect(Path(temp) / "data" / "yuna.db") as db:
+            with closing(sqlite3.connect(Path(temp) / "data" / "yuna.db")) as db:
                 rows = db.execute("SELECT role,content FROM messages ORDER BY id").fetchall()
             self.assertEqual(rows, [("user", "pedido na interface"), ("assistant", "resposta da interface"),
                                     ("user", "mensagem pelo chat"), ("assistant", "resposta do chat")])
