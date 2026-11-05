@@ -14,6 +14,10 @@ O instalador inclui o runtime privado, interface, documentos, bibliotecas de voz
 local e renderizador 3D. Não requer Python ou Node.js instalados separadamente.
 Ollama e modelos são separados: em **Central → Preparação**, instale/abra o Ollama
 pelo endereço oficial, verifique a instalação e prepare o modelo escolhido.
+A Central oferece Qwen3.5 2B, 4B (recomendado) e 9B; os modelos Qwen2.5
+anteriores permanecem por compatibilidade. Todos são locais e não exigem
+API Qwen comercial. A troca é explícita e só ocorre após concluir o download;
+reinicie a Yuna. Veja [Modelos locais](MODELOS_LOCAIS.md).
 
 Para executar o código-fonte existe uma única entrada, **Yuna.bat**. Ela cria um
 ambiente `.venv` na pasta após confirmação. Inicializadores antigos remanescentes
