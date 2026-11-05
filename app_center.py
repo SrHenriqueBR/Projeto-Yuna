@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (QCheckBox, QDialog, QHBoxLayout, QLabel,
 from app_tools import (TOOLS, RELEASE_URL, configure_shortcuts, installation_status,
                        launch_tool, prepare_model)
 from self_model import VERSION
+from model_config import MODEL_OPTIONS, LEGACY_OPTIONS, load_selected_model
 
 
 class YunaCenter(QDialog):
@@ -72,10 +73,33 @@ class YunaCenter(QDialog):
         box.addStretch()
         box = QVBoxLayout(maintenance)
         self.button(box, "Verificar instalação e Ollama", lambda: self.job(lambda: installation_status(self.root)))
+        model_note = QLabel(
+            "✦ Qwen3.5 GRATUITO • modelos instalados no seu computador via Ollama. "
+            "Sem conta de nuvem, chave de API ou cobrança por conversas. "
+            "A seleção só muda quando o download termina; reinicie a Yuna."
+        )
+        model_note.setWordWrap(True)
+        box.addWidget(model_note)
+        for model, label, description in MODEL_OPTIONS:
+            self.button(
+                box, "⬇  Qwen3.5 " + label + "  (" + model + ")",
+                lambda checked=False, name=model: self.download_model(name)
+            ).setToolTip(description + " · sem API paga")
+        old_label = QLabel("Compatibilidade: modelos da versão anterior")
+        old_label.setStyleSheet("color:#a89cbf; font-size:11px;")
+        box.addWidget(old_label)
         row = QHBoxLayout()
-        for name, label in (("qwen2.5:1.5b", "Modelo leve · 8 GB"), ("qwen2.5:3b", "Modelo padrão")):
-            self.button(row, label, lambda checked=False, name=name: self.download_model(name))
+        for model, label in LEGACY_OPTIONS:
+            self.button(
+                row, label, lambda checked=False, name=model: self.download_model(name)
+            ).setToolTip(model)
         box.addLayout(row)
+        self.current_model_label = QLabel(
+            "Modelo selecionado: " + load_selected_model(self.root)
+            + " (a troca precisa de reinicialização)"
+        )
+        self.current_model_label.setWordWrap(True)
+        box.addWidget(self.current_model_label)
         self.button(box, "Instalar ou abrir o site do Ollama", lambda: QDesktopServices.openUrl(QUrl("https://ollama.com/download/windows")))
         self.button(box, "Criar ou reparar atalhos Yuna", lambda: self.job(lambda: configure_shortcuts(self.root)))
         row = QHBoxLayout()
@@ -152,7 +176,9 @@ class YunaCenter(QDialog):
         if self.running:
             return
         answer = QMessageBox.question(self, "Preparar modelo local",
-            "Baixar/verificar " + model + " pelo Ollama? Pode usar vários GB de internet e disco. "
+            "Baixar/verificar " + model + " somente no Ollama local? "
+            "O download pode consumir vários GB de internet e espaço. "
+            "Não será utilizada API comercial nem cobrança por tokens. "
             "O Ollama precisa estar aberto. A escolha será usada ao reiniciar a Yuna.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
@@ -177,6 +203,11 @@ class YunaCenter(QDialog):
     def job_done(self, success, message):
         self.running = False
         self.output.setPlainText(message if success else "Não foi possível concluir: " + message)
+        if success:
+            self.current_model_label.setText(
+                "Modelo selecionado: " + load_selected_model(self.root)
+                + " (reinicie a Yuna para aplicar)"
+            )
 
     def closeEvent(self, event):
         self.hide()  # Mantém o progresso e as permissões ao reabrir a Central.
