@@ -8,6 +8,11 @@ URL = "https://api.osv.dev/v1/query"
 ECOSYSTEMS = {"PyPI", "npm"}
 
 
+class DenyRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        raise ValueError("O serviço OSV não pode redirecionar esta consulta.")
+
+
 def validate(ecosystem, name, version):
     if ecosystem not in ECOSYSTEMS:
         raise ValueError("Escolha PyPI ou npm.")
@@ -26,7 +31,7 @@ def check_package(ecosystem, name, version, *, opener=None):
         headers={"Content-Type": "application/json", "Accept": "application/json",
                  "User-Agent": "Projeto-Yuna/0.54"})
     client = opener or urllib.request.build_opener(
-        urllib.request.ProxyHandler({}))
+        urllib.request.ProxyHandler({}), DenyRedirect())
     try:
         with client.open(request, timeout=15) as response:
             raw = response.read(100001)
