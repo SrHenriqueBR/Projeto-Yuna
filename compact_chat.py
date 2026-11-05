@@ -379,6 +379,10 @@ class CompanionController(QObject):
         self._update_tray_indicator()
         self.panel.state.setText(policy.detail)
         self.window.status.setText("Yuna • " + policy.title)
+        if self.window.hero_timer is not None and mode != "ativa":
+            self.window.hero_timer.stop()
+        elif self.window.hero_timer is not None and self.window.isVisible():
+            self.window.hero_timer.start()
 
     def on_recolher(self):
         """Fechar minimiza para um ícone leve, sem encerrar a aplicação."""
@@ -420,7 +424,11 @@ class CompanionController(QObject):
         if sys.platform != "win32":
             return "A percepção de USB e energia desta versão está disponível no Windows."
         if not self.plugs.active:
-            return "A percepção está pausada. Ative Perceber USB e energia no menu •••."
+            if not mode_policy(self.mode).usb_events:
+                return ("A percepção de USB/energia está suspensa no modo " +
+                        mode_policy(self.mode).title +
+                        ". Mude para Ativa ou Acompanhamento leve na bandeja.")
+            return "A percepção está desligada. Marque Perceber USB e energia no menu •••."
         self.plugs.request_refresh()
         return describe_plugs(self.plugs.snapshot)
 
