@@ -312,6 +312,8 @@ class YunaDesktop(QMainWindow):
 
     def poll_battery(self):
         """Informa bateria real sem emitir voz automaticamente."""
+        if self.companion is not None and self.companion.mode == "pausada":
+            return
         status = read_battery()
         mood = self._battery_companion.observe(status)
         self._battery_mood = mood
