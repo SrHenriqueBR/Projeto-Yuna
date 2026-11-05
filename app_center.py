@@ -59,7 +59,7 @@ class YunaCenter(QDialog):
         for page, label in zip((home, permissions, maintenance, advanced),
                                ("Minha Yuna", "Permissões", "Preparação", "Avançado")):
             tabs.addTab(page, label)
-        box = QVBoxLayout(home)
+        box = QVBoxLayout(home_content)
         self.button(box, "Conversar no chat compacto", controller.show_compact)
         self.button(box, "Abrir janela completa e documentos", controller.show_full)
         self.button(box, "Mostrar ou esconder a personagem 2D", controller.window.toggle_avatar)
