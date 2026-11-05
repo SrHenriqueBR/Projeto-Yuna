@@ -20,9 +20,11 @@ from companion_commands import BANKING_NOTICE, banking_action, game_intent, powe
 from pc_controls import ShutdownCountdown
 from plug_monitor import PlugMonitor
 from plug_sense import describe_plugs, plug_intent
+from tray_modes import MODES, mode_policy, should_observe, mode_tooltip
 
 
-def app_icon():
+def app_icon(mode="ativa", microphone=False):
+    """Y roxa com indicador de estado: funciona sem arquivo .ico externo."""
     pixmap = QPixmap(64, 64)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)
@@ -36,6 +38,11 @@ def app_icon():
     font.setBold(True)
     painter.setFont(font)
     painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "Y")
+    # Ponto de status no canto inferior: azul apenas durante escuta autorizada.
+    painter.setPen(QColor("#121526"))
+    painter.setBrush(QColor("#4fa8ff") if microphone else
+                     QColor(mode_policy(mode).color))
+    painter.drawEllipse(44, 44, 18, 18)
     painter.end()
     return QIcon(pixmap)
 
@@ -205,6 +212,7 @@ class CompactChat(QWidget):
     def closeEvent(self, event):
         if self.controller.tray_available:
             self.hide()
+            self.controller.on_recolher()
             event.ignore()
         else:
             event.accept()
@@ -221,6 +229,8 @@ class CompanionController(QObject):
         super().__init__(window)
         self.window = window
         self.closing = False
+        self.mode = "ativa"
+        self._background_start = False
         self.wake = None
         self.wake_generation = 0
         self.wake_paused = Event()
@@ -236,6 +246,23 @@ class CompanionController(QObject):
         self.panel = CompactChat(self)
         self.panel.submitted.connect(self.submit)
         self.menu = QMenu(self.panel)
+        self.status_action = QAction("● Yuna ativa • pronta para conversar", self.menu)
+        self.status_action.setEnabled(False)
+        self.menu.addAction(self.status_action)
+        self.modes_menu = self.menu.addMenu("Modo de funcionamento")
+        self.mode_actions = {}
+        for key, title in (("ativa", "● Ativa • conversar"),
+                           ("economica", "◐ Econômica • menor consumo"),
+                           ("acompanhamento", "◇ Acompanhamento leve • USB/energia"),
+                           ("pausada", "Ⅱ Pausar • interromper atividades")):
+            action = QAction(title, self.modes_menu)
+            action.setCheckable(True)
+            action.setChecked(key == self.mode)
+            action.triggered.connect(
+                lambda _checked=False, selected=key: self.set_mode(selected))
+            self.modes_menu.addAction(action)
+            self.mode_actions[key] = action
+        self.menu.addSeparator()
         self.menu.addAction("Central da Yuna…", self.show_center)
         self.menu.addAction("Abrir chat compacto", self.show_compact)
         self.menu.addAction("Abrir janela completa", self.show_full)
@@ -262,7 +289,7 @@ class CompanionController(QObject):
         self.menu.addAction("Sair da Yuna", self.quit)
         self.panel.more.setMenu(self.menu)
         self.tray = QSystemTrayIcon(app_icon(), self)
-        self.tray.setToolTip("Yuna.app • conversa local")
+        self.tray.setToolTip(mode_tooltip(self.mode))
         self.tray.setContextMenu(self.menu)
         self.tray.activated.connect(lambda reason: self.show_compact()
             if reason in (QSystemTrayIcon.ActivationReason.Trigger,
@@ -281,9 +308,86 @@ class CompanionController(QObject):
         self.timer.setInterval(200)
         self.timer.timeout.connect(self.tick)
         self.timer.start()
+        self._update_tray_indicator()
+
+    def _update_tray_indicator(self):
+        """Apenas informações locais; não consulta serviços nem faz inferência."""
+        plugged = bool(self.plugs.active)
+        listening = bool(self.wake_action.isChecked() and self.mode == "ativa")
+        self.tray.setIcon(app_icon(self.mode, microphone=listening))
+        self.tray.setToolTip(mode_tooltip(
+            self.mode, microphone=listening, usb=plugged))
+        self.status_action.setText(
+            "● Yuna " + mode_policy(self.mode).title + " • " +
+            ("escuta autorizada" if listening else
+             "USB/energia acompanhados" if plugged else "em espera"))
+        for key, action in self.mode_actions.items():
+            action.setChecked(key == self.mode)
+        self.plug_action.setText(
+            "Perceber USB e energia" +
+            (" (suspenso neste modo)" if self.plug_action.isChecked()
+             and not mode_policy(self.mode).usb_events else ""))
+
+    def _quiet_optional_visuals(self):
+        """Reduz renderização sem reabrir câmera/microfone ao despertar."""
+        avatar = self.window.avatar_window
+        if avatar is not None and avatar.isVisible():
+            avatar.hide()
+            self.window.avatar_button.setText("✦  Mostrar Yuna viva")
+        if self.window.avatar_bridge is not None:
+            self.window.avatar_bridge.stop()
+            self.window.avatar_bridge = None
+            self.window.avatar3d_button.setText("◇  Conectar Yuna 3D")
+        if self.window.unreal_bridge is not None:
+            self.window.unreal_bridge.stop()
+            self.window.unreal_bridge = None
+            self.window.unreal_button.setText("◇  Conectar Yuna Unreal")
+
+    def set_mode(self, mode):
+        """Modo manual não liga escuta/câmera. Pausa interrompe ações pendentes."""
+        policy = mode_policy(mode)
+        if self.closing:
+            return
+        previous = self.mode
+        self.mode = mode
+        if mode == "acompanhamento" and not self.plug_action.isChecked() and sys.platform == "win32":
+            # Escolher explicitamente este modo concede apenas USB/energia.
+            self.plug_action.setChecked(True)
+        if mode != "ativa" and self.wake_action.isChecked():
+            self.wake_action.setChecked(False)
+        if mode == "pausada" and previous != "pausada":
+            self.window.emergency_stop()
+        if mode in ("economica", "pausada"):
+            self._quiet_optional_visuals()
+        self.toggle_plugs(self.plug_action.isChecked())
+        if mode != "ativa" and self.plug_voice.isChecked():
+            self.plug_voice.setChecked(False)
+        if self.window.battery_timer is not None:
+            if policy.battery_ms is None:
+                self.window.battery_timer.stop()
+            else:
+                self.window.battery_timer.setInterval(policy.battery_ms)
+                if not self.window.battery_timer.isActive():
+                    self.window.battery_timer.start()
+        if self.window.unreal_heartbeat is not None:
+            if policy.unreal_heartbeat:
+                if not self.window.unreal_heartbeat.isActive():
+                    self.window.unreal_heartbeat.start()
+            else:
+                self.window.unreal_heartbeat.stop()
+        self.timer.setInterval(policy.timer_ms)
+        self._update_tray_indicator()
+        self.panel.state.setText(policy.detail)
+        self.window.status.setText("Yuna • " + policy.title)
+
+    def on_recolher(self):
+        """Fechar minimiza para um ícone leve, sem encerrar a aplicação."""
+        if self.tray_available and self.mode == "ativa":
+            self.set_mode("economica")
 
     def start(self, background=False, compact=False):
-        self.toggle_plugs(self.plug_action.isChecked())
+        self._background_start = bool(background and self.tray_available)
+        self.set_mode("economica" if self._background_start else "ativa")
         if compact:
             self.show_compact()
         elif background and self.tray_available:
@@ -304,11 +408,13 @@ class CompanionController(QObject):
         self.center.activateWindow()
 
     def toggle_plugs(self, enabled):
-        if enabled and not self.closing and sys.platform == "win32":
+        if not self.closing and should_observe(
+                self.mode, windows=sys.platform == "win32", permission=enabled):
             self.window.winId()  # Cria HWND mesmo com a janela recolhida na bandeja.
             self.plugs.start()
         else:
             self.plugs.stop()
+        self._update_tray_indicator()
 
     def connection_status(self):
         if sys.platform != "win32":
@@ -322,7 +428,7 @@ class CompanionController(QObject):
         QMessageBox.information(self.panel, "Yuna • conexões", self.connection_status())
 
     def connection_notice(self, message):
-        if self.closing or not self.plugs.active:
+        if self.closing or not self.plugs.active or self.mode not in ("ativa", "acompanhamento"):
             return
         # Avisos efêmeros: não viram comandos, prompts, fatos ou inventário persistente.
         self.window.add_message("Yuna", message)
@@ -341,12 +447,18 @@ class CompanionController(QObject):
     def show_compact(self):
         if self.closing:
             return
+        if self.mode == "pausada":
+            self.set_mode("ativa")
+        self._background_start = False
         self.window.hide()
         self.panel.show_panel()
 
     def show_full(self):
         if self.closing:
             return
+        self._background_start = False
+        if self.mode in ("pausada", "economica"):
+            self.set_mode("ativa")
         self.panel.hide()
         self.window.showNormal()
         self.window.raise_()
@@ -365,7 +477,8 @@ class CompanionController(QObject):
             reason = "Sem microfone disponível" if not input_ok else (
                 "Sem saída de áudio disponível" if not output_ok else "Ditado local ainda não instalado")
             self.panel.state.setText(reason + " • podemos conversar por texto.")
-            self.show_compact()
+            if self.mode == "ativa" and not self._background_start:
+                self.show_compact()
         if not input_ok and self.wake_action.isChecked():
             self.wake_action.setChecked(False)
         self.audio_missing = missing
@@ -467,6 +580,8 @@ class CompanionController(QObject):
                 self.window.show_error(str(exc))
 
     def toggle_wake(self, enabled):
+        if enabled and self.mode != "ativa" and not self.closing:
+            self.set_mode("ativa")  # pedido explícito de escuta sai da economia
         self.wake_generation += 1
         generation = self.wake_generation
         if enabled and self.wake is not None and self.wake.is_alive():
@@ -476,7 +591,7 @@ class CompanionController(QObject):
         if self.wake is not None:
             self.wake.stop()
         self.panel.listening.setText("Microfone contínuo desligado")
-        self.tray.setToolTip("Yuna.app • microfone contínuo desligado")
+        self._update_tray_indicator()
         if not enabled:
             return
         if not all(importlib.util.find_spec(name) for name in ("sounddevice", "faster_whisper")):
@@ -503,7 +618,7 @@ class CompanionController(QObject):
     def _wake_ready(self, generation):
         if generation == self.wake_generation and not self.closing:
             self.panel.listening.setText('● Microfone ativo • diga “Olá Yuna”')
-            self.tray.setToolTip("Yuna.app • microfone ativo nesta sessão")
+            self._update_tray_indicator()
 
     def _heard(self, generation, text):
         if generation == self.wake_generation and not self.closing:
