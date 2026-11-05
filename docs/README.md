@@ -11,6 +11,7 @@ avançadas permanecem opcionais.
 | Guia | Assunto |
 | --- | --- |
 | [Instalação Windows](INSTALACAO_WINDOWS.md) | Instalador, código-fonte, Ollama, atualização, backup |
+| [Integrações 0.54](INTEGRACOES_054.md) | RAG local, liberar RAM/VRAM, eventos Windows e OSV.dev |
 | [Yuna.app no Windows](YUNA_APP.md) | Central, chat, voz, segundo plano, consentimento e limites |
 | [Qwen3.5 local e custos](MODELOS_LOCAIS.md) | Modelos 2B/4B/9B, Ollama gratuito e diferença para API paga |
 | [Estrutura do projeto](ESTRUTURA_DO_PROJETO.md) | Arquivos, responsáveis por módulo, limpeza segura |
