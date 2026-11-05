@@ -21,6 +21,7 @@ from pc_controls import ShutdownCountdown
 from plug_monitor import PlugMonitor
 from plug_sense import describe_plugs, plug_intent
 from tray_modes import MODES, mode_policy, should_observe, mode_tooltip
+from health_watch import HealthGuidance, read_health, summary as health_summary
 
 
 def app_icon(mode="ativa", microphone=False):
@@ -242,6 +243,7 @@ class CompanionController(QObject):
         self.audio_missing = None
         self.center = None
         self.plugs = PlugMonitor(self)
+        self.health = HealthGuidance()
         self.plugs.notice.connect(self.connection_notice)
         self.plugs.power_changed.connect(window.poll_battery)
         self.panel = CompactChat(self)
@@ -283,6 +285,7 @@ class CompanionController(QObject):
         self.menu.addAction("Conexões do computador…", self.show_connections)
         self.menu.addAction("Configurar controle de jogo…", self.configure_game)
         self.menu.addAction("Abrir câmera…", window.open_camera_viewer)
+        self.menu.addAction("Saúde deste PC (RAM/disco)…", self.show_health)
         self.menu.addAction("Diagnóstico do computador", lambda: self.submit("/diagnostico"))
         self.menu.addSeparator()
         self.menu.addAction("Cancelar desligamento", self.cancel_shutdown)
@@ -309,6 +312,9 @@ class CompanionController(QObject):
         self.timer.setInterval(200)
         self.timer.timeout.connect(self.tick)
         self.timer.start()
+        self.health_timer = QTimer(self)
+        self.health_timer.setInterval(300000)
+        self.health_timer.timeout.connect(self._health_tick)
         self._update_tray_indicator()
 
     def _update_tray_indicator(self):
@@ -355,6 +361,14 @@ class CompanionController(QObject):
         if mode == "acompanhamento" and not self.plug_action.isChecked() and sys.platform == "win32":
             # Escolher explicitamente este modo concede apenas USB/energia.
             self.plug_action.setChecked(True)
+        if mode == "acompanhamento":
+            if previous != mode:
+                self.health.reset()
+            self.health_timer.start()
+            if previous != mode:
+                QTimer.singleShot(2500, self._health_tick)
+        else:
+            self.health_timer.stop()
         if mode != "ativa" and self.wake_action.isChecked():
             self.wake_action.setChecked(False)
         if mode == "pausada" and previous != "pausada":
@@ -421,6 +435,23 @@ class CompanionController(QObject):
         else:
             self.plugs.stop()
         self._update_tray_indicator()
+
+    def _health_tick(self):
+        """Acompanhamento agregado, no máximo a cada 5 min; jamais usa Ollama."""
+        if self.closing or self.mode != "acompanhamento":
+            return
+        for message in self.health.observe(read_health()):
+            self.window.add_message("Yuna", message)
+            if (self.tray_available and not self.window.isVisible()
+                    and not self.panel.isVisible()):
+                self.tray.showMessage("Yuna • saúde do PC", message,
+                    QSystemTrayIcon.MessageIcon.Information, 5000)
+
+    def show_health(self):
+        """Verificação manual explícita, disponível mesmo no modo econômico."""
+        QMessageBox.information(
+            self.panel, "Yuna • saúde do computador",
+            health_summary(read_health()))
 
     def connection_status(self):
         if sys.platform != "win32":
@@ -714,6 +745,7 @@ class CompanionController(QObject):
 
     def quit(self):
         self.closing = True
+        self.health_timer.stop()
         self.plugs.stop()
         self.stop()
         self.timer.stop()
@@ -724,6 +756,7 @@ class CompanionController(QObject):
 
     def cleanup(self):
         self.closing = True
+        self.health_timer.stop()
         if self.center is not None:
             self.center.hide()
             self.center.sync.stop()
