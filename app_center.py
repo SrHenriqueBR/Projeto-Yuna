@@ -61,6 +61,19 @@ class YunaCenter(QDialog):
         self.button(box, "Abrir avatar 3D", lambda: self.open_tool("3d"))
         self.button(box, "Conversar no navegador deste computador", lambda: self.open_tool("web"))
         self.button(box, "Recolher para segundo plano", self.hide_companion)
+        modes_title = QLabel("Presença na bandeja • modo de funcionamento")
+        modes_title.setStyleSheet("color:#cbb1ff;font-weight:700;")
+        box.addWidget(modes_title)
+        self.button(box, "● Ativa • conversar", lambda: controller.set_mode("ativa"))
+        self.button(box, "◐ Econômica • reduzir verificações", lambda: controller.set_mode("economica"))
+        self.button(box, "◇ Acompanhamento leve • USB/energia",
+                    lambda: controller.set_mode("acompanhamento"))
+        self.button(box, "Ⅱ Pausar • interromper atividades",
+                    lambda: controller.set_mode("pausada"))
+        mode_note = QLabel("Acompanhamento observa somente USB, energia e bateria "
+            "deste PC. Não habilita câmera, microfone ou consultas automáticas à IA.")
+        mode_note.setWordWrap(True)
+        box.addWidget(mode_note)
         box.addStretch()
         box = QVBoxLayout(permissions)
         text = QLabel("Você controla os recursos. Microfone e câmera pedem autorização nesta sessão.")
@@ -160,6 +173,7 @@ class YunaCenter(QDialog):
             return
         self.controller.panel.hide()
         self.controller.window.hide()
+        self.controller.on_recolher()
         self.hide()
 
     def open_tool(self, name):
