@@ -18,5 +18,15 @@ Qwen2.5 anteriores continuam disponíveis; não há troca automática, e a
 seleção só é salva após um download confirmado e concluído. Reinicie a Yuna
 para aplicar o novo modelo.
 
+**Novidade 0.53.0:** ícone da Yuna na bandeja do Windows com estados
+Ativa, Econômica, Acompanhamento leve (USB/energia/bateria locais) e
+Pausada. Clicar abre chat compacto; clicar com o botão direito abre
+o controle. Fechar a janela ativa economia com pausas nas verificações
+de USB e menor frequência de bateria. O modo de acompanhamento
+depende de escolha explícita, não liga câmera ou microfone nem
+envia dados a modelos automaticamente. "Sair da Yuna" encerra o
+processo e o monitoramento. Ollama separado pode manter RAM/VRAM
+ocupadas mesmo em economia.
+
 Modelos de conversa/Whisper são downloads separados; hardware precisa ser conferido
 no computador onde o aplicativo será usado.
