@@ -34,7 +34,7 @@ mostra o menu. A Central também permite trocar os modos em **Minha Yuna**.
 | --- | --- | --- |
 | **Ativa** (roxo) | Timer de interface de 200 ms; bateria a cada 90 s | Conversa, verificações USB/energia se permitidas, escuta só se você a ligar |
 | **Econômica** (cinza) | Timer de 1200 ms; bateria a cada 5 min; USB e avatar 3D em pausa | Chat por texto sob demanda; microfone contínuo desativado |
-| **Acompanhamento leve** (verde) | Timer de 1000 ms; bateria a cada 3 min; eventos USB/energia autorizados | Avisos curtos de conexão e energia, sem câmera, escuta ou LLM automáticos |
+| **Acompanhamento leve** (verde) | Timer de 1000 ms; bateria a cada 3 min; eventos USB/energia autorizados | Avisos curtos de conexão/energia, bateria e pressão de RAM/disco, sem câmera, escuta ou LLM automáticos |
 | **Pausada** (âmbar) | Sem bateria, USB, voz contínua nem heartbeat opcional; cancela tarefas pendentes | Abrir o chat para retomar o modo ativo |
 | **Escuta autorizada** (pontinho azul) | Recurso opcional, usa CPU e RAM | Só após consentimento nesta sessão e no modo Ativa |
 | **Sair da Yuna** | Processo encerrado | Não acompanha nada até iniciar novamente |
