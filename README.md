@@ -15,7 +15,7 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.51.1 · **Plataforma principal:** Windows 10/11 x64 · **Modelo de IA padrão:** Ollama + `qwen2.5:3b`.
+> **Versão do código:** 0.52.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
 
 ## A proposta da Yuna
@@ -26,7 +26,7 @@ A imagem no início deste LEIA-ME é **o retrato de referência visual oficial d
 
 **Escopo atual do projeto:**
 
-- Conversar em português com **Ollama local**, preferencialmente sem API paga; modelo leve opcional `qwen2.5:1.5b` para máquinas de 8 GB.
+- Conversar em português com **Ollama local, sem API paga**, com Qwen3.5 2B (leve), 4B (recomendado) ou 9B (avançado), escolhidos manualmente. Qwen2.5 permanece para compatibilidade.
 - Usar **memória SQLite** e preferências locais, com comandos explícitos para lembrar e consultar informações.
 - Oferecer chat compacto, janela completa, mascote flutuante, voz local e um painel Central da Yuna.
 - Analisar documentos e realizar **somente as ações de PC implementadas e permitidas**, por exemplo abrir pastas ou programas.
@@ -44,7 +44,7 @@ A Yuna não é uma IA consciente nem tem acesso universal ao computador. Nem tod
 3. Execute o instalador, escolha os atalhos e, se for sua primeira migração, indique **a pasta antiga que contém `data`** no assistente. Não selecione o arquivo `yuna.db` isoladamente.
 4. Abra o atalho **Yuna.app** (ele inicia o aplicativo Windows **Yuna.exe**).
 5. No chat, clique em **••• → Central da Yuna → Preparação → Verificar instalação e Ollama**.
-6. Se ainda não tiver o Ollama, use **Instalar ou abrir o site do Ollama**. Instale o programa, abra-o e volte à Central. A Central oferece **modelo leve (`qwen2.5:1.5b`)** e **modelo padrão (`qwen2.5:3b`)**; confirme o download do que desejar.
+6. Se ainda não tiver Ollama, use **Instalar ou abrir o site do Ollama**. Instale-o e volte à Central. Escolha **Qwen3.5 2B** (PC com 8 GB), **Qwen3.5 4B** (recomendado) ou **Qwen3.5 9B** (avançado, exige mais memória). Confirme o download. Os modelos anteriores Qwen2.5 continuam disponíveis.
 7. **Reinicie a Yuna após escolher o modelo** e faça uma pergunta no chat. Se não houver resposta da IA, confira na Central se o Ollama está aberto e o modelo foi instalado.
 
 **Guia com imagens/fluxos, atualização, preservação de memória e erros comuns:** [Instalação no Windows](docs/INSTALACAO_WINDOWS.md).
@@ -61,6 +61,23 @@ Para desenvolver ou testar uma cópia do GitHub:
 Ao usar o código-fonte, o renderizador 3D pode precisar de Node.js para compilar: em `avatar3d/`, execute `npm install` e `npm run build`. Esses comandos **não são necessários** para o instalador pronto.
 
 **Importante:** não substitua somente um arquivo `.py` de uma versão por outro de versão diferente. Atualize a pasta de código e preserve seus dados pessoais. Para detalhes: [Instalação Windows](docs/INSTALACAO_WINDOWS.md).
+
+## IA gratuita: Qwen3.5 pelo Ollama local
+
+**Esta integração não exige a plataforma comercial Qwen API, cadastro, cartão, tokens de nuvem nem assinatura.** O Ollama executa o modelo no **seu próprio PC**, usando RAM/VRAM. A primeira instalação baixa o arquivo do modelo; pode consumir internet, armazenamento e energia elétrica. Depois de baixado, o texto pode ser processado offline.
+
+| Modelo | Indicação | Tamanho aproximado do download |
+| --- | --- | --- |
+| `qwen3.5:2b` | Notebook com 8 GB de RAM, modo leve | 2,7–3,1 GB |
+| `qwen3.5:4b` | **Recomendado** para 16 GB RAM + boa GPU | 3,3–4,0 GB |
+| `qwen3.5:9b` | Avançado, somente se houver RAM/VRAM livre suficiente | 6,6–7,6 GB |
+| `qwen2.5:1.5b` / `qwen2.5:3b` | Compatibilidade com instalações antigas | Mantidos |
+
+Os tamanhos são do catálogo do Ollama; a **memória necessária durante a execução pode ser maior**, sobretudo com contexto longo, visão, voz e outras funções abertas. A GPU de 8 GB pode não acomodar `9b` e contexto grande completamente na VRAM; nesse caso o desempenho pode cair.
+
+**Trocar com segurança:** abra **••• → Central da Yuna → Preparação**, clique no modelo, confirme o download e reinicie a Yuna. O modelo anterior continua selecionado se a transferência falhar. **Não há alteração automática, cobrança após várias conversas ou acesso secreto a APIs pagas.** Suas memórias SQLite não são apagadas.
+
+**API Qwen na nuvem é outra coisa:** é cobrada por tokens consumidos e pode iniciar faturamento após acabar a cota gratuita, se o serviço estiver habilitado para pagamento. **A Yuna 0.52.0 não integra essa API.** Consulte [o guia de modelos locais](docs/MODELOS_LOCAIS.md).
 
 ## O que já funciona e o que é experimental
 
