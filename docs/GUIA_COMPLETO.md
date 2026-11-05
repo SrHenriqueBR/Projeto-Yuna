@@ -30,7 +30,7 @@ retirados; seus recursos úteis passaram para a Central. Ao abrir uma pasta anti
 atualizada, cópias remanescentes desses inicializadores são guardadas em
 `data/inicializadores-antigos`, sem apagar as memórias.
 
-[Como instalar, importar memórias e atualizar](docs/INSTALACAO_WINDOWS.md).
+[Como instalar, importar memórias e atualizar](INSTALACAO_WINDOWS.md).
 
 ## Percepção de USB e energia
 
@@ -45,7 +45,7 @@ pausar/retomar ou **Falar avisos de conexões nesta sessão** para ouvir os avis
 Também pode perguntar **“Yuna, mostre as conexões”**. Não lê pendrives, instala
 drivers nem envia o inventário ao modelo ou à web. Cabos sem dispositivo,
 acessórios somente de carga e o botão físico de ligar podem não produzir um
-evento observável. [Funcionamento e limites](docs/YUNA_APP.md#usb-usb-c-e-alimentação).
+evento observável. [Funcionamento e limites](YUNA_APP.md#usb-usb-c-e-alimentação).
 
 ## Yuna.app — chat compacto e segundo plano
 
@@ -60,7 +60,7 @@ câmera com modelo de visão local opcional. As conversas ficam no banco local.
 **Atualize a pasta inteira e preserve `data`.** O nome Yuna.app identifica os
 atalhos e a interface; o instalador inclui seu ambiente privado. Despertar depende
 do Windows/hardware e não liga um PC totalmente desligado.
-[Instalação, exemplos, permissões e limites](docs/YUNA_APP.md).
+[Instalação, exemplos, permissões e limites](YUNA_APP.md).
 
 ## Escola da Yuna no GitHub
 
@@ -72,7 +72,7 @@ uma branch `yuna/estudo-...` para revisão; não faz merge automaticamente.
 A caixa de perguntas fica em **`aprendizado/ciclos/` na branch do estudo**.
 Respondemos em **`aprendizado/respostas.json` no main**. As respostas são públicas
 e usadas como referências nos próximos ciclos. Há agenda diária, botão manual
-e pausa enquanto um estudo espera revisão. [Como acompanhar, responder e pausar](aprendizado/README.md).
+e pausa enquanto um estudo espera revisão. [Como acompanhar, responder e pausar](../aprendizado/README.md).
 
 ## Laboratório de código, autotestes e tarefas
 
@@ -96,13 +96,13 @@ exige Ollama ou Docker. No modo PC, também pode pedir **“abra Downloads e
 depois abra Steam”**, pesquisar com **“pesquise na web sobre Python”** e
 escolher **`/desempenho rapido`** para favorecer respostas curtas.
 
-[Como usar, requisitos e limites do laboratório e das tarefas](docs/LABORATORIO_E_TAREFAS.md).
+[Como usar, requisitos e limites do laboratório e das tarefas](LABORATORIO_E_TAREFAS.md).
 
 ## Gestão local de aprendizados
 
 A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`Central da Yuna → Avançado → Configurar gestão local`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `Central da Yuna → Minha Yuna → Conversar no navegador` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
 
-Esse painel gerencia conhecimentos **desta instalação**. Não é uma central remota de usuários e não transmite conversas, tela, câmera ou arquivos ao criador da Yuna. [Funcionamento, configuração e limites](docs/GESTAO_E_APRENDIZADO.md).
+Esse painel gerencia conhecimentos **desta instalação**. Não é uma central remota de usuários e não transmite conversas, tela, câmera ou arquivos ao criador da Yuna. [Funcionamento, configuração e limites](GESTAO_E_APRENDIZADO.md).
 
 ## Conversar com a Yuna pelo navegador
 
@@ -176,7 +176,7 @@ de cabelo, ele continua necessário.
 Sem o modelo, o ator não mostra uma personagem pronta. O editor e os
 assets não são instalados automaticamente pelo projeto.
 
-[Guia completo de instalação e limitações do Yuna Unreal](unreal/README.md).
+[Guia completo de instalação e limitações do Yuna Unreal](../unreal/README.md).
 
 A versão web segue independente em HTML/Three.js/VRM; Pixel Streaming
 do Unreal para navegador **não foi implementado**. O modo de 8 GB
@@ -213,7 +213,7 @@ O link público não acessa câmera, microfone, arquivos locais nem dados da Yun
 A demonstração é hospedada a partir deste repositório público pelo visualizador
 terceirizado raw.githack.com, que pode mostrar uma confirmação na
 primeira visita. O código-fonte está em
-[`docs/yuna-preview.html`](docs/yuna-preview.html).
+[`docs/yuna-preview.html`](yuna-preview.html).
 
 Para hospedar diretamente no GitHub Pages, o proprietário pode ativar
 **Settings → Pages → Deploy from a branch → main → /docs**.
@@ -316,7 +316,7 @@ e marque a opção Telegram (desligada por padrão). Há limites de
 alertas de som alto. O programa nunca habilita envio pago ou
 "paid broadcast"; confirmação da API **não garante entrega**.
 
-Passo a passo: [`docs/ALERTAS_GRATUITOS_YUNA.md`](docs/ALERTAS_GRATUITOS_YUNA.md).
+Passo a passo: [`docs/ALERTAS_GRATUITOS_YUNA.md`](ALERTAS_GRATUITOS_YUNA.md).
 Use `py -3 configurar_alertas_telegram.py` para localizar um chat privado
 sem colocar o token do bot na URL do navegador.
 
@@ -338,7 +338,7 @@ também sem salvar frames nem identificar pessoas.
 O SOS ou alerta local oferecem apenas um rascunho do WhatsApp que a pessoa
 precisa conferir e enviar. Não há áudio transmitido, gravação oculta,
 reconhecimento de ameaças ou webcam ligada automaticamente. Consulte o
-guia [`docs/SEGURANCA_DOMESTICA_YUNA.md`](docs/SEGURANCA_DOMESTICA_YUNA.md).
+guia [`docs/SEGURANCA_DOMESTICA_YUNA.md`](SEGURANCA_DOMESTICA_YUNA.md).
 
 ### Magi1020 — convite de vídeo entre dois notebooks
 
@@ -346,7 +346,7 @@ Ao digitar **`Magi1020`** na Yuna Desktop (ou clicar em **◈ Magi1020 • Víde
 
 **A câmera de outra pessoa não é ativada pelo comando**. A chamada acontece no navegador via **Jitsi Meet (serviço externo)** e quem transmite precisa entrar e autorizar sua webcam. A pessoa que inicia uma sala no serviço público pode precisar se autenticar. Os links são aleatórios por convite, mas **não possuem expiração garantida**: não publique nem reutilize convites. A Yuna não grava a chamada, não ativa câmeras escondidas, não transmite vídeo dentro da interface Python e não cria pareamento remoto automático.
 
-O comando é apenas um **atalho de convite, nunca uma senha**. Para parar a transmissão, use **Sair** ou desligue a webcam no navegador. **Break080111 não encerra uma chamada Jitsi externa**. Guia detalhado: [`docs/MAGI1020_VIDEO_REMOTO.md`](docs/MAGI1020_VIDEO_REMOTO.md).
+O comando é apenas um **atalho de convite, nunca uma senha**. Para parar a transmissão, use **Sair** ou desligue a webcam no navegador. **Break080111 não encerra uma chamada Jitsi externa**. Guia detalhado: [`docs/MAGI1020_VIDEO_REMOTO.md`](MAGI1020_VIDEO_REMOTO.md).
 
 ### Câmeras autorizadas — webcam e RTSP experimental
 
@@ -365,7 +365,7 @@ ligação de câmera ou descoberta automática. O acesso termina em no máximo
 contínuo, reconhecimento facial, identificação de pessoas nem envio
 de imagens ao Ollama/nuvem. URLs RTSP/credenciais nunca são salvas;
 a URL completa fica visível enquanto digitada na caixa inicial. Consulte
-[`docs/CAMERAS_YUNA.md`](docs/CAMERAS_YUNA.md) para configurar e
+[`docs/CAMERAS_YUNA.md`](CAMERAS_YUNA.md) para configurar e
 entender as limitações do piloto.
 
 ### Jogar junto com a Yuna — em preparação
@@ -381,7 +381,7 @@ compatibilidade comprovada com The Last of Us. Próxima etapa: piloto
 supervisionado com captura consentida somente da janela selecionada,
 reconhecimento visual local e adaptador de controles com verificação real
 do processo em foco. Consulte
-[`docs/PLANO_JOGOS_COM_YUNA.md`](docs/PLANO_JOGOS_COM_YUNA.md).
+[`docs/PLANO_JOGOS_COM_YUNA.md`](PLANO_JOGOS_COM_YUNA.md).
 
 ### Energia ilustrativa da Yuna (bateria do notebook)
 
@@ -439,8 +439,8 @@ da fala, nunca áudio bruto ou conversas. A boca acompanha reprodução
 autorizada de forma aproximada, não faz correspondência precisa de
 fonemas. O navegador não executa comandos no computador.
 
-**Guias:** [criar uma Yuna realmente anime](docs/COMO_CRIAR_YUNA_ANIME.md),
-[renderizador e VRM](avatar3d/README.md). O documento de anime compara
+**Guias:** [criar uma Yuna realmente anime](COMO_CRIAR_YUNA_ANIME.md),
+[renderizador e VRM](../avatar3d/README.md). O documento de anime compara
 VRoid Studio, Unity VRoid Character Customization e CharacterGen e
 explica as licenças. Os modelos pessoais VRM não são enviados ao
 GitHub e devem ser preservados em backups locais.
@@ -480,7 +480,7 @@ Serviços externos têm políticas, disponibilidade e limites próprios. Use var
 
 ## Evolução VTuber (planejamento)
 
-Está disponível o [plano de arquitetura do avatar VTuber](docs/PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **O renderizador VRM 3D experimental já existe**, mas ainda não há personagem
+Está disponível o [plano de arquitetura do avatar VTuber](PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **O renderizador VRM 3D experimental já existe**, mas ainda não há personagem
 anime artística fornecida, caminhada livre pela área de trabalho ou
 sincronização labial por fonemas. O modo leve permanecerá disponível para
 máquinas de 8 GB.
