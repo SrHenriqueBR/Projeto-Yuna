@@ -93,15 +93,15 @@ class TrayControllerTests(unittest.TestCase):
         self.ctrl.tray_available = False
 
     def test_no_toast_or_model_when_economy_or_paused(self):
-        with patch.object(self.window, "add_message") as chat, patch.object(
-                self.window.worker, "record") as history, patch.object(
-                self.window.worker, "submit") as model:
-            for mode in ("economica", "pausada"):
-                self.ctrl.set_mode(mode)
+        for mode in ("economica", "pausada"):
+            self.ctrl.set_mode(mode)
+            with patch.object(self.window, "add_message") as chat, patch.object(
+                    self.window.worker, "record") as history, patch.object(
+                    self.window.worker, "submit") as model:
                 self.ctrl.connection_notice("Controle conectado")
-            chat.assert_not_called()
-            history.assert_not_called()
-            model.assert_not_called()
+                chat.assert_not_called()
+                history.assert_not_called()
+                model.assert_not_called()
 
 
 if __name__ == "__main__":
