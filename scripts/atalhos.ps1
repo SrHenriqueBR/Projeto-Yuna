@@ -21,8 +21,10 @@ function WriteShortcut([string]$folder, [string]$mode) {
     $shortcut.Description = 'Yuna - conversa, personagem e Central'
     $shortcut.Save()
 }
-WriteShortcut ([Environment]::GetFolderPath('DesktopDirectory')) '--compact'
-WriteShortcut ([Environment]::GetFolderPath('Programs')) '--compact'
+if (-not $Inicializacao) {
+    WriteShortcut ([Environment]::GetFolderPath('DesktopDirectory')) '--compact'
+    WriteShortcut ([Environment]::GetFolderPath('Programs')) '--compact'
+}
 $startup = [Environment]::GetFolderPath('Startup')
 if ($Inicializacao -eq 'Ativar') { WriteShortcut $startup '--background' }
 if ($Inicializacao -eq 'Desativar') {

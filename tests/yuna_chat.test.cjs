@@ -50,7 +50,7 @@ test('página pública explica como conectar e não procura serviços no computa
   assert.equal(app.ids.chatInput.disabled,true);
   assert.equal(app.ids.sendChat.disabled,true);
   assert.equal(app.ids.chatSetup.hidden,false);
-  assert.match(app.ids.chatDetail.textContent,/iniciar_yuna_web.bat/);
+  assert.match(app.ids.chatDetail.textContent,/Central da Yuna.*Conversar no navegador/);
 });
 
 test('conversa envia mensagem e sessão local e trata a resposta apenas como texto', async () => {
@@ -109,3 +109,4 @@ test('abas respondem ao teclado e não enviam mensagens ao selecionar um modo', 
   assert.match(app.ids.chatInput.placeholder,/pesando/);
   assert.equal(app.calls.length,0);
 });
+

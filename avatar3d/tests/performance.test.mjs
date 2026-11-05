@@ -42,6 +42,9 @@ test("spoken nods and intensity are strictly gated", () => {
   assert.equal(idle.breath, 0);
   assert.equal(idle.gazeX, 0);
   assert.equal(idle.motionStrength, 0);
+  assert.equal(idle.neckYaw, 0);
+  assert.equal(idle.leftArmSwing, 0);
+  assert.equal(idle.rightArmSwing, 0);
   assert.equal(performanceFrame(1.5,{mouthLevel:42}).mouth,1);
   assert.equal(performanceFrame(1.5,{mouthLevel:NaN}).mouth,0);
 });
@@ -111,3 +114,4 @@ test("VRM performer gracefully skips optional missing bones or expressions",()=>
   assert.doesNotThrow(()=>p.update(performanceFrame(2,{pose:"sleepy"}),1/30));
   assert.throws(()=>new VrmPerformer(null),TypeError);
 });
+

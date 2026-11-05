@@ -31,7 +31,8 @@ test("strips private/unexpected fields and bounds amplitude", () => {
 });
 
 test("maps reactions conservatively", () => {
-  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"talk", emotion:"surprised"})), "surprised");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"talk", speaking:false, emotion:"surprised"})), "surprised");
+  assert.equal(reactionPose(normalizeRemoteState({...state, pose:"talk", speaking:true, emotion:"surprised"})), "talk");
   assert.equal(reactionPose(normalizeRemoteState({...state, pose:"angry", emotion:"neutral"})), "angry");
   assert.equal(reactionPose(normalizeRemoteState({...state, pose:"walk", emotion:"neutral"})), "walk");
   assert.equal(reactionPose(normalizeRemoteState({...state, pose:"sit", emotion:"neutral"})), "sit");
@@ -69,3 +70,4 @@ test("battery state is strict and excludes privileged or identifying fields", ()
     ...state, battery: {percent: 100, plugged: true, mode: "full"}
   }).battery.percent, 100);
 });
+

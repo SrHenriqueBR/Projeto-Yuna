@@ -26,7 +26,7 @@ export function performanceFrame(seconds, {
   const w = strength * (Math.sin(time * 0.44) * 0.65 +
     Math.sin(time * 0.73 + 1.1) * 0.35);
   const elbow = 0.13 * strength;
-  return {
+  const frame = {
     ...base,
     motionStrength: strength,
     gazeX: base.gazeX * strength,
@@ -44,14 +44,14 @@ export function performanceFrame(seconds, {
       (talking ? Math.sin(time * 2.3) * 0.027 * strength : 0),
     headTilt: base.headTilt * strength + (active === "shy" ? -0.055 * strength :
       active === "wave" ? 0.055 * strength : 0),
-    neckYaw: base.headYaw * 0.34,
+    neckYaw: base.headYaw * 0.34 * strength,
     spineTwist: w * 0.024 + (active === "curious" ? -0.034 * strength : 0),
     bodyBob: active === "walk" && strength ?
       Math.abs(stride) * 0.035 : base.bodyBob * strength,
     hipShift: active === "walk" ? stride * 0.03 : w * 0.010,
     hipDrop: resting ? -0.095 * strength : 0,
-    leftArmSwing: active === "walk" ? -stride * 0.38 : base.leftArmSwing,
-    rightArmSwing: active === "walk" ? stride * 0.38 : base.rightArmSwing,
+    leftArmSwing: active === "walk" ? -stride * 0.38 : base.leftArmSwing * strength,
+    rightArmSwing: active === "walk" ? stride * 0.38 : base.rightArmSwing * strength,
     leftElbow: active === "shy" ? 0.55 * strength :
       active === "angry" ? 0.68 * strength : elbow,
     rightElbow: active === "wave" ? 1.02 * strength :
@@ -71,6 +71,11 @@ export function performanceFrame(seconds, {
     // O pulso da boca vem exclusivamente da fonte de audio/demonstracao.
     mouth: clamp(mouthLevel, 0, 1)
   };
+  // Zero de intensidade/pausa não deixa canais negativos de zero ou braços residuais.
+  for (const key of Object.keys(frame)) {
+    if (Object.is(frame[key], -0)) frame[key] = 0;
+  }
+  return frame;
 }
 
 /** Interpola movimentos secundarios, para evitar teletransporte de membros.
@@ -94,3 +99,4 @@ export class PerformanceDirector {
     return frame;
   }
 }
+

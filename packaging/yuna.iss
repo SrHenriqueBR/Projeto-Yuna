@@ -1,5 +1,5 @@
 #ifndef YunaVersion
-  #define YunaVersion "0.51"
+  #define YunaVersion "0.51.1"
 #endif
 [Setup]
 AppId={{0D5316AD-C9A6-4671-80DF-8BDF578E291A}
@@ -75,7 +75,7 @@ var
 begin
   if (CurStep = ssPostInstall) and (ImportPage.Values[0] <> '') then begin
     Arguments := '-X utf8 "' + ExpandConstant('{app}\app\app_maintenance.py') +
-      '" --import-data "' + ImportPage.Values[0] + '"';
+      '" --import-data "' + AddBackslash(ImportPage.Values[0]) + '."';
     if not Exec(ExpandConstant('{app}\runtime\python.exe'), Arguments,
       ExpandConstant('{app}\app'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
       ResultCode := 1;

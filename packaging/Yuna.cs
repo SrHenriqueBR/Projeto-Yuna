@@ -7,7 +7,7 @@ using System.Reflection;
 
 [assembly: AssemblyTitle("Yuna")]
 [assembly: AssemblyDescription("Assistente pessoal Yuna")]
-[assembly: AssemblyVersion("0.51.0.0")]
+[assembly: AssemblyVersion("0.51.1.0")]
 
 internal static class Program {
     [STAThread]

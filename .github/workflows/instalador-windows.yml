@@ -8,6 +8,7 @@ on:
       - 'packaging/**'
       - 'app_*.py'
       - 'scripts/**'
+      - 'avatar3d/**'
       - 'self_model.py'
       - 'yuna_launcher.py'
       - 'requirements-*.txt'
@@ -40,7 +41,11 @@ jobs:
         run: |
           npm install --ignore-scripts
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test ../tests/*.test.cjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Montar ambiente privado e aplicativo
         run: python packaging/build_windows.py
@@ -75,6 +80,12 @@ jobs:
         run: |
           $version = python -c 'from self_model import VERSION; print(VERSION)'
           $tag = "v$version"
+          $head = gh api "repos/$env:GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($head -ne $env:GITHUB_SHA) {
+            Write-Host 'Main avancou. O pacote fica como artefato; a proxima compilacao publica a versao atual.'
+            exit 0
+          }
           gh release view $tag --json tagName *> $null
           if ($LASTEXITCODE -eq 0) {
             Write-Host 'A versao ja esta publicada; artefato disponivel neste workflow. Altere VERSION para uma nova release.'
