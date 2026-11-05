@@ -1,508 +1,132 @@
-# Projeto Yuna — versão 0.51.1
+<p align="center">
+  <img src="docs/yuna-portrait.webp" width="280" alt="Retrato de referência da Yuna: personagem anime de cabelo escuro e olhos violetas">
+</p>
 
-Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
+<h1 align="center">Yuna — Assistente pessoal de IA para Windows</h1>
 
-A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+<p align="center">
+  <strong>Assistente local • Conversa em português • Memória • Voz • Avatar anime • Automação autorizada</strong>
+</p>
 
-## Instale e abra uma única Yuna
+<p align="center">
+  <a href="https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest/download/Yuna-Setup.exe"><strong>⬇ Baixar Yuna para Windows</strong></a>
+  · <a href="docs/INSTALACAO_WINDOWS.md">Guia de instalação</a>
+  · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-preview.html">Prévia anime na web</a>
+  · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
+</p>
 
-**[Baixar Yuna-Setup.exe para Windows](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest/download/Yuna-Setup.exe)** · [Versões e integridade](https://github.com/SrHenriqueBR/Projeto-Yuna/releases)
+> **Versão do código:** 0.51.1 · **Plataforma principal:** Windows 10/11 x64 · **Modelo de IA padrão:** Ollama + `qwen2.5:3b`.
+> O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
 
-Instale e abra **Yuna.app** pelo atalho. No chat, use **••• → Central da Yuna**:
-conversa, personagem 2D/3D, permissões, modelos, inicialização e manutenção ficam
-reunidos ali. O instalador inclui Python privado, interface, documentos e bibliotecas
-de voz; o renderizador 3D já vem compilado. Ollama e modelos continuam separados,
-com preparação guiada pela Central.
+## A proposta da Yuna
 
-No código-fonte existe **apenas `Yuna.bat`**. Os 14 inicializadores antigos foram
-retirados; seus recursos úteis passaram para a Central. Ao abrir uma pasta antiga
-atualizada, cópias remanescentes desses inicializadores são guardadas em
-`data/inicializadores-antigos`, sem apagar as memórias.
+A Yuna é um projeto de **assistente de IA instalado no computador**, com uma personagem anime como interface. O objetivo é manter a conversa, os arquivos, a memória e os modelos de texto **sob controle do usuário**, usando ferramentas locais e exigindo autorização para ações sensíveis.
 
-[Como instalar, importar memórias e atualizar](docs/INSTALACAO_WINDOWS.md).
+A imagem no início deste LEIA-ME é **o retrato de referência visual oficial da personagem**. A mascote 2D, a prévia 3D geométrica e os futuros modelos VRM/Unreal ainda não reproduzem necessariamente essa ilustração com fidelidade total. Uma foto animada não substitui uma malha 3D articulada.
 
-## Percepção de USB e energia
+**Escopo atual do projeto:**
 
-A Yuna percebe conexões/desconexões de dispositivos USB e mudanças no carregador
-enquanto está aberta, inclusive na bandeja. Mostra avisos curtos no chat, agrupa
-eventos próximos e atualiza a reação da bateria. **USB-C** aparece quando o driver
-do hub confirma o conector; dispositivos USB em portas C também são detectados
-como USB quando essa informação não está disponível.
+- Conversar em português com **Ollama local**, preferencialmente sem API paga; modelo leve opcional `qwen2.5:1.5b` para máquinas de 8 GB.
+- Usar **memória SQLite** e preferências locais, com comandos explícitos para lembrar e consultar informações.
+- Oferecer chat compacto, janela completa, mascote flutuante, voz local e um painel Central da Yuna.
+- Analisar documentos e realizar **somente as ações de PC implementadas e permitidas**, por exemplo abrir pastas ou programas.
+- Experimentar a personagem em **2D**, **3D/VRM com Three.js** e **Unreal Engine 5 em C++** (este último é experimental).
+- Permitir recursos opcionais de câmera, microfone, jogos e alertas **com consentimento específico**, nunca como acesso oculto ou irrestrito.
 
-No menu **•••**, use **Conexões do computador**, **Perceber USB e energia** para
-pausar/retomar ou **Falar avisos de conexões nesta sessão** para ouvir os avisos.
-Também pode perguntar **“Yuna, mostre as conexões”**. Não lê pendrives, instala
-drivers nem envia o inventário ao modelo ou à web. Cabos sem dispositivo,
-acessórios somente de carga e o botão físico de ligar podem não produzir um
-evento observável. [Funcionamento e limites](docs/YUNA_APP.md#usb-usb-c-e-alimentação).
+A Yuna não é uma IA consciente nem tem acesso universal ao computador. Nem toda ação solicitada é implementada, e o sistema não deve ser usado como mecanismo de vigilância de outras pessoas.
 
-## Yuna.app — chat compacto e segundo plano
+## Instalação rápida — recomendada
 
-Abra **`Central da Yuna → Preparação → Criar ou reparar atalhos Yuna`** para criar os atalhos **Yuna.app** e escolher se
-ela inicia junto com o Windows. **`Yuna.bat`** abre o novo chat compacto;
-fechar recolhe para a bandeja. Quando o áudio está indisponível, o chat aparece
-para continuar por texto. Há escuta local opcional de **“Olá Yuna”**, desligamento
-com contagem cancelável, tentativa agendada de despertar da suspensão, comandos
-curtos para um jogo autorizado, diagnóstico do PC e descrição de um quadro da
-câmera com modelo de visão local opcional. As conversas ficam no banco local.
+**Você não precisa instalar Python ou Node.js separadamente para usar o instalador Windows.** O Ollama e seu modelo de linguagem são preparados à parte.
 
-**Atualize a pasta inteira e preserve `data`.** O nome Yuna.app identifica os
-atalhos e a interface; o instalador inclui seu ambiente privado. Despertar depende
-do Windows/hardware e não liga um PC totalmente desligado.
-[Instalação, exemplos, permissões e limites](docs/YUNA_APP.md).
+1. Acesse [Releases](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest) e baixe **`Yuna-Setup.exe`**. Há também um arquivo `SHA256SUMS.txt` para conferir a integridade. **Não baixe de sites não oficiais.**
+2. Feche a Yuna se ela já estiver aberta. Para atualizar, faça antes uma cópia privada da pasta `data` com a aplicação fechada.
+3. Execute o instalador, escolha os atalhos e, se for sua primeira migração, indique **a pasta antiga que contém `data`** no assistente. Não selecione o arquivo `yuna.db` isoladamente.
+4. Abra o atalho **Yuna.app** (ele inicia o aplicativo Windows **Yuna.exe**).
+5. No chat, clique em **••• → Central da Yuna → Preparação → Verificar instalação e Ollama**.
+6. Se ainda não tiver o Ollama, use **Instalar ou abrir o site do Ollama**. Instale o programa, abra-o e volte à Central. A Central oferece **modelo leve (`qwen2.5:1.5b`)** e **modelo padrão (`qwen2.5:3b`)**; confirme o download do que desejar.
+7. **Reinicie a Yuna após escolher o modelo** e faça uma pergunta no chat. Se não houver resposta da IA, confira na Central se o Ollama está aberto e o modelo foi instalado.
 
-## Escola da Yuna no GitHub
+**Guia com imagens/fluxos, atualização, preservação de memória e erros comuns:** [Instalação no Windows](docs/INSTALACAO_WINDOWS.md).
 
-A Yuna pode estudar documentação pública, formular perguntas para os mentores e
-tentar uma melhoria pequena no próprio código usando um modelo aberto no
-**GitHub Actions**, mesmo com o notebook desligado. Publica os resultados em
-uma branch `yuna/estudo-...` para revisão; não faz merge automaticamente.
+### Alternativa — executar pelo código-fonte
 
-A caixa de perguntas fica em **`aprendizado/ciclos/` na branch do estudo**.
-Respondemos em **`aprendizado/respostas.json` no main**. As respostas são públicas
-e usadas como referências nos próximos ciclos. Há agenda diária, botão manual
-e pausa enquanto um estudo espera revisão. [Como acompanhar, responder e pausar](aprendizado/README.md).
+Para desenvolver ou testar uma cópia do GitHub:
 
-## Laboratório de código, autotestes e tarefas
+1. Baixe o código pelo botão **Code → Download ZIP** e extraia em uma pasta sua.
+2. Instale um **Python 3 de 64 bits compatível** com as dependências do projeto, com o `venv` disponível. No Windows, o comando `py` ajuda a localizar o Python.
+3. Execute **`Yuna.bat`**, a **única entrada BAT mantida na raiz**. Ele chama `scripts/iniciar.ps1`, solicita confirmação e cria o ambiente `.venv` com as bibliotecas Python necessárias.
+4. Abra e configure o **Ollama** conforme os passos 5–7 acima.
 
-A Yuna pode escrever uma melhoria pequena e testes com o **Ollama local**,
-conferir a proposta em uma cópia e tentar corrigir uma falha uma vez. Abra
-**`Central da Yuna → Avançado → Laboratório de melhorias`** ou use `/laboratorio`. A execução de código gerado
-exige Docker local e uma imagem já disponível; sem Docker, o resultado é
-apenas rascunho com verificação de sintaxe. As propostas ficam em
-`data/laboratorio/`, sem substituir o código em uso nem publicar alterações.
+Ao usar o código-fonte, o renderizador 3D pode precisar de Node.js para compilar: em `avatar3d/`, execute `npm install` e `npm run build`. Esses comandos **não são necessários** para o instalador pronto.
 
-Para incorporar uma proposta, abra **`Central da Yuna → Avançado → Revisar ou restaurar melhorias`**. O programa
-mostra a comparação e os testes, exige um novo teste em Docker e uma confirmação
-digitada antes de aplicar **um módulo**, com backup. Também permite restaurar a
-versão anterior sem Docker ou Ollama. Feche a Yuna para aplicar/restaurar e abra
-novamente depois. **“Yuna, mostre suas melhorias”** ou `/melhorias` consulta o
-histórico local; a conversa não aprova nem aplica código.
+**Importante:** não substitua somente um arquivo `.py` de uma versão por outro de versão diferente. Atualize a pasta de código e preserve seus dados pessoais. Para detalhes: [Instalação Windows](docs/INSTALACAO_WINDOWS.md).
 
-Para testar os módulos instalados de linguagem e intenções, abra
-**`Central da Yuna → Avançado → Testar a base da Yuna`** ou diga **“Yuna, teste sua base”**. Esse autoteste não
-exige Ollama ou Docker. No modo PC, também pode pedir **“abra Downloads e
-depois abra Steam”**, pesquisar com **“pesquise na web sobre Python”** e
-escolher **`/desempenho rapido`** para favorecer respostas curtas.
+## O que já funciona e o que é experimental
 
-[Como usar, requisitos e limites do laboratório e das tarefas](docs/LABORATORIO_E_TAREFAS.md).
-
-## Gestão local de aprendizados
-
-A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`Central da Yuna → Avançado → Configurar gestão local`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `Central da Yuna → Minha Yuna → Conversar no navegador` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
-
-Esse painel gerencia conhecimentos **desta instalação**. Não é uma central remota de usuários e não transmite conversas, tela, câmera ou arquivos ao criador da Yuna. [Funcionamento, configuração e limites](docs/GESTAO_E_APRENDIZADO.md).
-
-## Conversar com a Yuna pelo navegador
-
-1. Baixe e extraia a versão atual do projeto, preservando a pasta `data` da sua instalação.
-2. Abra o Ollama com o modelo que você já usa na Yuna. Sem um modelo instalado, execute `ollama pull qwen2.5:3b`; o instalador também oferece `qwen2.5:1.5b` para máquinas de 8 GB.
-3. Abra **`Central da Yuna → Minha Yuna → Conversar no navegador`**. O navegador entra em **http://127.0.0.1:8787/**. Mantenha a janela do launcher aberta enquanto conversa.
-
-O painel usa o modelo local e o histórico SQLite da Yuna (`data/yuna.db`). Reabrir a página restaura as conversas; pedidos explícitos de memória são guardados pelo mesmo sistema do aplicativo. Não exige chave de API nem serviço de IA pago. Texto e respostas não são encaminhados para uma API em nuvem.
-
-A personagem acena ao chegar, acompanha a escrita, muda de postura enquanto pensa, reage à resposta e oferece dança e riso. A leitura das respostas em voz alta é opcional; a disponibilidade da voz depende do navegador. A pausa e a preferência por movimento reduzido continuam disponíveis.
-
-O **link público** mostra a interface e as expressões, com instruções de conexão. Para receber respostas reais, abra a versão local pelo launcher. Esse modo de chat conversa e guarda memórias; para abrir programas e usar as ferramentas do computador, utilize a interface desktop existente. O servidor aceita conexões apenas no próprio computador e não disponibiliza seus arquivos pessoais.
-
-
-## Yuna 0.48 — movimentos 3D mais naturais
-
-**[Abrir o laboratório 3D no navegador](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html)**
-
-O laboratório 3D é uma **página WebGL pública**, sem instalação e sem
-Ollama. Mostra um personagem **geométrico original**, construído
-com Three.js, com ombros, cotovelos, punhos, joelhos, cabeça, olhos,
-cabelo e movimentos de repouso **articulados por peças**. Você pode
-escolher expressões e gestos, caminhar no lugar, acenar, descansar,
-girar a personagem e testar a fala demonstrativa do navegador.
-Não é a cena do Unreal nem o avatar anime VRM definitivo.
-
-O motor local `avatar3d/` foi ampliado com:
-- `src/performance.mjs`: diretor de movimento, gestos e transições
-  graduais, com controle de intensidade e movimento reduzido;
-- `src/vrm_performer.mjs`: movimento VRM nas articulações humanoides
-  normalizadas, inclusive coluna, ombros, cotovelos, punhos, quadril,
-  pernas e pés, com expressão facial e piscada quando o VRM suporta;
-- `src/preview_character.js`: prévia original com cotovelos e joelhos
-  separados, que podem ser animados mesmo sem possuir VRM.
-
-O navegador público importa Three.js por CDN (requer internet), mas
-não lê ou envia conversas, arquivos, microfone ou câmera. O
-renderizador **local** `Central da Yuna → Minha Yuna → Abrir avatar 3D` continua permitindo
-importar o **seu arquivo .vrm** (até 80 MB), que não é enviado
-a terceiros. Pelo botão **Conectar Yuna 3D** na interface Python, o
-modelo reproduz estados de emoção e o nível da fala por uma ponte
-autenticada de leitura.
-
-**Limitações:** caminhar é uma animação *no lugar*, sem navegação,
-captura de movimento, IK de pés ou clips profissionais. O cabelo do
-VRM exige seus próprios spring bones e o resultado visual depende
-da qualidade do rig. Voz MP3 ainda usa amplitude aproximada;
-não há visemas fonéticos precisos. Os movimentos 3D **não são**
-transmitidos pela Unreal Engine para a web.
-
-## Yuna Unreal 0.46 — movimentos de ossos em C++ (experimental)
-
-Foi adicionado um projeto **Unreal Engine 5** em `unreal/YunaUnreal/`,
-com ator `AYunaAvatarActor`, classe `UYunaAnimInstance` para
-Animation Blueprints e uma ponte Python/Qt **somente de estados visuais**.
-A versão 0.46 acrescenta `UPoseableMeshComponent`: com um Skeletal Mesh
-anime importado, há **movimentos de cabeça, tronco, braços, pernas e
-olhos sem montar um Animation Blueprint**. A função C++17
-`YunaMotion.h` calcula respiração, olhares, acenos e postura, e possui
-teste próprio no GitHub Actions.
-Na janela da Yuna há o botão **◇ Conectar Yuna Unreal**.
-Ao ativá-lo, a Yuna publica em `data/yuna_unreal_state.json` apenas
-pose, emoção, amplitude de voz e marca temporal; **não abre portas** e
-não compartilha conversas, memórias ou comandos locais.
-
-A **estrutura de integração está implementada**, mas ainda precisa
-de **Unreal Engine instalado, compilação C++ no Windows e modelo VRM
-anime rigado**. No modo de ossos diretos, o Animation Blueprint não é
-obrigatório para os gestos iniciais; para morph targets faciais e física
-de cabelo, ele continua necessário.
-Sem o modelo, o ator não mostra uma personagem pronta. O editor e os
-assets não são instalados automaticamente pelo projeto.
-
-[Guia completo de instalação e limitações do Yuna Unreal](unreal/README.md).
-
-A versão web segue independente em HTML/Three.js/VRM; Pixel Streaming
-do Unreal para navegador **não foi implementado**. O modo de 8 GB
-continua leve e sem Unreal.
-
-## Veja a Yuna anime no navegador — demonstração interativa
-
-**[Abrir a prévia web da Yuna](https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-preview.html)**
-
-Na versão **0.47**, a prévia passou a abrir no modo **Avatar
-articulado**: personagem anime desenhada em SVG com partes separadas,
-controladas por JavaScript em `docs/yuna-viva.js`. A cabeça, os
-olhos e pálpebras, a boca, os braços e as mechas do cabelo se mexem
-independentemente. Ela pisca, olha para o cursor, respira, acena,
-faz reações, dança, ri e move a boca durante a leitura em voz alta.
-Você pode **Pausar movimentos** ou alternar para **Retrato original**,
-uma imagem estática usada como referência de aparência.
-
-Esta versão é totalmente gratuita e não exige Unreal, Node.js,
-Ollama nem instalação para o modo de demonstração web. **Ainda é
-2D vetorial, não o personagem 3D do Unreal Engine**: o movimento
-é real em partes do SVG, mas não inclui malha 3D, rigging/visemas
-profissionais nem a mesma aparência exata do retrato do desktop.
-
-No **Windows**, `Yuna.bat` abre a conversa real com uma
-**terceira coluna de apresentação anime**, os mesmos estados de humor,
-e o retrato oscilando suavemente. A voz real, anexos, memória, Ollama,
-câmeras opcionais e recursos existentes continuam nos controles atuais.
-Nenhum Node.js ou WebEngine novo é necessário para esse painel.
-Se o arquivo do retrato faltar, o aplicativo funciona com fallback.
-
-A prévia pública não é o avatar VRM final. O chat conecta ao Ollama quando a página é aberta pelo `Central da Yuna → Minha Yuna → Conversar no navegador`, no próprio notebook.
-O link público não acessa câmera, microfone, arquivos locais nem dados da Yuna.
-A demonstração é hospedada a partir deste repositório público pelo visualizador
-terceirizado raw.githack.com, que pode mostrar uma confirmação na
-primeira visita. O código-fonte está em
-[`docs/yuna-preview.html`](docs/yuna-preview.html).
-
-Para hospedar diretamente no GitHub Pages, o proprietário pode ativar
-**Settings → Pages → Deploy from a branch → main → /docs**.
-Depois de publicada, a mesma página terá o endereço
-`https://srhenriquebr.github.io/Projeto-Yuna/yuna-preview.html`.
-
-## Instalação e atualização
-
-Use **Yuna-Setup.exe** em [Releases](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest).
-A instalação é por usuário, com atalho e desinstalação pelo Windows. Não exige
-Python ou Node.js separados. O assistente oferece copiar `data` de uma pasta
-anterior; não sobrescreve uma memória existente. Atualizar ou desinstalar preserva
-os arquivos pessoais. Faça backup de `data` com a Yuna fechada antes de migrar.
-
-Ollama precisa estar instalado e aberto para conversa livre. Em
-**Central → Preparação**, verifique o ambiente, abra o site oficial do Ollama e
-prepare **qwen2.5:1.5b** (mais leve, para 8 GB) ou **qwen2.5:3b**. O download só
-começa após sua confirmação; ao trocar o modelo, reinicie a Yuna.
-
-Para trabalhar pelo código-fonte: extraia o ZIP, mantenha Python compatível instalado
-(com Python Launcher no Windows) e abra **Yuna.bat**. Ele prepara `.venv` privativo
-na primeira vez. A conversa abre mesmo sem Ollama; o diagnóstico mostra o que falta.
-Use a versão instalada para ter também o 3D compilado, ou compile `avatar3d` com
-`npm install` e `npm run build` no ambiente de desenvolvimento.
-
-A memória principal fica em **data/yuna.db**. `data/conhecimentos.json` não substitui
-o banco. Não publique a pasta `data`. Na instalação por executável ela fica em
-`%LOCALAPPDATA%\Programs\Yuna\app\data`; a Central tem um botão para abri-la.
-
-| Entrada | Uso |
+| Área | Situação |
 | --- | --- |
-| **Yuna.app / Yuna.exe** | Aplicativo instalado, chat e Central |
-| **Yuna.bat** | Única entrada da cópia do código-fonte |
-| **••• → Central da Yuna** | Recursos, permissões, preparação e ferramentas avançadas |
+| Chat, memória e Ollama | Funcional no ambiente local, com modelo instalado e em execução |
+| Chat compacto / Central da Yuna | Aplicativo Windows e menus de preparação |
+| Documentos, comandos do PC e ações | Suporte aos formatos e comandos implementados, mediante solicitação |
+| Voz, USB/energia, câmera e jogos | Recursos específicos, dependentes de hardware e/ou autorização |
+| Avatar 2D | Interface interativa e personalizável |
+| Avatar 3D/VRM | Renderizador opcional; requer modelo VRM próprio para visual anime completo |
+| Unreal Engine / C++ | Estrutura experimental; exige Unreal, compilação e rig/animador |
+| Demonstrações web públicas | Prévia visual sem acesso ao modelo Ollama, às memórias ou ao PC |
 
-Os módulos Python são componentes compartilhados; não remova `yuna.py`,
-`yuna_overlay.py` ou outros módulos para reduzir a pasta. A variável opcional
-`YUNA_MODEL` continua tendo prioridade sobre a escolha feita na Central.
+**Não estão incluídos:** consciência artificial; controle irrestrito do sistema; acesso remoto oculto à câmera/microfone; personagem 3D profissional pronta e distribuída com licença; transmissão Unreal Pixel Streaming; reconhecimento exclusivo de voz como forma de autenticação.
 
-## Conversa, comandos e memórias
+## Onde ficam os dados e como manter a segurança
 
-A Yuna responde a pedidos comuns, por exemplo:
+A memória principal é `data/yuna.db`, complementada por outros dados e preferências em `data/`. No instalador, o caminho padrão é:
 
-~~~text
-Oi Yuna, o que vamos fazer hoje?
-Yuna, abra o Discord
-Yuna, abra a pasta Downloads
-Yuna, procure meu currículo
-Yuna, lembra que eu prefiro respostas objetivas
-O que você lembra de mim?
-~~~
+```text
+%LOCALAPPDATA%\Programs\Yuna\app\data
+```
 
-Atalhos úteis para terminal e diagnóstico:
+Feche a Yuna antes de copiar essa pasta. Atualizações e desinstalação foram projetadas para preservar os dados pessoais, mas mantenha seu próprio backup. **Nunca publique `data/`, tokens, senhas, gravações, modelos privados ou arquivos de terceiros no GitHub.**
 
-| Comando | Função |
+Câmera, escuta e controle de jogos permanecem condicionados a opções e autorizações próprias. A página pública de demonstração não acessa câmera, microfone, arquivos locais nem conversa com o Ollama.
+
+## Estrutura do repositório
+
+```text
+Projeto-Yuna/
+├── Yuna.bat                  # Único iniciador da cópia do código
+├── yuna_launcher.py          # Inicialização da interface e erros
+├── yuna_desktop.py           # Janela completa e integrações
+├── yuna_overlay.py           # Mascote/overlay Windows
+├── yuna.py                   # Núcleo e conversação
+├── app_center.py             # Central de recursos e configuração
+├── avatar3d/                 # Renderizador Three.js / VRM opcional
+├── unreal/                   # Experimentos Unreal Engine / C++
+├── docs/                     # Guias, retrato oficial e prévias web
+├── packaging/                # Empacotamento e instalador Windows
+├── scripts/                  # Inicialização PowerShell e ferramentas
+├── tests/                    # Testes automatizados
+├── aprendizado/              # Escola da Yuna / aprendizado revisado
+└── data/                     # Dados privados locais (IGNORADOS pelo Git)
+```
+
+Os módulos Python permanecem na raiz **de propósito**, porque vários imports e pontos de entrada dependem desses caminhos. Mover tudo para novas pastas sem refatorar os imports e testes quebraria a Yuna. O restante está separado por finalidade.
+
+## Guias e recursos
+
+| Quero... | Onde encontrar |
 | --- | --- |
-| **/ajuda** | Lista comandos disponíveis |
-| **/autoteste** | Testa os módulos instalados de linguagem e intenções |
-| **/laboratorio ARQUIVO \| OBJETIVO** | Gera código e testes em cópia; execução isolada exige Docker |
-| **/melhorias** | Mostra propostas e aplicações; revisar e restaurar em `Central da Yuna → Avançado → Revisar ou restaurar melhorias` |
-| **/tarefas PEDIDO** | Executa até cinco etapas explícitas em sequência |
-| **/desempenho rapido**, **/desempenho equilibrado** | Ajusta tamanho das respostas e permanência do modelo em RAM |
-| **/web ASSUNTO**, **/pesquisar ASSUNTO** | Abre Google ou consulta Wikipédia com fontes |
-| **/apps**, **/apps atualizar** | Lista e atualiza aplicativos do menu Iniciar |
-| **/abrir steam**, **/abrir downloads** | Abre aplicativo ou pasta permitida |
-| **/buscar NOME**, **/buscar tudo NOME** | Busca nomes na pasta do usuário ou nos discos fixos |
-| **/abrir 2**, **/localizar 2** | Abre um resultado permitido ou localiza sua pasta |
-| **/sistema**, **/processos**, **/ambiente** | Consultas locais disponíveis, sem monitoramento contínuo |
-| **/fazer PEDIDO** | Solicita interpretação estruturada por Ollama de uma ação suportada |
-| **/lembrar TEXTO**, **/memorias**, **/esquecer ID** | Gerencia memórias explícitas |
-| **/nova** | Limpa histórico de conversa, preservando memórias explícitas |
-| **/apagar CONFIRMAR** | Exclui histórico e memórias mediante confirmação explícita |
-| **/sair** | Fecha o modo terminal |
+| Instalar, atualizar ou reparar | [Instalação no Windows](docs/INSTALACAO_WINDOWS.md) |
+| Entender menus, permissões e voz | [Yuna.app no Windows](docs/YUNA_APP.md) |
+| Navegar pelos arquivos e módulos | [Mapa do repositório](docs/ESTRUTURA_DO_PROJETO.md) |
+| Encontrar documentação por assunto | [Índice de documentação](docs/README.md) |
+| Ler todas as funções e comandos | [Guia completo (referência)](docs/GUIA_COMPLETO.md) |
+| Criar o avatar anime VRM | [Criar Yuna Anime](docs/COMO_CRIAR_YUNA_ANIME.md) |
+| Configurar o experimento Unreal | [Yuna Unreal](unreal/README.md) |
+| Desenvolver o renderizador 3D | [Avatar Three.js / VRM](avatar3d/README.md) |
+| Conhecer os testes e as releases | [Workflow do instalador](.github/workflows/instalador-windows.yml) |
 
-As buscas não garantem cobrir todos os discos ou documentos; não executam scripts encontrados. As memórias não treinam os pesos do modelo. O sistema tem filtros locais, mas não deve receber senhas, credenciais nem dados confidenciais de terceiros.
+## Desenvolvimento e contribuições
 
-### Documentos
+Os testes estão em `tests/`, `avatar3d/tests/` e `unreal/tests/`, com fluxos automatizados em `.github/workflows/`. Alterações no projeto devem incluir testes proporcionais ao risco e, quando necessário, uma validação no Windows real. Para melhorias de código, prefira Pull Requests revisáveis e mantenha a pasta `data/` fora de qualquer commit.
 
-O **Yuna Desktop** permite anexar e analisar **DOCX, XLSX, PPTX, PDF, TXT e MD**. O original não é alterado. A cópia para **data/biblioteca** exige autorização. O modo de mascote legado inclui ferramentas adicionais de criação de arquivos. Nem todo pedido é executável: a Yuna informa quando uma ação não é suportada.
-
-### Avatar 2D e aparência
-
-O botão **Mostrar Yuna viva** abre a personagem flutuante. Clique com o botão direito para ajustar cores, penteado, roupa, acessórios, tamanho (75%, 100% e 130%), gestos e movimento. As preferências persistem em **data/avatar_yuna.json**.
-
-Exemplos de pedidos: **Yuna, deixa o cabelo curto**, **Yuna, acena pra mim**, **Yuna, pisca pra mim**, **Yuna fica tímida**, **Yuna vai dormir**, **Yuna acorda**, **Yuna reduz as animações** e **Yuna retoma as animações**. As animações são expressões fictícias. A personagem ainda não possui modelo 3D, rigging, captura de movimento nem reconhecimento de emoções.
-
-### Alertas automáticos SEM custo por Telegram (opt-in)
-
-O WhatsApp **não é usado para envios automáticos**: a API oficial da
-Meta pode cobrar por mensagem de modelo; seguindo a exigência de custo
-zero, esta rota foi **bloqueada**. O WhatsApp manual por link `wa.me`
-continua disponível sem integração paga.
-
-A Yuna também pode **enviar alertas de SOS ou som alto por Telegram**,
-usando a Bot API gratuita, sem ativar transmissões de áudio ou webcam.
-É necessário que a pessoa no notebook concorde, ative uma sessão
-visível de **30 minutos**, configure seu bot e um chat privado,
-e marque a opção Telegram (desligada por padrão). Há limites de
-**6 tentativas por sessão**, 45 s entre SOS e 5 minutos entre
-alertas de som alto. O programa nunca habilita envio pago ou
-"paid broadcast"; confirmação da API **não garante entrega**.
-
-Passo a passo: [`docs/ALERTAS_GRATUITOS_YUNA.md`](docs/ALERTAS_GRATUITOS_YUNA.md).
-Use `py -3 configurar_alertas_telegram.py` para localizar um chat privado
-sem colocar o token do bot na URL do navegador.
-
-### Vídeo dentro da Yuna + SOS de segurança doméstica (piloto opt-in)
-
-No botão **▣ Videochamada dentro da Yuna**, você pode colar um convite
-`Magi1020` e visualizar uma reunião Jitsi numa janela da própria Yuna
-(quando Qt WebEngine estiver disponível). **A outra pessoa precisa participar,
-concordar e ligar a própria webcam**; quem usa o notebook mantém o controle
-da câmera e do microfone. O serviço de mídia continua **externo, Jitsi Meet**.
-
-Na opção **◉ Segurança doméstica (SOS)**, a pessoa no próprio notebook
-pode iniciar uma sessão visível de até 30 minutos para SOS manual e,
-se autorizar explicitamente, análise **local de intensidade sonora**.
-Há detecção opcional de mudança de imagem na prévia da câmera,
-também sem salvar frames nem identificar pessoas.
-
-**Importante:** a Yuna **ainda não envia alertas automáticos pelo WhatsApp**.
-O SOS ou alerta local oferecem apenas um rascunho do WhatsApp que a pessoa
-precisa conferir e enviar. Não há áudio transmitido, gravação oculta,
-reconhecimento de ameaças ou webcam ligada automaticamente. Consulte o
-guia [`docs/SEGURANCA_DOMESTICA_YUNA.md`](docs/SEGURANCA_DOMESTICA_YUNA.md).
-
-### Magi1020 — convite de vídeo entre dois notebooks
-
-Ao digitar **`Magi1020`** na Yuna Desktop (ou clicar em **◈ Magi1020 • Vídeo remoto**), você pode criar e copiar um convite de videochamada, ou entrar com um convite recebido de outra pessoa.
-
-**A câmera de outra pessoa não é ativada pelo comando**. A chamada acontece no navegador via **Jitsi Meet (serviço externo)** e quem transmite precisa entrar e autorizar sua webcam. A pessoa que inicia uma sala no serviço público pode precisar se autenticar. Os links são aleatórios por convite, mas **não possuem expiração garantida**: não publique nem reutilize convites. A Yuna não grava a chamada, não ativa câmeras escondidas, não transmite vídeo dentro da interface Python e não cria pareamento remoto automático.
-
-O comando é apenas um **atalho de convite, nunca uma senha**. Para parar a transmissão, use **Sair** ou desligue a webcam no navegador. **Break080111 não encerra uma chamada Jitsi externa**. Guia detalhado: [`docs/MAGI1020_VIDEO_REMOTO.md`](docs/MAGI1020_VIDEO_REMOTO.md).
-
-### Câmeras autorizadas — webcam e RTSP experimental
-
-A Yuna Desktop pode agora abrir uma **prévia temporária** de uma webcam
-local (índice `0`, `1` etc.) ou câmera RTSP da **rede local privada**
-cujo acesso você esteja autorizado a utilizar. A função é opt-in:
-clique em **◉ Ver câmera autorizada** ou peça **"Yuna, mostre a câmera"**
-para abrir a seleção. É exigida uma confirmação antes de acessar a fonte.
-
-Para instalar o decodificador opcional na mesma instalação Python da Yuna,
-execute `py -3 -m pip install opencv-python`. Não há instalação,
-ligação de câmera ou descoberta automática. O acesso termina em no máximo
-5 minutos, ao fechar a janela ou quando você usa **Break080111** / **Parar**.
-
-**Não é ainda vigilância com alertas:** não há gravação, monitoramento
-contínuo, reconhecimento facial, identificação de pessoas nem envio
-de imagens ao Ollama/nuvem. URLs RTSP/credenciais nunca são salvas;
-a URL completa fica visível enquanto digitada na caixa inicial. Consulte
-[`docs/CAMERAS_YUNA.md`](docs/CAMERAS_YUNA.md) para configurar e
-entender as limitações do piloto.
-
-### Jogar junto com a Yuna — em preparação
-
-O primeiro módulo `game_sessions.py` **não manipula nenhum jogo**:
-é um contrato de autorização para futuros controles. Ele permite somente
-sessão individual/offline aprovada, executável local conhecido, comandos
-curtos, prazo limitado e interrupção por `Break080111` ou pelo botão Parar.
-
-**Ainda não há visão de jogo nem controle de teclado/gamepad instalado.**
-Ações propostas no módulo não são executadas; também não existe
-compatibilidade comprovada com The Last of Us. Próxima etapa: piloto
-supervisionado com captura consentida somente da janela selecionada,
-reconhecimento visual local e adaptador de controles com verificação real
-do processo em foco. Consulte
-[`docs/PLANO_JOGOS_COM_YUNA.md`](docs/PLANO_JOGOS_COM_YUNA.md).
-
-### Energia ilustrativa da Yuna (bateria do notebook)
-
-Em notebooks Windows com sensor válido, a Yuna consulta **apenas a porcentagem
-da bateria e se o carregador está conectado** pela API do Windows. A consulta
-é local, leve e sem instalação adicional; em desktops sem bateria ou em
-sensores indisponíveis ela **não inventa percentuais nem faz alertas**.
-
-- **Até 35% sem carregador:** prefere ficar sentada e descansando.
-- **Até 20% sem carregador:** mostra sono, reduz FPS para no máximo 12 e
-  caminha lentamente até a lateral direita da tela, junto ao seu indicador
-  virtual de energia (não detecta a tomada física).
-- **Até 10% sem carregador:** pede conexão ao carregador com um alerta mais urgente.
-- **Carregando:** relaxa e mostra a condição de carga.
-- **100% de carga:** comemora e sugere uma atividade, **sem abrir nem controlar
-  aplicativos automaticamente**.
-
-O avatar 2D mostra um pequeno indicador e balões ocasionais; a Yuna
-Desktop também comunica a mudança no chat, sem ligar TTS por conta própria.
-Se o 3D estiver explicitamente conectado, a ponte transmite apenas carga,
-estado AC e categoria visual. O monitoramento é consultado em intervalos
-de 90 segundos — **não é uma leitura instantânea contínua**.
-Gestos explícitos, voz em andamento e movimento reduzido têm prioridade
-sobre a animação automática.
-
-**Jogar de verdade em games de terceiros ainda não foi implementado.**
-Automação de controles, compreensão visual e compatibilidade com jogos
-precisam de autorização específica por sessão, mecanismo de parada e
-testes offline antes de manipular teclado ou gamepad.
-
-### Yuna Anime 3D / VRM opcional (0.43)
-
-A interface 2D continua como padrão. O renderizador **Three.js +
-@pixiv/three-vrm** pode exibir um avatar anime VRM com esqueleto articulado.
-Na versão 0.43, ele pisca em intervalos variados, respira, muda de
-postura, move braços e cabelo e olha ao redor mesmo sem mover o mouse.
-A física do cabelo depende do modelo VRM importado.
-
-**O renderizador não inclui um modelo anime artístico pronto:** na
-ausência de `yuna.vrm`, aparece uma prévia geométrica simplificada.
-Para ter rosto, cabelo e roupas realmente anime, crie um avatar
-próprio no VRoid Studio e exporte `yuna.vrm`:
-
-1. Instale **Node.js 22 LTS** para a interface 3D.
-2. Na pasta `avatar3d/`, execute `npm install` uma vez.
-3. Coloque seu arquivo `yuna.vrm` em `avatar3d/public/yuna.vrm`
-   para carregamento automático; ou importe o VRM manualmente pelo botão.
-4. Na raiz, execute `Central da Yuna → Minha Yuna → Abrir avatar 3D`. Abra
-   `http://127.0.0.1:5173` no navegador.
-5. Se quiser sincronizar voz e expressões, abra também
-   `Yuna.bat` e clique **Conectar Yuna 3D**.
-
-A ponte usa localhost, token temporário e envia apenas estado e amplitude
-da fala, nunca áudio bruto ou conversas. A boca acompanha reprodução
-autorizada de forma aproximada, não faz correspondência precisa de
-fonemas. O navegador não executa comandos no computador.
-
-**Guias:** [criar uma Yuna realmente anime](docs/COMO_CRIAR_YUNA_ANIME.md),
-[renderizador e VRM](avatar3d/README.md). O documento de anime compara
-VRoid Studio, Unity VRoid Character Customization e CharacterGen e
-explica as licenças. Os modelos pessoais VRM não são enviados ao
-GitHub e devem ser preservados em backups locais.
-
-### Voz e boca animada (0.25)
-
-A janela **Yuna Desktop** inicia com **Windows offline**, que exige uma voz feminina pt-BR instalada no próprio Windows. **▶ Testar voz** permite verificar a fala e o avatar.
-
-A voz offline gera um **WAV temporário local**; a amplitude do áudio movimenta a boca enquanto a mídia está tocando. O movimento não corresponde a fonemas exatos. Se não existir uma voz compatível, uma mensagem de erro aparecerá na interface.
-
-**Edge online** é opcional e **envia o texto falado ao serviço externo**, somente após consentimento. A boca acompanha o período de reprodução de maneira aproximada nesse modo. Para instalar:
-
-~~~powershell
-py -3 -m pip install edge-tts
-~~~
-
-Para ditado local **sob acionamento manual** do botão de microfone no Yuna Desktop:
-
-~~~powershell
-py -3 -m pip install -r requirements-voz.txt
-~~~
-
-O ditado usa dependências opcionais, pode baixar os pesos de reconhecimento na primeira utilização e não é escuta contínua. O modo de mascote legado possui integração adicional com ElevenLabs, **somente** mediante chave autorizada e possíveis custos; evite enviar conversas sensíveis a serviços de síntese online.
-
-## Funções avançadas e serviços opcionais
-
-Além das conversas locais, o modo de mascote/terminal mantém comandos como:
-
-- **/clima CIDADE**, **/livros TEMA**, **/cep CEP**: consultas públicas sob pedido explícito.
-- **/github**, **/github ler ARQUIVO**, **/melhorar ARQUIVO**: consulta de código público permitido e elaboração de **propostas locais**, sem executar nem publicar alterações automaticamente.
-- **/ia gemini PERGUNTA**, **/ia groq PERGUNTA**, **/ia openrouter PERGUNTA**: provedores opcionais com chaves próprias. **/ias** consulta configuração.
-- **/openai PERGUNTA**: API separada, somente com **OPENAI_API_KEY** e possíveis custos.
-- **/tela**: descrição da tela **sob pedido explícito**, requer Pillow e um modelo visual local compatível.
-- **Diário, curiosidade, propostas e iniciativa**: módulos locais disponíveis conforme a interface e configuração, sem autorização para alterar código ou arquivos arbitrários.
-
-Serviços externos têm políticas, disponibilidade e limites próprios. Use variáveis de ambiente como **GEMINI_API_KEY**, **GROQ_API_KEY**, **OPENROUTER_API_KEY**, **OPENAI_API_KEY** ou **ELEVENLABS_API_KEY** só quando precisar, nunca como texto no repositório ou no banco.
-
-## Evolução VTuber (planejamento)
-
-Está disponível o [plano de arquitetura do avatar VTuber](docs/PLANO_AVATAR_VTUBER.md), baseado em estudo de AIRI, Open-LLM-VTuber, Xiaokeai, Soul-of-Waifu e alternativas de rigging 2D. O plano define a evolução do avatar 2D atual para uma personagem 2D em camadas e, opcionalmente, 3D/VRM, com voz e eventos sincronizados. **O renderizador VRM 3D experimental já existe**, mas ainda não há personagem
-anime artística fornecida, caminhada livre pela área de trabalho ou
-sincronização labial por fonemas. O modo leve permanecerá disponível para
-máquinas de 8 GB.
-
-## Estrutura do código
-
-| Parte | Arquivos centrais |
-| --- | --- |
-| Modelo e memória | **yuna.py**, **initiative.py**, **natural_memory.py**, **self_model.py**, **affect.py**, **conversation_integrity.py** |
-| Ferramentas locais e documentos | **computer.py**, **desktop.py**, **local_agent.py**, **agent_brain.py**, **office_agent.py**, **document_writer.py**, **document_library.py** |
-| Interface principal | **yuna_launcher.py**, **yuna_desktop.py** |
-| Avatar | **yuna_avatar.py**, **avatar_state.py**, **avatar_motion.py** |
-| Voz | **voice.py**, **speech_input.py** |
-| Mascote legada e funções extras | **yuna_overlay.py**, **diary.py**, **proactive.py**, **own_initiative.py**, **integrations.py**, **free_apis.py**, **web_actions.py** |
-| Testes | **tests/** e **.github/workflows/testes.yml** |
-
-Os outros módulos Python na raiz também são dependências de recursos existentes e permanecem no projeto. Os testes antigos protegem regressões: não são material descartável.
-
-## Diagnóstico e desenvolvimento
-
-No PowerShell aberto na pasta do projeto:
-
-~~~powershell
-py --version
-py -3 -m pip install -r requirements-mascote.txt
-py -3 -m unittest discover -s tests -v
-~~~
-
-Se **py** não for reconhecido, instale o Python com **Python Launcher**; não execute o instalador de dependências a partir de **C:\Windows\System32**. Se o menu não iniciar, confira **data/yuna_startup_error.txt**. Se o Ollama recusar conexão, verifique o serviço local e o modelo instalado. Se o avatar aparecer sem janela de conversa, execute **Yuna.bat**, não somente o módulo do avatar.
-
-Os testes são executados no GitHub Actions com interface Qt offscreen. Eles não substituem o teste de áudio, placas de som, microfone e animações no Windows físico.
-
-**Segurança:** a pasta **data/** não é criptografada; backups também devem ser privados. A Yuna não possui controle autônomo irrestrito do computador, não instala códigos criados pelo próprio modelo e não fica ativa com a máquina desligada.
-
-**Histórico:** a evolução das versões 0.7–0.24 continua disponível no histórico de commits e pull requests do GitHub. Este README descreve a versão atual, evitando instruções contraditórias de lançamentos antigos.
-
+**Repositório:** [SrHenriqueBR/Projeto-Yuna](https://github.com/SrHenriqueBR/Projeto-Yuna) · **Licenças:** confira as condições dos componentes e modelos de terceiros antes de redistribuir a Yuna, seus avatares ou uma build com Unreal Engine.
