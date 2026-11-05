@@ -8,26 +8,6 @@ ele evita instalar Python e bibliotecas manualmente. O renderizador 3D
 pode vir compilado, mas modelos VRM de terceiros não são incluídos.
 
 
-## Instalação recomendada
-
-1. Baixe **[Yuna-Setup.exe](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest/download/Yuna-Setup.exe)**.
-2. Execute o instalador e escolha se deseja um atalho na Área de Trabalho e início
-   com o Windows. A instalação é na sua conta, sem exigir administrador.
-3. Se já usava Yuna, feche a versão antiga e selecione a pasta anterior no campo
-   de importação. Ela precisa conter `data`. A cópia inclui um snapshot consistente
-   dos bancos SQLite. A origem não é apagada, e um destino com dados não é sobrescrito.
-4. Abra **Yuna.app**. No chat, **••• → Central da Yuna** reúne as opções.
-
-O pacote inclui o ambiente privado de Python, bibliotecas da interface, documentos,
-voz local, voz Edge opcional e o renderizador 3D compilado. Ollama e os modelos de
-texto/Whisper são separados. Em **Preparação**, abra o endereço oficial do Ollama,
-deixe-o em execução e prepare o modelo leve ou padrão. O download pode usar vários
-GB e só começa após confirmação. Reinicie a Yuna depois de mudar o modelo.
-
-O instalador funciona no Windows 10/11 x64. Não tem certificado comercial de
-assinatura; o Windows pode mostrar editor desconhecido. Baixe do repositório do
-projeto e confira `SHA256SUMS.txt` na mesma release. Não desative o antivírus.
-
 ## Passo a passo: instalar do zero
 
 1. Abra a [versão mais recente do GitHub](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest).
@@ -118,18 +98,6 @@ Na importação, não mesclamos bancos. Se o destino já tem dados, ele permanec
 intacto e o instalador informa que a importação não foi concluída. Avatares pessoais
 fora de `data` continuam na instalação anterior; faça backup deles separadamente.
 
-## Código-fonte: somente Yuna.bat
-
-Para desenvolver, extraia o ZIP do GitHub e abra **Yuna.bat**. É a única entrada
-`.bat` do projeto. Requer Python compatível de 64 bits com `venv`; a preparação
-cria `.venv`, sem modificar pacotes globais. Se não houver Python, prefira o
-instalador pronto. Use a pasta inteira da versão, não misture módulos isolados.
-
-Ao atualizar uma pasta antiga por ZIP, as 14 entradas antigas conhecidas são
-movidas para `data/inicializadores-antigos`. Arquivos personalizados com outros
-nomes e as memórias não são removidos. Para a cópia de desenvolvimento, o 3D requer
-`npm install` e `npm run build` em `avatar3d`; no instalador ele já vem pronto.
-
 ## Problemas frequentes
 
 | Situação | O que verificar |
@@ -168,6 +136,11 @@ O caminho de desenvolvimento é diferente do instalador:
 
 O instalador **não exige** esses comandos. Para manter o projeto,
 consulte [a estrutura de pastas](ESTRUTURA_DO_PROJETO.md).
+
+Ao atualizar uma pasta antiga por ZIP, inicializadores legados
+**conhecidos pelo programa** são movidos para
+`data/inicializadores-antigos` sem eliminar os dados da instalação.
+Cópias personalizadas com outros nomes não são apagadas automaticamente.
 
 ## Empacotamento e testes
 
