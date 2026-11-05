@@ -43,8 +43,12 @@ mostra o menu. A Central também permite trocar os modos em **Minha Yuna**.
   salvo se você escolheu **Acompanhamento leve** (esse modo permanece ativo).
   A janela só é encerrada com **Sair da Yuna** ou quando não há bandeja disponível.
 - **Acompanhamento leve** é uma autorização explícita para perceber
-  somente **USB, USB-C quando informado pelo driver, alimentação e bateria
-  deste PC**. Não inicia câmera, microfone, análise contínua de documentos,
+  somente **USB, USB-C quando informado pelo driver, alimentação, bateria,
+  RAM percentual e espaço livre na unidade Windows**. RAM/disco são
+  lidos a cada 5 minutos e alertas exigem duas leituras consecutivas,
+  com intervalo mínimo entre avisos. O menu **Saúde deste PC (RAM/disco)…**
+  oferece uma consulta manual, inclusive no modo econômico.
+  Não inicia câmera, microfone, análise contínua de documentos,
   scanner de arquivos ou perguntas automáticas ao Ollama. As notificações
   de USB/energia não são salvas como memória da IA.
 - **Pausar Yuna** solicita interrupção de ações, jogos, áudio e
