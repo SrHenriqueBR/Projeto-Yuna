@@ -19,7 +19,7 @@ seleção só é salva após um download confirmado e concluído. Reinicie a Yun
 para aplicar o novo modelo.
 
 **Novidade 0.53.0:** ícone da Yuna na bandeja do Windows com estados
-Ativa, Econômica, Acompanhamento leve (USB/energia/bateria locais) e
+Ativa, Econômica, Acompanhamento leve (USB/energia/bateria/RAM/disco locais) e
 Pausada. Clicar abre chat compacto; clicar com o botão direito abre
 o controle. Fechar a janela ativa economia com pausas nas verificações
 de USB e menor frequência de bateria. O modo de acompanhamento
