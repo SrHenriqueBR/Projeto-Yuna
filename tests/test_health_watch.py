@@ -44,7 +44,10 @@ class HealthWatchTests(unittest.TestCase):
             disk.assert_not_called()
 
     def test_invalid_apis_do_not_invent_usage(self):
+        # Simular ambas as APIs indisponíveis, inclusive quando a CI
+        # roda no Windows e GlobalMemoryStatusEx retornaria dados reais.
         with patch("health_watch.sys.platform", "win32"), patch(
+                "health_watch.ctypes", new=object()), patch(
                 "health_watch.shutil.disk_usage", side_effect=OSError("indisponível")):
             self.assertIsNone(read_health())
 
