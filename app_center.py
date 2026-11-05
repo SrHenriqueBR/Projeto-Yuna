@@ -5,12 +5,17 @@ from threading import Thread
 from PySide6.QtCore import Qt, Signal, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QCheckBox, QDialog, QHBoxLayout, QLabel,
-    QMessageBox, QPushButton, QScrollArea, QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
+    QMessageBox, QPushButton, QScrollArea, QInputDialog, QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
 
 from app_tools import (TOOLS, RELEASE_URL, configure_shortcuts, installation_status,
                        launch_tool, prepare_model)
 from self_model import VERSION
 from model_config import MODEL_OPTIONS, LEGACY_OPTIONS, load_selected_model
+from yuna_rag import (available_documents, index_document, search_documents,
+                      clear_index, install_embedding_model)
+from ollama_memory import loaded_models, loaded_model_status, unload_model
+from windows_events import read_recent_events
+from osv_security import check_package
 
 
 class YunaCenter(QDialog):
@@ -56,8 +61,13 @@ class YunaCenter(QDialog):
         maintenance.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         maintenance_content = QWidget()
         maintenance.setWidget(maintenance_content)
-        for page, label in zip((home, permissions, maintenance, advanced),
-                               ("Minha Yuna", "Permissões", "Preparação", "Avançado")):
+        integrations = QScrollArea()
+        integrations.setWidgetResizable(True)
+        integrations.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        integrations_content = QWidget()
+        integrations.setWidget(integrations_content)
+        for page, label in zip((home, permissions, maintenance, integrations, advanced),
+                               ("Minha Yuna", "Permissões", "Preparação", "Integrações", "Avançado")):
             tabs.addTab(page, label)
         box = QVBoxLayout(home_content)
         self.button(box, "Conversar no chat compacto", controller.show_compact)
@@ -131,6 +141,39 @@ class YunaCenter(QDialog):
         box.addLayout(row)
         self.button(box, "Abrir pasta das memórias", self.open_data)
         self.button(box, "Atualizar ou reparar o app", lambda: QDesktopServices.openUrl(QUrl(RELEASE_URL)))
+        box.addStretch()
+        box = QVBoxLayout(integrations_content)
+        intro = QLabel("Integrações opcionais: nada é consultado ou enviado sem você clicar. "
+                       "Documentos ficam no computador; OSV recebe apenas pacote e versão.")
+        intro.setWordWrap(True)
+        box.addWidget(intro)
+        label = QLabel("✦ Documentos e busca inteligente (RAG local)")
+        label.setStyleSheet("color:#d5baff;font-weight:700;")
+        box.addWidget(label)
+        self.button(box, "Preparar EmbeddingGemma local (~622 MB)", self.rag_prepare)
+        self.button(box, "Indexar documento já guardado na biblioteca", self.rag_index)
+        self.button(box, "Pesquisar nos documentos indexados", self.rag_search)
+        self.button(box, "Apagar somente índice semântico", self.rag_clear)
+        label = QLabel("✦ Ollama • memória RAM/VRAM")
+        label.setStyleSheet("color:#d5baff;font-weight:700;")
+        box.addWidget(label)
+        self.button(box, "Ver modelos carregados no Ollama", self.ollama_status)
+        self.button(box, "Descarregar um modelo da memória (não desinstala)", self.ollama_unload)
+        label = QLabel("✦ Diagnóstico local do Windows")
+        label.setStyleSheet("color:#d5baff;font-weight:700;")
+        box.addWidget(label)
+        self.button(box, "Eventos do sistema • últimas 24 horas", lambda: self.win_events("System"))
+        self.button(box, "Eventos de aplicativos • últimas 24 horas", lambda: self.win_events("Application"))
+        label = QLabel("✦ Dependências • OSV.dev")
+        label.setStyleSheet("color:#d5baff;font-weight:700;")
+        box.addWidget(label)
+        self.button(box, "Consultar vulnerabilidade de pacote PyPI / npm", self.osv_query)
+        note = QLabel("A busca RAG não executa comandos nos documentos. "
+                      "Descarregar modelo exige confirmação; ele permanece instalado. "
+                      "Eventos do Windows são resumidos sem mensagens pessoais. "
+                      "OSV requer internet e recebe apenas nome e versão informados.")
+        note.setWordWrap(True)
+        box.addWidget(note)
         box.addStretch()
         box = QVBoxLayout(advanced)
         label = QLabel("Ferramentas de manutenção. As janelas de console mostram o andamento e esperam Enter antes de fechar.")
@@ -232,6 +275,104 @@ class YunaCenter(QDialog):
                 "Modelo selecionado: " + load_selected_model(self.root)
                 + " (reinicie a Yuna para aplicar)"
             )
+
+    def rag_prepare(self):
+        if self.running:
+            return
+        answer = QMessageBox.question(
+            self, "Preparar busca semântica",
+            "Baixar EmbeddingGemma (~622 MB) no Ollama LOCAL? "
+            "Não usa API paga nem envia arquivos. O download usa internet.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            self.job(lambda: install_embedding_model(self.progress.emit))
+
+    def rag_index(self):
+        if self.running:
+            return
+        docs = available_documents(self.root)
+        if not docs:
+            self.output.setPlainText(
+                "Guarde primeiro um arquivo na Biblioteca da janela completa da Yuna. "
+                "Nenhuma pasta é varrida automaticamente.")
+            return
+        choices = [name + " [" + ident[:8] + "]" for ident, name in docs]
+        selected, ok = QInputDialog.getItem(
+            self, "Indexar biblioteca local", "Selecione o documento guardado:",
+            choices, 0, False)
+        if ok and selected:
+            ident = docs[choices.index(selected)][0]
+            answer = QMessageBox.question(
+                self, "Autorizar indexação local",
+                "Gerar embeddings deste documento no Ollama local e guardar "
+                "os trechos em data/yuna_rag.sqlite? O arquivo não será enviado à nuvem.",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if answer == QMessageBox.StandardButton.Yes:
+                self.job(lambda: index_document(self.root, ident))
+
+    def rag_search(self):
+        if self.running:
+            return
+        question, ok = QInputDialog.getText(
+            self, "Busca semântica", "Qual informação deseja encontrar?")
+        if ok and question.strip():
+            self.job(lambda: search_documents(self.root, question.strip()))
+
+    def rag_clear(self):
+        if self.running:
+            return
+        choice = QMessageBox.question(
+            self, "Apagar índice local",
+            "Apagar todas as representações e trechos da busca semântica? "
+            "Isso NÃO apaga os documentos originais nem data/yuna.db.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if choice == QMessageBox.StandardButton.Yes:
+            self.job(lambda: clear_index(self.root))
+
+    def ollama_status(self):
+        self.job(loaded_model_status)
+
+    def ollama_unload(self):
+        if self.running:
+            return
+        name, ok = QInputDialog.getText(
+            self, "Liberar RAM/VRAM", "Nome exato do modelo carregado no Ollama "
+            "(consulte Ver modelos carregados antes):")
+        if not ok or not name.strip():
+            return
+        name = name.strip()
+        choice = QMessageBox.question(
+            self, "Confirmar liberação",
+            "Pedir para o Ollama descarregar " + name + " da RAM/VRAM? "
+            "Não desinstala nada e pode interromper outra conversa em andamento.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if choice == QMessageBox.StandardButton.Yes:
+            self.job(lambda: unload_model(name))
+
+    def win_events(self, category):
+        self.job(lambda: read_recent_events(category))
+
+    def osv_query(self):
+        if self.running:
+            return
+        ecosystem, ok = QInputDialog.getItem(
+            self, "Consulta OSV", "Ecossistema da dependência:",
+            ["PyPI", "npm"], 0, False)
+        if not ok:
+            return
+        package, ok = QInputDialog.getText(
+            self, "Consulta OSV", "Nome público do pacote:")
+        if not ok or not package.strip():
+            return
+        version, ok = QInputDialog.getText(
+            self, "Consulta OSV", "Versão exata instalada (ex.: 3.1.4):")
+        if ok and version.strip():
+            self.job(lambda: check_package(ecosystem, package.strip(),
+                                           version.strip()))
 
     def closeEvent(self, event):
         self.hide()  # Mantém o progresso e as permissões ao reabrir a Central.
