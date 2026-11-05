@@ -40,9 +40,11 @@ pode vir compilado, mas modelos VRM de terceiros não são incluídos.
    instalação e Ollama**. Caso o Ollama esteja ausente, use **Instalar
    ou abrir o site do Ollama** (link oficial para Windows).
 8. Instale e inicie o Ollama. Na Central, escolha e confirme a instalação
-   de **qwen2.5:1.5b** (mais leve, recomendado para testar em PC com
-   8 GB de RAM) ou **qwen2.5:3b** (modelo padrão). O download é
-   separado e pode consumir GB de armazenamento.
+   de **qwen3.5:2b** (leve, indicado para testar com 8 GB de RAM),
+   **qwen3.5:4b** (recomendado) ou **qwen3.5:9b** (avançado,
+   exige RAM/VRAM adicional). Os Qwen2.5 anteriores continuam disponíveis
+   em Compatibilidade. O download é separado e pode consumir vários GB.
+   Não há API Qwen paga integrada à Yuna.
 9. **Reinicie a Yuna** depois de escolher o modelo. Envie uma pergunta
    curta para conferir a resposta.
 10. Para experimentar os recursos adicionais, use a própria Central.
@@ -66,6 +68,27 @@ mescle bancos `.db` manualmente nem exclua a origem até conferir
 as memórias na nova instalação. Se a instalação antiga estiver fora
 de `data/`, guarde separadamente seus modelos VRM, imagens e anexos
 que desejar preservar.
+
+## Modelos locais — sem cobranças por mensagens
+
+Escolha o modelo na **Central → Preparação**. Qwen3.5 utiliza somente
+`http://127.0.0.1:11434`, que é o Ollama rodando no próprio computador.
+Não é necessário criar conta em qwen.ai, fornecer cartão, cadastrar API key
+nem aceitar cobranças por tokens.
+
+| Modelo | Para que serve | Download aproximado |
+| --- | --- | --- |
+| `qwen3.5:2b` | Mais leve, para 8 GB RAM | 2,7–3,1 GB |
+| `qwen3.5:4b` | Recomendado para 16 GB RAM | 3,3–4,0 GB |
+| `qwen3.5:9b` | Avançado, requer folga de memória | 6,6–7,6 GB |
+
+Mesmo que o download caiba no disco, a memória para execução pode ser
+maior. A escolha ocorre **somente após o download concluir**; não troca
+automaticamente o modelo de instalações antigas. Para verificar a seleção,
+digite `/modelo` no chat. Reinicie a Yuna para aplicar a mudança.
+
+Leia [Modelos locais e custos](MODELOS_LOCAIS.md) para comparar
+Ollama com APIs comerciais e encontrar as opções de segurança.
 
 ## Onde ficou cada recurso
 
