@@ -12,6 +12,7 @@ avançadas permanecem opcionais.
 | --- | --- |
 | [Instalação Windows](INSTALACAO_WINDOWS.md) | Instalador, código-fonte, Ollama, atualização, backup |
 | [Yuna.app no Windows](YUNA_APP.md) | Central, chat, voz, segundo plano, consentimento e limites |
+| [Qwen3.5 local e custos](MODELOS_LOCAIS.md) | Modelos 2B/4B/9B, Ollama gratuito e diferença para API paga |
 | [Estrutura do projeto](ESTRUTURA_DO_PROJETO.md) | Arquivos, responsáveis por módulo, limpeza segura |
 | [Guia completo preservado](GUIA_COMPLETO.md) | Referência extensa de funcionalidades e comandos |
 
