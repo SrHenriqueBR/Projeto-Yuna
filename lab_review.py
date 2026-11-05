@@ -372,7 +372,7 @@ def status_text(root):
         except (OSError, ValueError):
             lines.append(ident + " · relatório indisponível")
     if len(lines) == 1:
-        lines.append("Ainda não há propostas. Crie uma em laboratorio_yuna.bat.")
+        lines.append("Ainda não há propostas. Crie uma em Central da Yuna → Avançado → Laboratório de melhorias.")
     lines.append("\nAplicações recentes (até 20):")
     states = {"applied": "aplicada", "restored": "restaurada", "conflict": "arquivo mudou depois",
               "not_applied": "não aplicada"}
@@ -385,7 +385,7 @@ def status_text(root):
             lines.append(ident + " · registro ou backup indisponível")
     if not identifiers:
         lines.append("Nenhuma aplicação registrada.")
-    lines.append("Abra revisar_melhorias_yuna.bat para revisar, testar, aplicar ou restaurar."
+    lines.append("Abra Central da Yuna → Avançado → Revisar ou restaurar melhorias para revisar, testar, aplicar ou restaurar."
                  " Feche a Yuna antes de aplicar e abra novamente depois.")
     return "\n".join(lines)
 

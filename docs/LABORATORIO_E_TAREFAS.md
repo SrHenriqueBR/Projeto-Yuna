@@ -6,7 +6,7 @@ executa ferramentas do PC. Atualize os arquivos do projeto preservando `data/`.
 
 ## Testar a própria base
 
-Abra **`testar_yuna.bat`** ou diga **“Yuna, teste sua base”** no modo PC.
+Abra **`Central da Yuna → Avançado → Testar a base da Yuna`** ou diga **“Yuna, teste sua base”** no modo PC.
 O comando técnico é `/autoteste`.
 
 Esse autoteste executa nove testes fixos de linguagem e de interpretação de
@@ -16,7 +16,7 @@ funcionamento de áudio, câmera, hardware Windows ou a qualidade do Ollama.
 
 ## Escrever uma melhoria e testes
 
-Abra **`laboratorio_yuna.bat`** e descreva uma mudança pequena. Também pode
+Abra **`Central da Yuna → Avançado → Laboratório de melhorias`** e descreva uma mudança pequena. Também pode
 escrever na Yuna desktop:
 
 ```text
@@ -58,7 +58,7 @@ incorporar uma mudança ao projeto.
 
 ## Revisar, aplicar e voltar à versão anterior
 
-Abra **`revisar_melhorias_yuna.bat`**. Ele funciona separadamente da conversa e
+Abra **`Central da Yuna → Avançado → Revisar ou restaurar melhorias`**. Ele funciona separadamente da conversa e
 não usa o modelo. Para consultar a lista na Yuna, diga **“Yuna, mostre suas
 melhorias”** ou `/melhorias`.
 

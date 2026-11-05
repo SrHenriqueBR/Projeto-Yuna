@@ -151,10 +151,11 @@ class LibraryTests(unittest.TestCase):
 
     def test_gui_default_launcher_and_terminal_fallback(self):
         root = Path(__file__).resolve().parents[1]
-        launcher = (root / "iniciar_yuna.bat").read_text(encoding="utf-8")
-        self.assertIn("pyw -3", launcher)
-        self.assertIn("yuna_desktop.py", launcher)
-        self.assertTrue((root / "iniciar_yuna_terminal.bat").exists())
+        from app_tools import tool_command
+        launcher = (root / "Yuna.bat").read_text(encoding="utf-8")
+        self.assertIn("scripts\\iniciar.ps1", launcher)
+        self.assertEqual([p.name for p in root.glob("*.bat")], ["Yuna.bat"])
+        self.assertEqual(Path(tool_command(root, "terminal")[3]).name, "yuna.py")
         self.assertTrue((root / "requirements-voz.txt").exists())
 
 

@@ -128,7 +128,7 @@
       const response = await fetch(path, {...options, signal: abort.signal, cache: 'no-store',
         headers: {'Content-Type': 'application/json', 'X-Yuna-Token': token, ...options.headers}});
       let data;
-      try { data = await response.json(); } catch (_) { throw new Error('A conexão local não retornou uma resposta válida. Reabra iniciar_yuna_web.bat.'); }
+      try { data = await response.json(); } catch (_) { throw new Error('A conexão local não retornou uma resposta válida. Reabra Central da Yuna → Minha Yuna → Conversar no navegador.'); }
       if (!response.ok) throw new Error(data.error || 'Não consegui concluir o pedido. Tente novamente.');
       return data;
     } catch (failure) {
@@ -143,7 +143,7 @@
     ready = false; controls();
     if (!local) {
       connection.textContent = 'Prévia online · chat no notebook';
-      detail.textContent = 'Para conversar com a IA, baixe o projeto e abra iniciar_yuna_web.bat no computador com Ollama. Depois clique em Abrir chat local.';
+      detail.textContent = 'Para conversar com a IA, baixe o projeto e abra Central da Yuna → Minha Yuna → Conversar no navegador no computador com Ollama. Depois clique em Abrir chat local.';
       setup.hidden = false;
       return;
     }
@@ -151,7 +151,7 @@
     connect.disabled = true;
     try {
       const status = await request('/api/status');
-      if (typeof status.token !== 'string') throw new Error('Abra esta página pelo iniciar_yuna_web.bat.');
+      if (typeof status.token !== 'string') throw new Error('Abra esta página pelo Central da Yuna → Minha Yuna → Conversar no navegador.');
       token = status.token;
       ready = status.ready === true;
       connection.textContent = ready ? '● Conectada · ' + status.model : 'Ollama precisa de atenção';
@@ -171,7 +171,7 @@
     } catch (failure) {
       ready = false;
       connection.textContent = 'Chat desconectado';
-      detail.textContent = 'Mantenha iniciar_yuna_web.bat aberto e tente Reconectar.';
+      detail.textContent = 'Mantenha Central da Yuna → Minha Yuna → Conversar no navegador aberto e tente Reconectar.';
       error.textContent = failure.message || 'Não consegui me conectar à Yuna local.';
       setup.hidden = false;
     }

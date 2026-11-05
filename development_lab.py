@@ -404,7 +404,7 @@ def report_text(folder):
                  if report.get("candidate") else "\nRelatório: relatorio.json.")
     return (status + ("\n" + reason if reason else "") + "\nPasta: " + str(folder) + artifacts
             + "\nCódigo em uso e GitHub preservados. Testes não substituem revisão humana."
-              "\nPara revisar, retestar e aplicar com backup: revisar_melhorias_yuna.bat."
+              "\nPara revisar, retestar e aplicar com backup: Central da Yuna → Avançado → Revisar ou restaurar melhorias."
               " Use /melhorias para consultar o histórico de aplicações.")
 
 
@@ -434,7 +434,7 @@ def handle_development(message, root, ask, *, progress=None, cancelled=None):
                 "Módulos: " + ", ".join(TARGETS)
                 + "\nTestes de execução exigem Docker local e imagem python:3.12-slim já disponível."
                 " Não aplico propostas automaticamente."
-                "\n/melhorias mostra propostas e aplicações. Revisão e restauração: revisar_melhorias_yuna.bat.")
+                "\n/melhorias mostra propostas e aplicações. Revisão e restauração: Central da Yuna → Avançado → Revisar ou restaurar melhorias.")
     match = re.fullmatch(r"/laborat[oó]rio\s+(\S+)\s*\|\s*(.+)", value, re.I | re.S)
     if not match:
         match = re.fullmatch(

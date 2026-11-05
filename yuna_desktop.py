@@ -876,9 +876,9 @@ class YunaDesktop(QMainWindow):
         except OSError:
             QMessageBox.information(
                 self, "Yuna 3D não iniciada",
-                "Primeiro execute iniciar_yuna_3d.bat após instalar as dependências "
-                "Node em avatar3d. Depois clique aqui para vincular a voz ao 3D. "
-                "O avatar 2D continua disponível sem Node.js."
+                "Abra Central da Yuna → Minha Yuna → Abrir avatar 3D. "
+                "Depois clique aqui para vincular a voz ao 3D. "
+                "O instalador já inclui o renderizador; na cópia de desenvolvimento, compile avatar3d."
             )
             return
         bridge = None
@@ -1580,9 +1580,9 @@ class YunaDesktop(QMainWindow):
                     or importlib.util.find_spec("faster_whisper") is None):
                 QMessageBox.information(
                     self, "Microfone opcional",
-                    "Para usar o ditado de voz local, instale:\n"
-                    "py -3 -m pip install -r requirements-voz.txt\n\n"
-                    "Sem esses pacotes, a conversa por texto continua funcionando."
+                    "Prepare esta cópia pelo Yuna.bat ou use Central da Yuna → "
+                    "Preparação → Atualizar ou reparar o app.\n\n"
+                    "A conversa por texto continua funcionando."
                 )
                 return
         except (ImportError, ValueError) as exc:
@@ -1725,6 +1725,11 @@ def main():
     app.aboutToQuit.connect(instance.close)
     window.companion.start(background="--background" in sys.argv,
                            compact="--compact" in sys.argv)
+    if "--central" in sys.argv:
+        window.companion.show_center()
+    if "--smoke-test" in sys.argv:
+        window.companion.show_center()
+        QTimer.singleShot(1200, window.companion.quit)
     return app.exec()
 
 

@@ -9,7 +9,7 @@ Three.js + `@pixiv/three-vrm` e funciona em navegador moderno com WebGL.
 2. Abra um terminal em `avatar3d/` e execute `npm install`. É necessário
    acesso à internet **nessa instalação inicial**.
 3. Execute `npm run dev` e acesse `http://127.0.0.1:5173`.
-   Como alternativa, da raiz do projeto execute `iniciar_yuna_3d.bat`
+   Como alternativa, compile com `npm run build` e use **Central da Yuna → Minha Yuna → Abrir avatar 3D**
    **depois** de instalar as dependências.
 4. Clique em **Importar modelo .VRM**, escolha **seu próprio arquivo** e teste
    as expressões. Até 80 MB por arquivo. Também é possível soltar o arquivo
@@ -34,8 +34,8 @@ Para validar o código: `npm test` e `npm run build`.
 
 1. Instale as dependências opcionais em `avatar3d/` com `npm install`
    uma única vez (Node 22 LTS).
-2. Abra a **Yuna Desktop** normalmente em `iniciar_yuna.bat`.
-3. Execute `iniciar_yuna_3d.bat` para iniciar o renderizador local em
+2. Abra a **Yuna Desktop** normalmente em `Yuna.bat`.
+3. Execute `Central da Yuna → Minha Yuna → Abrir avatar 3D` para iniciar o renderizador local em
    `http://127.0.0.1:5173`.
 4. Na janela da Yuna, clique em **◇ Conectar Yuna 3D**. Ela abrirá uma nova
    aba com credencial de sessão temporária e habilitará a sincronização.
@@ -165,3 +165,4 @@ autoload; o Git ignora modelos privados.
 
 A ponte com o AvatarController Python já existe e continua
 somente-leitura, autenticada e desligada por padrão.
+

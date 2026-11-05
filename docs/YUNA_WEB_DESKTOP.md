@@ -12,7 +12,7 @@
 
 1. Feche a Yuna e preserve em backup `data/` e `assets/` da instalação antiga.
 2. Baixe a versão atual do GitHub e atualize **os arquivos Python e a pasta docs completa**, preservando `data/` e `assets/`. Não misture arquivos de versões.
-3. Execute `iniciar_yuna.bat` normalmente.
+3. Execute `Yuna.bat` normalmente.
 4. A janela principal inclui, entre menu e conversa, o retrato anime compartilhado com a web, frases de reação e botões de humor.
 5. O botão **▶ Ouvir a Yuna** utiliza a voz selecionada na interface principal; se a voz estiver desligada, não reproduz nada. A síntese Edge continua opt-in conforme as regras existentes.
 6. O painel de personagem não ativa câmera, microfone, APIs, portas ou processos extras. Câmeras, segurança e vídeo continuam exigindo autorização explícita, como antes.
@@ -42,7 +42,7 @@ Execute `python -m unittest discover -s tests -p test_yuna_live_web.py -v` e `no
 
 ## Chat local e novas reações
 
-Abra `iniciar_yuna_web.bat` com o Ollama em execução. O endereço local padrão é `http://127.0.0.1:8787/`. A primeira resposta pode demorar enquanto o modelo é carregado; o painel indica quando Yuna está pensando. Enter envia a mensagem; Shift+Enter adiciona uma linha. “Ler respostas em voz alta” é opcional, e “Parar voz” interrompe a leitura.
+Abra `Central da Yuna → Minha Yuna → Conversar no navegador` com o Ollama em execução. O endereço local padrão é `http://127.0.0.1:8787/`. A primeira resposta pode demorar enquanto o modelo é carregado; o painel indica quando Yuna está pensando. Enter envia a mensagem; Shift+Enter adiciona uma linha. “Ler respostas em voz alta” é opcional, e “Parar voz” interrompe a leitura.
 
 O chat reutiliza `data/yuna.db` e `data/conhecimentos.json`. Guarde essa pasta ao atualizar. O servidor serve apenas os arquivos da interface e as rotas de conversa; não publica a pasta `data`. Cada pergunta é processada de uma vez. O modelo do chat não executa programas nem pesquisa na web.
 
@@ -58,4 +58,4 @@ No painel de chat, escolha **Conversar**, **Desabafar** ou **Pedir conselho**. A
 
 Yuna conversa no feminino, com acolhimento e curiosidade. No desabafo, prioriza entender o que foi contado antes de sugerir soluções. No conselho, pede contexto quando necessário e apresenta possibilidades sem impor decisões. A personagem não inventa experiências humanas ou lembranças.
 
-O acesso é o mesmo: abra `iniciar_yuna_web.bat` com o Ollama em execução. O link público permite conhecer as opções; as respostas reais são produzidas na versão local. A qualidade do tom e dos conselhos depende do modelo instalado.
+O acesso é o mesmo: abra `Central da Yuna → Minha Yuna → Conversar no navegador` com o Ollama em execução. O link público permite conhecer as opções; as respostas reais são produzidas na versão local. A qualidade do tom e dos conselhos depende do modelo instalado.

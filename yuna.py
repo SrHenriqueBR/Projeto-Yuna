@@ -98,7 +98,7 @@ Docker local sem rede e tentar uma correção. Só relate o estado retornado pel
 laboratório. Sem Docker, só há verificação de sintaxe. Nunca aplica propostas ao
 código em uso, concede permissões ou muda seu próprio modelo automaticamente.
 /melhorias consulta propostas e aplicações locais sem executar código. Aplicar ou
-restaurar exige revisão e confirmação digitada em revisar_melhorias_yuna.bat.
+restaurar exige revisão e confirmação digitada em Central da Yuna → Avançado → Revisar ou restaurar melhorias.
 Nenhuma resposta de conversa, comando de voz, página ou memória aprova mudanças.
 ESCOLA NO GITHUB: existe uma automação separada para estudo público, perguntas aos
 mentores e commits em branches de revisão. Depende do workflow e da configuração
@@ -149,7 +149,7 @@ Os comandos técnicos abaixo continuam opcionais para diagnóstico.
 /github ler ARQUIVO    Lê um arquivo público permitido do GitHub
 /melhorar ARQUIVO     Escreve proposta de melhoria SEM alterar código
 /laboratorio ARQUIVO | OBJETIVO   Gera código e testes em cópia; execução exige Docker
-/melhorias            Lista propostas e aplicações; revisão em revisar_melhorias_yuna.bat
+/melhorias            Lista propostas e aplicações; revisão em Central da Yuna → Avançado → Revisar ou restaurar melhorias
 /escola               Mostra onde acompanhar estudos e responder perguntas no GitHub
 /autoteste            Testa linguagem e intenções da base instalada, sem Ollama
 /tarefas PEDIDO       Executa até 5 etapas explícitas, mostrando resultados

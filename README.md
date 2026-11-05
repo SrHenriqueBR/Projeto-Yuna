@@ -1,8 +1,25 @@
-# Projeto Yuna — versão 0.50
+# Projeto Yuna — versão 0.51
 
 Assistente pessoal local para **Windows 10/11**, com conversa em português, memória SQLite, interface gráfica, leitura de documentos, acesso limitado a ferramentas do computador, avatar chibi **2D** e renderizador anime **3D/VRM opcional**. O modelo de texto padrão é **Ollama + qwen2.5:3b**. O computador precisa permanecer ligado enquanto a Yuna funciona.
 
 A Yuna **não é uma IA consciente nem um agente com controle irrestrito**. Executa apenas as ações implementadas e permitidas pelo programa.
+
+## Instale e abra uma única Yuna
+
+**[Baixar Yuna-Setup.exe para Windows](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest/download/Yuna-Setup.exe)** · [Versões e integridade](https://github.com/SrHenriqueBR/Projeto-Yuna/releases)
+
+Instale e abra **Yuna.app** pelo atalho. No chat, use **••• → Central da Yuna**:
+conversa, personagem 2D/3D, permissões, modelos, inicialização e manutenção ficam
+reunidos ali. O instalador inclui Python privado, interface, documentos e bibliotecas
+de voz; o renderizador 3D já vem compilado. Ollama e modelos continuam separados,
+com preparação guiada pela Central.
+
+No código-fonte existe **apenas `Yuna.bat`**. Os 14 inicializadores antigos foram
+retirados; seus recursos úteis passaram para a Central. Ao abrir uma pasta antiga
+atualizada, cópias remanescentes desses inicializadores são guardadas em
+`data/inicializadores-antigos`, sem apagar as memórias.
+
+[Como instalar, importar memórias e atualizar](docs/INSTALACAO_WINDOWS.md).
 
 ## Percepção de USB e energia
 
@@ -21,8 +38,8 @@ evento observável. [Funcionamento e limites](docs/YUNA_APP.md#usb-usb-c-e-alime
 
 ## Yuna.app — chat compacto e segundo plano
 
-Abra **`configurar_yuna_app.bat`** para criar os atalhos **Yuna.app** e escolher se
-ela inicia junto com o Windows. **`iniciar_yuna.bat`** abre o novo chat compacto;
+Abra **`Central da Yuna → Preparação → Criar ou reparar atalhos Yuna`** para criar os atalhos **Yuna.app** e escolher se
+ela inicia junto com o Windows. **`Yuna.bat`** abre o novo chat compacto;
 fechar recolhe para a bandeja. Quando o áudio está indisponível, o chat aparece
 para continuar por texto. Há escuta local opcional de **“Olá Yuna”**, desligamento
 com contagem cancelável, tentativa agendada de despertar da suspensão, comandos
@@ -30,7 +47,7 @@ curtos para um jogo autorizado, diagnóstico do PC e descrição de um quadro da
 câmera com modelo de visão local opcional. As conversas ficam no banco local.
 
 **Atualize a pasta inteira e preserve `data`.** O nome Yuna.app identifica os
-atalhos e a interface; esta distribuição ainda roda em Python. Despertar depende
+atalhos e a interface; o instalador inclui seu ambiente privado. Despertar depende
 do Windows/hardware e não liga um PC totalmente desligado.
 [Instalação, exemplos, permissões e limites](docs/YUNA_APP.md).
 
@@ -50,12 +67,12 @@ e pausa enquanto um estudo espera revisão. [Como acompanhar, responder e pausar
 
 A Yuna pode escrever uma melhoria pequena e testes com o **Ollama local**,
 conferir a proposta em uma cópia e tentar corrigir uma falha uma vez. Abra
-**`laboratorio_yuna.bat`** ou use `/laboratorio`. A execução de código gerado
+**`Central da Yuna → Avançado → Laboratório de melhorias`** ou use `/laboratorio`. A execução de código gerado
 exige Docker local e uma imagem já disponível; sem Docker, o resultado é
 apenas rascunho com verificação de sintaxe. As propostas ficam em
 `data/laboratorio/`, sem substituir o código em uso nem publicar alterações.
 
-Para incorporar uma proposta, abra **`revisar_melhorias_yuna.bat`**. O programa
+Para incorporar uma proposta, abra **`Central da Yuna → Avançado → Revisar ou restaurar melhorias`**. O programa
 mostra a comparação e os testes, exige um novo teste em Docker e uma confirmação
 digitada antes de aplicar **um módulo**, com backup. Também permite restaurar a
 versão anterior sem Docker ou Ollama. Feche a Yuna para aplicar/restaurar e abra
@@ -63,7 +80,7 @@ novamente depois. **“Yuna, mostre suas melhorias”** ou `/melhorias` consulta
 histórico local; a conversa não aprova nem aplica código.
 
 Para testar os módulos instalados de linguagem e intenções, abra
-**`testar_yuna.bat`** ou diga **“Yuna, teste sua base”**. Esse autoteste não
+**`Central da Yuna → Avançado → Testar a base da Yuna`** ou diga **“Yuna, teste sua base”**. Esse autoteste não
 exige Ollama ou Docker. No modo PC, também pode pedir **“abra Downloads e
 depois abra Steam”**, pesquisar com **“pesquise na web sobre Python”** e
 escolher **`/desempenho rapido`** para favorecer respostas curtas.
@@ -72,7 +89,7 @@ escolher **`/desempenho rapido`** para favorecer respostas curtas.
 
 ## Gestão local de aprendizados
 
-A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`configurar_gestao_yuna.bat`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `iniciar_yuna_web.bat` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
+A Yuna agora explica suas capacidades em **Como a Yuna ajuda e aprende** e permite que a pessoa compartilhe voluntariamente um texto para revisão. O responsável configura uma senha pelo **`Central da Yuna → Avançado → Configurar gestão local`** e acessa o painel local **`http://127.0.0.1:8787/yuna-gestao.html`**, com `Central da Yuna → Minha Yuna → Conversar no navegador` aberto. Textos pendentes não entram no chat; o remetente pode retirar uma sugestão usando seu comprovante.
 
 Esse painel gerencia conhecimentos **desta instalação**. Não é uma central remota de usuários e não transmite conversas, tela, câmera ou arquivos ao criador da Yuna. [Funcionamento, configuração e limites](docs/GESTAO_E_APRENDIZADO.md).
 
@@ -80,7 +97,7 @@ Esse painel gerencia conhecimentos **desta instalação**. Não é uma central r
 
 1. Baixe e extraia a versão atual do projeto, preservando a pasta `data` da sua instalação.
 2. Abra o Ollama com o modelo que você já usa na Yuna. Sem um modelo instalado, execute `ollama pull qwen2.5:3b`; o instalador também oferece `qwen2.5:1.5b` para máquinas de 8 GB.
-3. Abra **`iniciar_yuna_web.bat`**. O navegador entra em **http://127.0.0.1:8787/**. Mantenha a janela do launcher aberta enquanto conversa.
+3. Abra **`Central da Yuna → Minha Yuna → Conversar no navegador`**. O navegador entra em **http://127.0.0.1:8787/**. Mantenha a janela do launcher aberta enquanto conversa.
 
 O painel usa o modelo local e o histórico SQLite da Yuna (`data/yuna.db`). Reabrir a página restaura as conversas; pedidos explícitos de memória são guardados pelo mesmo sistema do aplicativo. Não exige chave de API nem serviço de IA pago. Texto e respostas não são encaminhados para uma API em nuvem.
 
@@ -112,7 +129,7 @@ O motor local `avatar3d/` foi ampliado com:
 
 O navegador público importa Three.js por CDN (requer internet), mas
 não lê ou envia conversas, arquivos, microfone ou câmera. O
-renderizador **local** `iniciar_yuna_3d.bat` continua permitindo
+renderizador **local** `Central da Yuna → Minha Yuna → Abrir avatar 3D` continua permitindo
 importar o **seu arquivo .vrm** (até 80 MB), que não é enviado
 a terceiros. Pelo botão **Conectar Yuna 3D** na interface Python, o
 modelo reproduz estados de emoção e o nível da fala por uma ponte
@@ -173,14 +190,14 @@ Ollama nem instalação para o modo de demonstração web. **Ainda é
 é real em partes do SVG, mas não inclui malha 3D, rigging/visemas
 profissionais nem a mesma aparência exata do retrato do desktop.
 
-No **Windows**, `iniciar_yuna.bat` abre a conversa real com uma
+No **Windows**, `Yuna.bat` abre a conversa real com uma
 **terceira coluna de apresentação anime**, os mesmos estados de humor,
 e o retrato oscilando suavemente. A voz real, anexos, memória, Ollama,
 câmeras opcionais e recursos existentes continuam nos controles atuais.
 Nenhum Node.js ou WebEngine novo é necessário para esse painel.
 Se o arquivo do retrato faltar, o aplicativo funciona com fallback.
 
-A prévia pública não é o avatar VRM final. O chat conecta ao Ollama quando a página é aberta pelo `iniciar_yuna_web.bat`, no próprio notebook.
+A prévia pública não é o avatar VRM final. O chat conecta ao Ollama quando a página é aberta pelo `Central da Yuna → Minha Yuna → Conversar no navegador`, no próprio notebook.
 O link público não acessa câmera, microfone, arquivos locais nem dados da Yuna.
 A demonstração é hospedada a partir deste repositório público pelo visualizador
 terceirizado raw.githack.com, que pode mostrar uma confirmação na
@@ -192,55 +209,38 @@ Para hospedar diretamente no GitHub Pages, o proprietário pode ativar
 Depois de publicada, a mesma página terá o endereço
 `https://srhenriquebr.github.io/Projeto-Yuna/yuna-preview.html`.
 
-## Instalação em outro Windows — assistente 0.26
+## Instalação e atualização
 
-1. Instale o **Python 3.11 ou 3.12 de 64 bits** com o **Python Launcher**: https://www.python.org/downloads/windows/
-2. Instale e abra o **Ollama**: https://ollama.com/download/windows
-3. No GitHub, use **Code → Download ZIP**, extraia e execute **`instalar_yuna.bat`** com dois cliques, **sem abrir como administrador**.
-4. Siga o assistente. Ele verifica Python, bibliotecas, Ollama e memória RAM, pergunta antes de instalar pacotes ou baixar modelos, permite criar um atalho e pode iniciar a Yuna.
-5. Depois use **`iniciar_yuna.bat`** normalmente; a conversa ocorre na janela **Conversa com a Yuna** e o avatar é opcional.
+Use **Yuna-Setup.exe** em [Releases](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest).
+A instalação é por usuário, com atalho e desinstalação pelo Windows. Não exige
+Python ou Node.js separados. O assistente oferece copiar `data` de uma pasta
+anterior; não sobrescreve uma memória existente. Atualizar ou desinstalar preserva
+os arquivos pessoais. Faça backup de `data` com a Yuna fechada antes de migrar.
 
-O assistente é um **script de instalação guiada (.bat + PowerShell)**, ainda **não um instalador .exe ou MSI**. Não instala Python ou Ollama automaticamente nem exige elevação. Se faltar algum dos dois, mostra o endereço oficial e orienta a instalação. Pacotes Python são baixados do índice configurado no seu pip, somente após autorização. O download do modelo é feito pelo próprio Ollama, também com confirmação.
+Ollama precisa estar instalado e aberto para conversa livre. Em
+**Central → Preparação**, verifique o ambiente, abra o site oficial do Ollama e
+prepare **qwen2.5:1.5b** (mais leve, para 8 GB) ou **qwen2.5:3b**. O download só
+começa após sua confirmação; ao trocar o modelo, reinicie a Yuna.
 
-### Computador com 8 GB de RAM
+Para trabalhar pelo código-fonte: extraia o ZIP, mantenha Python compatível instalado
+(com Python Launcher no Windows) e abra **Yuna.bat**. Ele prepara `.venv` privativo
+na primeira vez. A conversa abre mesmo sem Ollama; o diagnóstico mostra o que falta.
+Use a versão instalada para ter também o 3D compilado, ou compile `avatar3d` com
+`npm install` e `npm run build` no ambiente de desenvolvimento.
 
-O instalador recomenda **`qwen2.5:1.5b`** para até 8 GB, mas você pode manter **`qwen2.5:3b`** se preferir melhor capacidade e aceitar mais uso de memória. O programa salva apenas essa escolha em **`data/modelo_yuna.txt`**, sem apagar o banco SQLite. Usuários avançados podem continuar definindo a variável **`YUNA_MODEL`**, que tem prioridade. Em instalações antigas, sem essa escolha, o padrão continua 3B.
+A memória principal fica em **data/yuna.db**. `data/conhecimentos.json` não substitui
+o banco. Não publique a pasta `data`. Na instalação por executável ela fica em
+`%LOCALAPPDATA%\Programs\Yuna\app\data`; a Central tem um botão para abri-la.
 
-Para descobrir o que falta sem baixar nada, execute **`diagnosticar_yuna.bat`**. O diagnóstico consulta o ambiente e não instala bibliotecas, modelos ou atalhos.
-
-### Instalação manual (alternativa)
-
-Abra PowerShell **na pasta extraída**, não em `C:\Windows\System32`:
-
-~~~powershell
-py -3 -m pip install -r requirements-mascote.txt
-ollama pull qwen2.5:3b
-~~~
-
-Se o Ollama não responder, abra o aplicativo; se necessário, execute **`ollama serve`** em outro terminal. Para testar isoladamente: **`ollama run qwen2.5:3b`**. Se aparecer `py não reconhecido`, reinstale o Python com Python Launcher e abra um novo terminal.
-
-## Como atualizar sem perder as memórias
-
-1. Feche todas as janelas da Yuna e copie sua pasta **data/** para um backup privado.
-2. Baixe e extraia a nova versão em outra pasta.
-3. Atualize **todos os arquivos .py**, os arquivos .bat, o novo **instalar_yuna.ps1** e os arquivos requirements da instalação antiga. Não copie uma seleção de módulos de versões diferentes.
-4. **Preserve data/ e assets/** da sua instalação; não as substitua pelo ZIP. Reabra **iniciar_yuna.bat**.
-
-A memória principal fica em **data/yuna.db**, e as preferências visuais ficam em **data/avatar_yuna.json**. A cópia **data/conhecimentos.json** não substitui o banco SQLite. **Não envie data/ para GitHub.**
-
-## Entradas oficiais
-
-| Arquivo | Quando usar |
+| Entrada | Uso |
 | --- | --- |
-| **instalar_yuna.bat** | Instalação assistida com diagnóstico, escolha de modelo e criação opcional de atalho |
-| **diagnosticar_yuna.bat** | Diagnóstico somente leitura, sem baixar nada |
-| **iniciar_yuna.bat** | **Padrão:** janela de conversa, biblioteca de documentos, voz e avatar 2D opcional |
-| **iniciar_yuna_mascote.bat** | Interface flutuante legada com funcionalidades específicas (diário, criação de arquivos, iniciativas e provedores opcionais) |
-| **iniciar_yuna_terminal.bat** | Modo de texto para diagnóstico, especialmente quando a interface gráfica falhar |
+| **Yuna.app / Yuna.exe** | Aplicativo instalado, chat e Central |
+| **Yuna.bat** | Única entrada da cópia do código-fonte |
+| **••• → Central da Yuna** | Recursos, permissões, preparação e ferramentas avançadas |
 
-O desenho **yuna_avatar.py** é um componente da interface principal: não é uma janela independente de conversa. Os modos acima compartilham módulos e dados; **não remova yuna_overlay.py, yuna.py ou os módulos de apoio** ao atualizar.
-
-Para mudar de modelo de texto, use uma variável de ambiente **YUNA_MODEL** e tenha o modelo instalado no Ollama. Um modelo 7B é opcional e consome mais RAM; não faz parte do requisito da Yuna.
+Os módulos Python são componentes compartilhados; não remova `yuna.py`,
+`yuna_overlay.py` ou outros módulos para reduzir a pasta. A variável opcional
+`YUNA_MODEL` continua tendo prioridade sobre a escolha feita na Central.
 
 ## Conversa, comandos e memórias
 
@@ -262,7 +262,7 @@ Atalhos úteis para terminal e diagnóstico:
 | **/ajuda** | Lista comandos disponíveis |
 | **/autoteste** | Testa os módulos instalados de linguagem e intenções |
 | **/laboratorio ARQUIVO \| OBJETIVO** | Gera código e testes em cópia; execução isolada exige Docker |
-| **/melhorias** | Mostra propostas e aplicações; revisar e restaurar em `revisar_melhorias_yuna.bat` |
+| **/melhorias** | Mostra propostas e aplicações; revisar e restaurar em `Central da Yuna → Avançado → Revisar ou restaurar melhorias` |
 | **/tarefas PEDIDO** | Executa até cinco etapas explícitas em sequência |
 | **/desempenho rapido**, **/desempenho equilibrado** | Ajusta tamanho das respostas e permanência do modelo em RAM |
 | **/web ASSUNTO**, **/pesquisar ASSUNTO** | Abre Google ou consulta Wikipédia com fontes |
@@ -418,10 +418,10 @@ próprio no VRoid Studio e exporte `yuna.vrm`:
 2. Na pasta `avatar3d/`, execute `npm install` uma vez.
 3. Coloque seu arquivo `yuna.vrm` em `avatar3d/public/yuna.vrm`
    para carregamento automático; ou importe o VRM manualmente pelo botão.
-4. Na raiz, execute `iniciar_yuna_3d.bat`. Abra
+4. Na raiz, execute `Central da Yuna → Minha Yuna → Abrir avatar 3D`. Abra
    `http://127.0.0.1:5173` no navegador.
 5. Se quiser sincronizar voz e expressões, abra também
-   `iniciar_yuna.bat` e clique **Conectar Yuna 3D**.
+   `Yuna.bat` e clique **Conectar Yuna 3D**.
 
 A ponte usa localhost, token temporário e envia apenas estado e amplitude
 da fala, nunca áudio bruto ou conversas. A boca acompanha reprodução
@@ -498,7 +498,7 @@ py -3 -m pip install -r requirements-mascote.txt
 py -3 -m unittest discover -s tests -v
 ~~~
 
-Se **py** não for reconhecido, instale o Python com **Python Launcher**; não execute o instalador de dependências a partir de **C:\Windows\System32**. Se o menu não iniciar, confira **data/yuna_startup_error.txt**. Se o Ollama recusar conexão, verifique o serviço local e o modelo instalado. Se o avatar aparecer sem janela de conversa, execute **iniciar_yuna.bat**, não somente o módulo do avatar.
+Se **py** não for reconhecido, instale o Python com **Python Launcher**; não execute o instalador de dependências a partir de **C:\Windows\System32**. Se o menu não iniciar, confira **data/yuna_startup_error.txt**. Se o Ollama recusar conexão, verifique o serviço local e o modelo instalado. Se o avatar aparecer sem janela de conversa, execute **Yuna.bat**, não somente o módulo do avatar.
 
 Os testes são executados no GitHub Actions com interface Qt offscreen. Eles não substituem o teste de áudio, placas de som, microfone e animações no Windows físico.
 

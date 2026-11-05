@@ -50,7 +50,7 @@
       $('learningOwner').textContent=owner?'Responsável desta instalação: '+owner.name+'. Ele poderá revisar apenas o texto que você compartilhar abaixo.':'Nenhum responsável configurado. Seus aprendizados pessoais continuam locais.';
       $('learningConsentLabel').textContent=owner?'Autorizo compartilhar este texto com '+owner.name+' para revisão e possível uso como referência geral nesta instalação.':'Configure o responsável antes de compartilhar.';
       controls();
-    }catch(error){$('learningOwner').textContent='Gestão local indisponível. Mantenha iniciar_yuna_web.bat aberto.';}
+    }catch(error){$('learningOwner').textContent='Gestão local indisponível. Mantenha Central da Yuna → Minha Yuna → Conversar no navegador aberto.';}
   }
   start();
 })();

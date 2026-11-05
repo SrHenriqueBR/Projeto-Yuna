@@ -21,7 +21,7 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          foreach ($script in @("instalar_yuna.ps1", "configurar_yuna_app.ps1", "wake_schedule.ps1")) {
+          foreach ($script in @("scripts/iniciar.ps1", "scripts/atalhos.ps1", "packaging/test_install.ps1", "wake_schedule.ps1")) {
             $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $script), [ref]$tokens, [ref]$errors)
             if ($errors.Count -gt 0) {
               $errors | ForEach-Object { Write-Error $_.Message }

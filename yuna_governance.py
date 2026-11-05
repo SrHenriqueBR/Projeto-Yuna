@@ -198,7 +198,7 @@ def main():
     except ValueError as error:
         print(error)
         return 1
-    print('Painel local configurado. Abra iniciar_yuna_web.bat e acesse /yuna-gestao.html.')
+    print('Painel local configurado. Abra Central da Yuna → Minha Yuna → Conversar no navegador e acesse /yuna-gestao.html.')
     print('Isso não configura acesso remoto nem coleta câmeras, tela ou conversas.')
     return 0
 

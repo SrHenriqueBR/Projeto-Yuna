@@ -19,9 +19,9 @@ um gerador de personagens realistas nem contratar uma API paga.
 5. Para que o avatar seja carregado automaticamente na inicialização,
    feche a prévia, crie a pasta **avatar3d/public** (se necessário),
    coloque uma cópia do seu **yuna.vrm** lá e abra novamente o
-   `iniciar_yuna_3d.bat`. O servidor Vite local serve somente esse
+   `Central da Yuna → Minha Yuna → Abrir avatar 3D`. O servidor Vite local serve somente esse
    arquivo para sua própria prévia; não buscamos modelos na nuvem.
-6. Abra o aplicativo desktop com `iniciar_yuna.bat` e clique
+6. Abra o aplicativo desktop com `Yuna.bat` e clique
    **Conectar Yuna 3D** para sincronizar fala e gestos. A conexão
    permanece opcional e local.
 
@@ -98,3 +98,4 @@ Esses recursos exigem desenvolvimento e testes adicionais.
 
 O VRoid Studio é gratuito, mas itens customizados podem ter licenças
 próprias. Não baixe ou redistribua modelos alheios sem permissão.
+

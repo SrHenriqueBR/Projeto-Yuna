@@ -27,6 +27,18 @@ def show_startup_error(message):
 
 def run():
     try:
+        from app_maintenance import retire_legacy_launchers
+        try:
+            retire_legacy_launchers(Path(__file__).resolve().parent)
+        except OSError:
+            pass  # Pasta protegida: abrir continua possível; nenhum arquivo arbitrário é removido.
+        if "--tool" in sys.argv:
+            from app_tools import TOOLS, launch_tool
+            index = sys.argv.index("--tool")
+            if index + 1 >= len(sys.argv) or sys.argv[index + 1] not in TOOLS:
+                raise ValueError("Ferramenta inválida. Abra a Central da Yuna.")
+            launch_tool(Path(__file__).resolve().parent, sys.argv[index + 1])
+            return 0
         from yuna_desktop import main
         return main()
     except Exception as exc:
@@ -39,9 +51,11 @@ def run():
             )
         except OSError:
             pass
-        show_startup_error(type(exc).__name__ + ": " + str(exc))
+        if "--smoke-test" not in sys.argv:
+            show_startup_error(type(exc).__name__ + ": " + str(exc))
         return 1
 
 
 if __name__ == "__main__":
     raise SystemExit(run())
+

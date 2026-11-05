@@ -1,33 +1,38 @@
 # Yuna.app no Windows
 
-## Atualizar e abrir
+## Instalar, atualizar e abrir
 
-1. Na Yuna antiga, escolha **Sair da Yuna** no menu da bandeja. Antes desta atualização, fechar a janela já encerrava o programa.
-2. Baixe o ZIP atual do repositório e extraia. Preserve a pasta **`data`** da sua instalação: ela contém conversas, preferências e conhecimentos. Atualize todos os arquivos do projeto, inclusive os novos `.py`, `.ps1` e `.bat`.
-3. Abra **`configurar_yuna_app.bat`**. Ele cria **Yuna.app** na Área de Trabalho e no menu Iniciar. Você pode escolher iniciar junto com o Windows, somente na sua conta.
-4. Abra **Yuna.app** ou **`iniciar_yuna.bat`**. O chat compacto usa o mesmo Ollama e banco da janela completa. O botão **↗** abre a interface completa.
+1. Na versão antiga, escolha **Sair da Yuna** e faça backup privado da pasta `data`.
+2. Baixe **Yuna-Setup.exe** em [Releases](https://github.com/SrHenriqueBR/Projeto-Yuna/releases/latest).
+3. Instale na sua conta do Windows. Se desejar importar memórias, selecione a pasta
+   anterior que contém `data`. A origem é preservada; dados existentes no destino
+   não são sobrescritos. Atualização e desinstalação também preservam dados pessoais.
+4. Abra **Yuna.app** pelo atalho e use **••• → Central da Yuna** para recursos,
+   permissões e preparação. **↗** continua abrindo a janela completa.
 
-Se faltarem as bibliotecas da interface, use `instalar_yuna.bat`. O Ollama e o modelo de conversa já precisam estar instalados/abertos para respostas livres. Saudações e comandos implementados não precisam de uma resposta do modelo.
+O instalador inclui o runtime privado, interface, documentos, bibliotecas de voz
+local e renderizador 3D. Não requer Python ou Node.js instalados separadamente.
+Ollama e modelos são separados: em **Central → Preparação**, instale/abra o Ollama
+pelo endereço oficial, verifique a instalação e prepare o modelo escolhido.
 
-**Yuna.app é o nome da janela, da bandeja e dos atalhos.** Esta distribuição continua sendo Python: o Gerenciador de Tarefas pode mostrar `pythonw.exe`, não um executável independente chamado Yuna.app. O atalho aponta para a pasta extraída; configure novamente se mover essa pasta.
+Para executar o código-fonte existe uma única entrada, **Yuna.bat**. Ela cria um
+ambiente `.venv` na pasta após confirmação. Inicializadores antigos remanescentes
+são movidos para `data/inicializadores-antigos`. [Guia completo](INSTALACAO_WINDOWS.md).
 
 ## Segundo plano e chat compacto
 
 - Fechar a janela recolhe a Yuna para a bandeja, quando ela estiver disponível. Clique no ícone **Y** para recuperar o chat; **Sair da Yuna** encerra o processo. Sem bandeja disponível, a janela completa continua como acesso ao aplicativo.
-- `iniciar_yuna_segundo_plano.bat` abre na bandeja. Abrir outra vez ativa a instância existente da mesma conta.
+- `Central da Yuna → Minha Yuna → Recolher para segundo plano` abre na bandeja. Abrir outra vez ativa a instância existente da mesma conta.
 - O chat aparece quando o Windows/Qt informa ausência de entrada ou saída de áudio, quando faltam as dependências de voz, ou quando a captura/reprodução falha. Alto-falantes também contam como saída; não é obrigatório usar fone. Nem todo botão físico de mute ou dispositivo silenciado pode ser detectado.
 - Mensagens novas aparecem ao final da conversa, com rolagem automática. As respostas usam a voz selecionada na janela completa; a voz Windows local continua como padrão.
 - As animações do painel completo pausam enquanto ele está escondido. O modo residente não fica enviando perguntas ao modelo sem uma mensagem sua. A escuta opcional consome CPU e RAM enquanto estiver ativa.
 
-Para remover a inicialização automática, execute no PowerShell, na pasta do projeto:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\configurar_yuna_app.ps1 -RemoverInicializacao
-```
+Em **Central → Preparação**, escolha **Iniciar com Windows** ou **Não iniciar com
+Windows**. Os atalhos valem somente para a conta atual.
 
 ## Voz e chamados
 
-Use **`instalar_voz_yuna.bat`** para instalar `sounddevice` e `faster-whisper`. No menu **•••**, marque **Escutar “Olá Yuna” nesta sessão**. A primeira ativação pode baixar o modelo Whisper `base`; a transcrição é local, sem chave de API ou serviço pago. Não guarda gravações.
+O instalador já inclui as bibliotecas de voz local. Na cópia do código-fonte, `Yuna.bat` prepara essas bibliotecas. No menu **•••**, marque **Escutar “Olá Yuna” nesta sessão**. A primeira ativação pode baixar o modelo Whisper `base`; a transcrição é local, sem chave de API ou serviço pago. Não guarda gravações.
 
 Esse modo precisa ser ativado novamente ao iniciar a Yuna. O indicador mostra quando o microfone está ativo. Diga a chamada e o pedido juntos, com uma breve pausa entre pedidos. A captura usa blocos curtos: ruído, frases cortadas entre blocos e potência do computador podem afetar a compreensão.
 

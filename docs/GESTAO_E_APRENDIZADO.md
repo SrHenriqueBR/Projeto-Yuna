@@ -13,9 +13,9 @@
 ## Configurar seu painel
 
 1. Atualize o projeto completo, preservando a pasta `data`.
-2. No computador que você administra, execute `configurar_gestao_yuna.bat`.
+2. No computador que você administra, execute `Central da Yuna → Avançado → Configurar gestão local`.
 3. Informe o nome visível do responsável e crie uma senha de pelo menos 12 caracteres. A senha é digitada sem aparecer no terminal e armazenada como hash com sal.
-4. Abra `iniciar_yuna_web.bat` e acesse `http://127.0.0.1:8787/yuna-gestao.html`.
+4. Abra `Central da Yuna → Minha Yuna → Conversar no navegador` e acesse `http://127.0.0.1:8787/yuna-gestao.html`.
 5. Entre com a senha configurada. Escrever um nome, um código público ou dizer “sou o criador” no chat não concede acesso.
 
 A configuração inicial só existe no terminal; não há cadastro de proprietário pela página pública. As sessões do painel expiram em 30 minutos e são invalidadas ao reiniciar o servidor. Use **Sair** para encerrar a sessão. Não há recuperação ou troca de senha pela web nesta etapa.

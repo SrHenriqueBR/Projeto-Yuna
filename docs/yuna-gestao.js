@@ -61,13 +61,13 @@
   $('refreshManager').addEventListener('click',async()=>{if(busy)return;try{await refresh();message.textContent='Painel atualizado.';}catch(error){message.textContent=error.message;if(error.status===401)signedOut();}});
   $('ownerLogout').addEventListener('click',async()=>{if(busy)return;try{await api('/api/admin/logout',{});signedOut();message.textContent='Sessão encerrada.';}catch(error){message.textContent=error.message;}});
   async function start() {
-    if(!local){$('managerSetup').textContent='Prévia do painel. Para gerenciar, abra iniciar_yuna_web.bat e entre pelo endereço local.';return;}
+    if(!local){$('managerSetup').textContent='Prévia do painel. Para gerenciar, abra Central da Yuna → Minha Yuna → Conversar no navegador e entre pelo endereço local.';return;}
     try {
       const state=await api('/api/governance');token=state.token;
-      $('managerSetup').textContent=state.owner?'Responsável configurado: '+state.owner.name:'Configure primeiro o responsável pelo configurar_gestao_yuna.bat.';
+      $('managerSetup').textContent=state.owner?'Responsável configurado: '+state.owner.name:'Configure primeiro o responsável pelo Central da Yuna → Avançado → Configurar gestão local.';
       password.disabled=!state.owner;$('ownerLogin').disabled=!state.owner;
       if(state.owner)try{await refresh();}catch(error){if(error.status!==401)throw error;}
-    }catch(error){message.textContent='Não consegui abrir a gestão local. Mantenha iniciar_yuna_web.bat aberto.';}
+    }catch(error){message.textContent='Não consegui abrir a gestão local. Mantenha Central da Yuna → Minha Yuna → Conversar no navegador aberto.';}
   }
   start();
 })();

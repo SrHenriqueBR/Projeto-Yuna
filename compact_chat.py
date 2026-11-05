@@ -229,12 +229,14 @@ class CompanionController(QObject):
         self.game_pending = False
         self.shutdown = ShutdownCountdown()
         self.audio_missing = None
+        self.center = None
         self.plugs = PlugMonitor(self)
         self.plugs.notice.connect(self.connection_notice)
         self.plugs.power_changed.connect(window.poll_battery)
         self.panel = CompactChat(self)
         self.panel.submitted.connect(self.submit)
         self.menu = QMenu(self.panel)
+        self.menu.addAction("Central da Yuna…", self.show_center)
         self.menu.addAction("Abrir chat compacto", self.show_compact)
         self.menu.addAction("Abrir janela completa", self.show_full)
         self.wake_action = QAction('Escutar “Olá Yuna” nesta sessão', self.menu)
@@ -289,6 +291,17 @@ class CompanionController(QObject):
         else:
             self.show_full()
         self.check_audio()
+
+    def show_center(self):
+        if self.closing:
+            return
+        if self.center is None:
+            from app_center import YunaCenter
+            from yuna import ROOT
+            self.center = YunaCenter(self, ROOT)
+        self.center.show()
+        self.center.raise_()
+        self.center.activateWindow()
 
     def toggle_plugs(self, enabled):
         if enabled and not self.closing and sys.platform == "win32":
@@ -467,7 +480,7 @@ class CompanionController(QObject):
         if not enabled:
             return
         if not all(importlib.util.find_spec(name) for name in ("sounddevice", "faster_whisper")):
-            QMessageBox.information(self.panel, "Voz local", "Instale requirements-voz.txt pelo instalar_voz_yuna.bat. O chat por texto continua disponível.")
+            QMessageBox.information(self.panel, "Voz local", "Prepare a cópia pelo Yuna.bat ou use Central da Yuna → Preparação → Atualizar ou reparar o app. O chat por texto continua disponível.")
             self.wake_action.setChecked(False)
             return
         answer = QMessageBox.question(self.panel, "Escuta local nesta sessão",
@@ -584,6 +597,9 @@ class CompanionController(QObject):
 
     def cleanup(self):
         self.closing = True
+        if self.center is not None:
+            self.center.hide()
+            self.center.sync.stop()
         self.plugs.stop()
         self.stop()
         self.timer.stop()

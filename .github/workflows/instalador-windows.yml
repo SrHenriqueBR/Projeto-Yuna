@@ -1,0 +1,84 @@
+name: Instalador Windows da Yuna
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'packaging/**'
+      - 'app_*.py'
+      - 'scripts/**'
+      - 'self_model.py'
+      - 'yuna_launcher.py'
+      - 'requirements-*.txt'
+      - '.github/workflows/instalador-windows.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: instalador-windows
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14.10'
+          architecture: 'x64'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compilar renderizador 3D incluido
+        working-directory: avatar3d
+        run: |
+          npm install --ignore-scripts
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Montar ambiente privado e aplicativo
+        run: python packaging/build_windows.py
+      - name: Testar com o runtime distribuido
+        env:
+          QT_QPA_PLATFORM: offscreen
+          YUNA_PERFIL: leve
+          PYTHONFAULTHANDLER: '1'
+        run: .\build\Yuna\runtime\python.exe -X utf8 -m unittest discover -s tests -v
+      - name: Compilar instalador
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw 'Inno Setup 6 nao foi localizado no runner.' }
+          $version = python -c 'from self_model import VERSION; print(VERSION)'
+          & $iscc "/DYunaVersion=$version" packaging/yuna.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Testar instalacao e preservacao de memorias
+        run: .\packaging\test_install.ps1
+      - name: Calcular integridade do instalador
+        run: |
+          $hash = (Get-FileHash dist/Yuna-Setup.exe -Algorithm SHA256).Hash.ToLower()
+          Set-Content -Path dist/SHA256SUMS.txt -Value "$hash  Yuna-Setup.exe" -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Yuna-Windows
+          path: dist/*
+          retention-days: 30
+      - name: Publicar versao testada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = python -c 'from self_model import VERSION; print(VERSION)'
+          $tag = "v$version"
+          gh release view $tag --json tagName *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host 'A versao ja esta publicada; artefato disponivel neste workflow. Altere VERSION para uma nova release.'
+            exit 0
+          }
+          gh release create $tag dist/Yuna-Setup.exe dist/SHA256SUMS.txt --target $env:GITHUB_SHA --title "Yuna $version para Windows" --notes-file packaging/RELEASE.md
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

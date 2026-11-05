@@ -4,6 +4,8 @@ __pycache__/
 .venv/
 .env
 .env.*
+build/
+dist/
 
 # Renderer VRM opcional (Node, modelo do usuario)
 avatar3d/node_modules/
