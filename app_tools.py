@@ -7,7 +7,7 @@ import subprocess
 import sys
 import urllib.request
 
-from model_config import load_selected_model, save_selected_model
+from model_config import INSTALLER_MODELS, load_selected_model, save_selected_model
 
 TOOLS = {
     "terminal": ("Conversa no terminal", "yuna.py", ()),
@@ -61,6 +61,8 @@ def installation_status(root):
     lines.append("Voz local: " + ("pronta" if voice else "bibliotecas ausentes; prepare pelo Yuna.bat ou reinstale o app"))
     lines.append("Avatar 3D: " + ("pronto" if (root / "avatar3d/dist/index.html").is_file()
                                  else "disponível no instalador; no código-fonte requer compilação"))
+    lines.append("Qwen3.5: execução LOCAL pelo Ollama; não utiliza conta ou chave da API Qwen.")
+    lines.append("Troca de modelo: somente após confirmar download na Central. Memórias preservadas.")
     try:
         with local_api("/api/tags") as response:
             models = json.loads(response.read(1024 * 1024)).get("models", [])
@@ -73,8 +75,8 @@ def installation_status(root):
 
 
 def prepare_model(root, model, progress=lambda text: None):
-    if model not in ("qwen2.5:1.5b", "qwen2.5:3b"):
-        raise ValueError("Modelo não suportado pela Central.")
+    if model not in INSTALLER_MODELS:
+        raise ValueError("Modelo não suportado pela Central ou requer serviço externo.")
     progress("Preparando " + model + " pelo Ollama local…")
     done = False
     with local_api("/api/pull", {"model": model, "stream": True}, timeout=300) as response:
