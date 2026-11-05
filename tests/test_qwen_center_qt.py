@@ -33,7 +33,7 @@ class QwenCenterQtTests(unittest.TestCase):
         class DummyController:
             window = DummyWindow()
             wake_action = QCheckBox()
-            usb_action = QCheckBox()
+            plug_action = QCheckBox()
             plug_voice = QCheckBox()
             show_compact = staticmethod(lambda: None)
             show_full = staticmethod(lambda: None)
