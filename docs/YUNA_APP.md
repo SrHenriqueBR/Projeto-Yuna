@@ -23,10 +23,44 @@ Para executar o código-fonte existe uma única entrada, **Yuna.bat**. Ela cria 
 ambiente `.venv` na pasta após confirmação. Inicializadores antigos remanescentes
 são movidos para `data/inicializadores-antigos`. [Guia completo](INSTALACAO_WINDOWS.md).
 
-## Segundo plano e chat compacto
+## Bandeja do sistema, economia e acompanhamento (0.53.0)
 
-- Fechar a janela recolhe a Yuna para a bandeja, quando ela estiver disponível. Clique no ícone **Y** para recuperar o chat; **Sair da Yuna** encerra o processo. Sem bandeja disponível, a janela completa continua como acesso ao aplicativo.
-- `Central da Yuna → Minha Yuna → Recolher para segundo plano` abre na bandeja. Abrir outra vez ativa a instância existente da mesma conta.
+A Yuna mantém **uma única instância** em execução. No Windows, clique na seta
+de ícones ocultos perto do relógio se não encontrar o **Y** com pontinho
+de status. **Clique esquerdo** abre o chat compacto; **clique direito**
+mostra o menu. A Central também permite trocar os modos em **Minha Yuna**.
+
+| Menu | CPU e verificações | O que fica autorizado |
+| --- | --- | --- |
+| **Ativa** (roxo) | Timer de interface de 200 ms; bateria a cada 90 s | Conversa, verificações USB/energia se permitidas, escuta só se você a ligar |
+| **Econômica** (cinza) | Timer de 1200 ms; bateria a cada 5 min; USB e avatar 3D em pausa | Chat por texto sob demanda; microfone contínuo desativado |
+| **Acompanhamento leve** (verde) | Timer de 1000 ms; bateria a cada 3 min; eventos USB/energia autorizados | Avisos curtos de conexão e energia, sem câmera, escuta ou LLM automáticos |
+| **Pausada** (âmbar) | Sem bateria, USB, voz contínua nem heartbeat opcional; cancela tarefas pendentes | Abrir o chat para retomar o modo ativo |
+| **Escuta autorizada** (pontinho azul) | Recurso opcional, usa CPU e RAM | Só após consentimento nesta sessão e no modo Ativa |
+| **Sair da Yuna** | Processo encerrado | Não acompanha nada até iniciar novamente |
+
+- **Fechar a janela** recolhe para o ícone e entra em **Modo econômico**,
+  salvo se você escolheu **Acompanhamento leve** (esse modo permanece ativo).
+  A janela só é encerrada com **Sair da Yuna** ou quando não há bandeja disponível.
+- **Acompanhamento leve** é uma autorização explícita para perceber
+  somente **USB, USB-C quando informado pelo driver, alimentação e bateria
+  deste PC**. Não inicia câmera, microfone, análise contínua de documentos,
+  scanner de arquivos ou perguntas automáticas ao Ollama. As notificações
+  de USB/energia não são salvas como memória da IA.
+- **Pausar Yuna** solicita interrupção de ações, jogos, áudio e
+  permissões de captura temporárias. Uma operação de sistema que já tenha
+  começado pode não ser interrompida instantaneamente. Clicar no ícone
+  para abrir o chat retoma a Yuna como Ativa.
+- **Economia não encerra o Ollama**, pois é um processo separado:
+  a memória RAM/VRAM usada por um modelo local pode continuar ocupada.
+  O avatar 2D visível e as pontes opcionais 3D são recolhidos/desconectados
+  para poupar recursos. Reative-os manualmente se desejar.
+- O pontinho no ícone mostra o modo; ele **não indica conexão à internet**.
+
+### Chat compacto e voz
+
+- `Central da Yuna → Minha Yuna → Recolher para segundo plano` abre na
+  bandeja. Abrir outra vez ativa a instância existente da mesma conta.
 - O chat aparece quando o Windows/Qt informa ausência de entrada ou saída de áudio, quando faltam as dependências de voz, ou quando a captura/reprodução falha. Alto-falantes também contam como saída; não é obrigatório usar fone. Nem todo botão físico de mute ou dispositivo silenciado pode ser detectado.
 - Mensagens novas aparecem ao final da conversa, com rolagem automática. As respostas usam a voz selecionada na janela completa; a voz Windows local continua como padrão.
 - As animações do painel completo pausam enquanto ele está escondido. O modo residente não fica enviando perguntas ao modelo sem uma mensagem sua. A escuta opcional consome CPU e RAM enquanto estiver ativa.
