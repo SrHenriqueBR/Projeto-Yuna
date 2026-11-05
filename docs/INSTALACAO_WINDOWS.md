@@ -130,9 +130,10 @@ chat compacto ou direito para abrir o menu de estados:
 Fechar a janela normalmente entra em modo econômico em vez de
 encerrar a Yuna. Clique em **Sair da Yuna** para desligar o processo.
 
-O acompanhamento leve observa apenas USB/energia e bateria locais,
-mediante seleção explícita. Escuta e câmera não são ativadas por esse
-modo. [Controle e detalhes](YUNA_APP.md).
+O acompanhamento leve observa USB/energia, bateria e uso agregado de
+RAM/espaço livre em disco locais, mediante seleção explícita. Alertas
+de recursos só aparecem quando os limites altos persistem e não são
+enviados à IA. Escuta e câmera não são ativadas por esse modo. [Controle e detalhes](YUNA_APP.md).
 
 ## Problemas frequentes
 
