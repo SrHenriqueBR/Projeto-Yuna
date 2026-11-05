@@ -1,4 +1,4 @@
-"""Yuna 0.53.0: identidade verificável e planejamento local, sem execução autônoma.
+"""Yuna 0.54.0: identidade verificável e planejamento local, sem execução autônoma.
 
 A IA não vê seu próprio código-fonte por introspecção do modelo. Esta descrição
 representa as capacidades IMPLEMENTADAS e é atualizada por quem mantém o projeto.
