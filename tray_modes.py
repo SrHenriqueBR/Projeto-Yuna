@@ -26,7 +26,7 @@ MODES = {
         "#8d94a5", 1200, 300_000, False, False),
     "acompanhamento": TrayPolicy(
         "acompanhamento", "Acompanhamento leve",
-        "Avisos autorizados de USB/energia • sem câmera, microfone ou IA automática",
+        "USB, energia, bateria e RAM/disco • sem câmera, microfone ou IA",
         "#6ccbb8", 1000, 180_000, True, False),
     "pausada": TrayPolicy(
         "pausada", "Pausada", "Sem escuta, observação ou tarefas em andamento",
