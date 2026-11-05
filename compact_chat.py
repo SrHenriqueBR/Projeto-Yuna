@@ -233,6 +233,7 @@ class CompanionController(QObject):
         self._background_start = False
         self.wake = None
         self.wake_generation = 0
+        self._wake_live = False
         self.wake_paused = Event()
         self.game_stop = Event()
         self.game_generation = 0
@@ -313,7 +314,8 @@ class CompanionController(QObject):
     def _update_tray_indicator(self):
         """Apenas informações locais; não consulta serviços nem faz inferência."""
         plugged = bool(self.plugs.active)
-        listening = bool(self.wake_action.isChecked() and self.mode == "ativa")
+        listening = bool(self._wake_live and self.wake_action.isChecked()
+                         and self.mode == "ativa")
         self.tray.setIcon(app_icon(self.mode, microphone=listening))
         self.tray.setToolTip(mode_tooltip(
             self.mode, microphone=listening, usb=plugged))
@@ -598,6 +600,7 @@ class CompanionController(QObject):
             return
         if self.wake is not None:
             self.wake.stop()
+        self._wake_live = False
         self.panel.listening.setText("Microfone contínuo desligado")
         self._update_tray_indicator()
         if not enabled:
@@ -625,6 +628,7 @@ class CompanionController(QObject):
 
     def _wake_ready(self, generation):
         if generation == self.wake_generation and not self.closing:
+            self._wake_live = True
             self.panel.listening.setText('● Microfone ativo • diga “Olá Yuna”')
             self._update_tray_indicator()
 
