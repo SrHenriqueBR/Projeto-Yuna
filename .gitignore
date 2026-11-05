@@ -24,3 +24,27 @@ unreal/**/*.suo
 unreal/**/*.vrm
 unreal/**/Plugins/VRM4U/
 unreal/YunaUnreal/Content/UserAvatars/
+
+# Arquivos locais gerados por editores, testes e diagnósticos
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+*.log
+*.tmp
+*.bak
+
+# Bancos SQLite pessoais fora da pasta data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Artefatos locais do Windows / macOS
+Thumbs.db
+Desktop.ini
+.DS_Store
