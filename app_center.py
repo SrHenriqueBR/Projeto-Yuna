@@ -5,7 +5,7 @@ from threading import Thread
 from PySide6.QtCore import Qt, Signal, QUrl, QTimer
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (QCheckBox, QDialog, QHBoxLayout, QLabel,
-    QMessageBox, QPushButton, QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
+    QMessageBox, QPushButton, QScrollArea, QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
 
 from app_tools import (TOOLS, RELEASE_URL, configure_shortcuts, installation_status,
                        launch_tool, prepare_model)
@@ -45,7 +45,12 @@ class YunaCenter(QDialog):
         layout.addWidget(QLabel("Conversa, recursos e configurações em um só lugar."))
         tabs = QTabWidget()
         layout.addWidget(tabs)
-        home, permissions, maintenance, advanced = [QWidget() for _ in range(4)]
+        home, permissions, advanced = [QWidget() for _ in range(3)]
+        maintenance = QScrollArea()
+        maintenance.setWidgetResizable(True)
+        maintenance.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        maintenance_content = QWidget()
+        maintenance.setWidget(maintenance_content)
         for page, label in zip((home, permissions, maintenance, advanced),
                                ("Minha Yuna", "Permissões", "Preparação", "Avançado")):
             tabs.addTab(page, label)
@@ -71,7 +76,7 @@ class YunaCenter(QDialog):
         note.setWordWrap(True)
         box.addWidget(note)
         box.addStretch()
-        box = QVBoxLayout(maintenance)
+        box = QVBoxLayout(maintenance_content)
         self.button(box, "Verificar instalação e Ollama", lambda: self.job(lambda: installation_status(self.root)))
         model_note = QLabel(
             "✦ Qwen3.5 GRATUITO • modelos instalados no seu computador via Ollama. "
