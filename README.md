@@ -86,10 +86,11 @@ No modo econômico a CPU pode ser poupada por menos verificações
 (200 ms → 1200 ms no timer de interface; bateria 90 s → 5 min),
 mas o **Ollama é um processo separado** e pode continuar com um
 modelo carregado na memória. A Yuna não encerra o Ollama
-silenciosamente. No modo acompanhamento, USB/energia usa avisos
-do Windows com consulta de segurança; a bateria é verificada a cada
-3 minutos. Não existe diagnóstico permanente do sistema, leitura
-oculta de tela, câmera ou envio de dados. [Guia e permissões](docs/YUNA_APP.md).
+silenciosamente. No modo acompanhamento, USB/energia usa eventos do Windows com consulta
+de confirmação; a bateria é verificada a cada 3 minutos, e RAM/espaço
+livre do disco a cada 5 minutos. A Yuna oferece orientações com avisos
+limitados por intervalo, sem acessar nomes de processos ou arquivos.
+Não existe leitura oculta de tela, câmera ou envio desses dados. [Guia e permissões](docs/YUNA_APP.md).
 
 ## IA gratuita: Qwen3.5 pelo Ollama local
 
