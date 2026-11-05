@@ -62,6 +62,8 @@ class TrayControllerTests(unittest.TestCase):
             self.assertEqual(self.ctrl.timer.interval(), 1000)
             self.assertEqual(self.window.battery_timer.interval(), 180000)
             self.assertFalse(self.window.unreal_heartbeat.isActive())
+            self.assertTrue(self.ctrl.health_timer.isActive())
+            self.assertEqual(self.ctrl.health_timer.interval(), 300000)
             camera.assert_not_called()
             llm.assert_not_called()
             prompt.assert_not_called()
@@ -73,6 +75,7 @@ class TrayControllerTests(unittest.TestCase):
             halt.assert_called_once()
         self.assertEqual(self.ctrl.mode, "pausada")
         self.assertFalse(self.window.battery_timer.isActive())
+        self.assertFalse(self.ctrl.health_timer.isActive())
         self.assertFalse(self.window.unreal_heartbeat.isActive())
         self.assertFalse(self.ctrl.plugs.active)
         self.assertFalse(self.ctrl.wake_action.isChecked())
@@ -91,6 +94,27 @@ class TrayControllerTests(unittest.TestCase):
         self.ctrl.on_recolher()
         self.assertEqual(self.ctrl.mode, "acompanhamento")
         self.ctrl.tray_available = False
+
+    def test_health_monitor_reads_only_in_opt_in_mode(self):
+        from health_watch import HealthReading
+        self.ctrl.tray_available = False
+        with patch("compact_chat.read_health",
+                   return_value=HealthReading(96, 33, 30)) as read, patch.object(
+                self.window, "add_message") as chat, patch.object(
+                self.window.worker, "submit") as model:
+            self.ctrl._health_tick()
+            read.assert_not_called()
+            self.ctrl.set_mode("acompanhamento")
+            self.ctrl._health_tick()
+            self.ctrl._health_tick()
+            self.assertEqual(read.call_count, 2)
+            chat.assert_called_once()
+            self.assertIn("RAM", chat.call_args.args[1])
+            model.assert_not_called()
+            self.ctrl.set_mode("economica")
+            self.ctrl._health_tick()
+            self.assertEqual(read.call_count, 2)
+            self.assertFalse(self.ctrl.health_timer.isActive())
 
     def test_no_toast_or_model_when_economy_or_paused(self):
         for mode in ("economica", "pausada"):
