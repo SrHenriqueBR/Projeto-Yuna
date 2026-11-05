@@ -45,7 +45,12 @@ class YunaCenter(QDialog):
         layout.addWidget(QLabel("Conversa, recursos e configurações em um só lugar."))
         tabs = QTabWidget()
         layout.addWidget(tabs)
-        home, permissions, advanced = [QWidget() for _ in range(3)]
+        permissions, advanced = [QWidget() for _ in range(2)]
+        home = QScrollArea()
+        home.setWidgetResizable(True)
+        home.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        home_content = QWidget()
+        home.setWidget(home_content)
         maintenance = QScrollArea()
         maintenance.setWidgetResizable(True)
         maintenance.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -54,13 +59,26 @@ class YunaCenter(QDialog):
         for page, label in zip((home, permissions, maintenance, advanced),
                                ("Minha Yuna", "Permissões", "Preparação", "Avançado")):
             tabs.addTab(page, label)
-        box = QVBoxLayout(home)
+        box = QVBoxLayout(home_content)
         self.button(box, "Conversar no chat compacto", controller.show_compact)
         self.button(box, "Abrir janela completa e documentos", controller.show_full)
         self.button(box, "Mostrar ou esconder a personagem 2D", controller.window.toggle_avatar)
         self.button(box, "Abrir avatar 3D", lambda: self.open_tool("3d"))
         self.button(box, "Conversar no navegador deste computador", lambda: self.open_tool("web"))
         self.button(box, "Recolher para segundo plano", self.hide_companion)
+        modes_title = QLabel("Presença na bandeja • modo de funcionamento")
+        modes_title.setStyleSheet("color:#cbb1ff;font-weight:700;")
+        box.addWidget(modes_title)
+        self.button(box, "● Ativa • conversar", lambda: controller.set_mode("ativa"))
+        self.button(box, "◐ Econômica • reduzir verificações", lambda: controller.set_mode("economica"))
+        self.button(box, "◇ Acompanhamento leve • USB/energia",
+                    lambda: controller.set_mode("acompanhamento"))
+        self.button(box, "Ⅱ Pausar • interromper atividades",
+                    lambda: controller.set_mode("pausada"))
+        mode_note = QLabel("Acompanhamento observa somente USB, energia e bateria "
+            "deste PC. Não habilita câmera, microfone ou consultas automáticas à IA.")
+        mode_note.setWordWrap(True)
+        box.addWidget(mode_note)
         box.addStretch()
         box = QVBoxLayout(permissions)
         text = QLabel("Você controla os recursos. Microfone e câmera pedem autorização nesta sessão.")
@@ -160,6 +178,7 @@ class YunaCenter(QDialog):
             return
         self.controller.panel.hide()
         self.controller.window.hide()
+        self.controller.on_recolher()
         self.hide()
 
     def open_tool(self, name):

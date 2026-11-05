@@ -121,6 +121,20 @@ Na importação, não mesclamos bancos. Se o destino já tem dados, ele permanec
 intacto e o instalador informa que a importação não foi concluída. Avatares pessoais
 fora de `data` continuam na instalação anterior; faça backup deles separadamente.
 
+## Usar a Yuna perto do relógio
+
+Depois de instalar a versão 0.53.0, procure o ícone **Y** na bandeja do
+Windows (seta **˄** ao lado do relógio). Clique esquerdo para abrir o
+chat compacto ou direito para abrir o menu de estados:
+**Ativa**, **Econômica**, **Acompanhamento leve** e **Pausada**.
+Fechar a janela normalmente entra em modo econômico em vez de
+encerrar a Yuna. Clique em **Sair da Yuna** para desligar o processo.
+
+O acompanhamento leve observa USB/energia, bateria e uso agregado de
+RAM/espaço livre em disco locais, mediante seleção explícita. Alertas
+de recursos só aparecem quando os limites altos persistem e não são
+enviados à IA. Escuta e câmera não são ativadas por esse modo. [Controle e detalhes](YUNA_APP.md).
+
 ## Problemas frequentes
 
 | Situação | O que verificar |

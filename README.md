@@ -15,7 +15,7 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.52.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
+> **Versão do código:** 0.53.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
 
 ## A proposta da Yuna
@@ -62,6 +62,36 @@ Ao usar o código-fonte, o renderizador 3D pode precisar de Node.js para compila
 
 **Importante:** não substitua somente um arquivo `.py` de uma versão por outro de versão diferente. Atualize a pasta de código e preserve seus dados pessoais. Para detalhes: [Instalação Windows](docs/INSTALACAO_WINDOWS.md).
 
+## Yuna presente na bandeja do Windows (versão 0.53.0)
+
+Ao abrir a Yuna, um ícone **Y** aparece na área de notificação do Windows,
+perto do relógio (clique na seta **˄** caso esteja oculto). **Clique esquerdo**
+abre o chat compacto; **clique direito** abre a Central, ferramentas
+autorizadas e o menu **Modo de funcionamento**.
+
+| Modo | Comportamento real |
+| --- | --- |
+| **● Ativa** | Conversa normal, voz somente com consentimento; USB/energia se a autorização estiver marcada. |
+| **◐ Econômica** | Continua aberta no ícone e pronta para chat; interrompe escuta contínua, suspende monitor USB, reduz verificações da bateria e interrompe animações opcionais. Fechar a janela muda automaticamente para este modo. |
+| **◇ Acompanhamento leve** | Após seleção explícita, acompanha USB/energia e bateria **deste computador**; verifica RAM e espaço livre em disco a cada 5 minutos e orienta somente se houver pressão persistente. Não ativa microfone, câmera ou IA automática. |
+| **Ⅱ Pausada** | Pede para cancelar tarefas em andamento, escuta e monitoramento; reabrir o chat retoma o modo ativo. |
+| **Sair da Yuna** | Encerra o processo; o ícone desaparece. |
+
+O **pontinho no ícone** indica o estado: roxo = ativa, cinza = economia,
+verde = acompanhamento, âmbar = pausada, azul = escuta autorizada.
+Esses estados indicam atividade **local**, não conexão à internet nem
+monitoramento de outras pessoas.
+
+No modo econômico a CPU pode ser poupada por menos verificações
+(200 ms → 1200 ms no timer de interface; bateria 90 s → 5 min),
+mas o **Ollama é um processo separado** e pode continuar com um
+modelo carregado na memória. A Yuna não encerra o Ollama
+silenciosamente. No modo acompanhamento, USB/energia usa eventos do Windows com consulta
+de confirmação; a bateria é verificada a cada 3 minutos, e RAM/espaço
+livre do disco a cada 5 minutos. A Yuna oferece orientações com avisos
+limitados por intervalo, sem acessar nomes de processos ou arquivos.
+Não existe leitura oculta de tela, câmera ou envio desses dados. [Guia e permissões](docs/YUNA_APP.md).
+
 ## IA gratuita: Qwen3.5 pelo Ollama local
 
 **Esta integração não exige a plataforma comercial Qwen API, cadastro, cartão, tokens de nuvem nem assinatura.** O Ollama executa o modelo no **seu próprio PC**, usando RAM/VRAM. A primeira instalação baixa o arquivo do modelo; pode consumir internet, armazenamento e energia elétrica. Depois de baixado, o texto pode ser processado offline.
@@ -77,7 +107,7 @@ Os tamanhos são do catálogo do Ollama; a **memória necessária durante a exec
 
 **Trocar com segurança:** abra **••• → Central da Yuna → Preparação**, clique no modelo, confirme o download e reinicie a Yuna. O modelo anterior continua selecionado se a transferência falhar. **Não há alteração automática, cobrança após várias conversas ou acesso secreto a APIs pagas.** Suas memórias SQLite não são apagadas.
 
-**API Qwen na nuvem é outra coisa:** é cobrada por tokens consumidos e pode iniciar faturamento após acabar a cota gratuita, se o serviço estiver habilitado para pagamento. **A Yuna 0.52.0 não integra essa API.** Consulte [o guia de modelos locais](docs/MODELOS_LOCAIS.md).
+**API Qwen na nuvem é outra coisa:** é cobrada por tokens consumidos e pode iniciar faturamento após acabar a cota gratuita, se o serviço estiver habilitado para pagamento. **A Yuna 0.53.0 não integra essa API.** Consulte [o guia de modelos locais](docs/MODELOS_LOCAIS.md).
 
 ## O que já funciona e o que é experimental
 
@@ -85,6 +115,7 @@ Os tamanhos são do catálogo do Ollama; a **memória necessária durante a exec
 | --- | --- |
 | Chat, memória e Ollama | Funcional no ambiente local, com modelo instalado e em execução |
 | Chat compacto / Central da Yuna | Aplicativo Windows e menus de preparação |
+| Presença na bandeja / economia | Quatro modos locais, avisos autorizados e redução de verificações |
 | Documentos, comandos do PC e ações | Suporte aos formatos e comandos implementados, mediante solicitação |
 | Voz, USB/energia, câmera e jogos | Recursos específicos, dependentes de hardware e/ou autorização |
 | Avatar 2D | Interface interativa e personalizável |
