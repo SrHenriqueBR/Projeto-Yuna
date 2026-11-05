@@ -73,7 +73,7 @@ autorizadas e o menu **Modo de funcionamento**.
 | --- | --- |
 | **● Ativa** | Conversa normal, voz somente com consentimento; USB/energia se a autorização estiver marcada. |
 | **◐ Econômica** | Continua aberta no ícone e pronta para chat; interrompe escuta contínua, suspende monitor USB, reduz verificações da bateria e interrompe animações opcionais. Fechar a janela muda automaticamente para este modo. |
-| **◇ Acompanhamento leve** | Após seleção explícita, acompanha USB/energia e bateria **deste computador** e avisa alterações locais. Não ativa microfone, câmera ou IA automática. |
+| **◇ Acompanhamento leve** | Após seleção explícita, acompanha USB/energia e bateria **deste computador**; verifica RAM e espaço livre em disco a cada 5 minutos e orienta somente se houver pressão persistente. Não ativa microfone, câmera ou IA automática. |
 | **Ⅱ Pausada** | Pede para cancelar tarefas em andamento, escuta e monitoramento; reabrir o chat retoma o modo ativo. |
 | **Sair da Yuna** | Encerra o processo; o ícone desaparece. |
 
