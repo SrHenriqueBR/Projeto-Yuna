@@ -18,6 +18,13 @@ Qwen2.5 anteriores continuam disponíveis; não há troca automática, e a
 seleção só é salva após um download confirmado e concluído. Reinicie a Yuna
 para aplicar o novo modelo.
 
+**Novidade 0.54.0:** nova aba **Integrações** com busca local de documentos
+arquivados por EmbeddingGemma + Ollama, gerenciamento manual de modelos
+carregados em RAM/VRAM, leitura limitada de eventos do Windows e consultas
+explícitas à base pública OSV.dev por pacote/versão. Sem API de IA paga,
+sem indexar pastas sem consentimento e sem iniciar reparos automaticamente.
+Consulte docs/INTEGRACOES_054.md.
+
 **Novidade 0.53.0:** ícone da Yuna na bandeja do Windows com estados
 Ativa, Econômica, Acompanhamento leve (USB/energia/bateria/RAM/disco locais) e
 Pausada. Clicar abre chat compacto; clicar com o botão direito abre
