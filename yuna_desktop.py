@@ -18,7 +18,7 @@ from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QInputDialog,
     QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
-    QPushButton, QScrollArea, QSplitter, QVBoxLayout, QWidget
+    QPushButton, QScrollArea, QSplitter, QSystemTrayIcon, QVBoxLayout, QWidget
 )
 
 from computer import Computer
