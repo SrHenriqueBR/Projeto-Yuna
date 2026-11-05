@@ -15,7 +15,7 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.53.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
+> **Versão do código:** 0.54.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
 
 ## A proposta da Yuna
@@ -91,6 +91,33 @@ de confirmação; a bateria é verificada a cada 3 minutos, e RAM/espaço
 livre do disco a cada 5 minutos. A Yuna oferece orientações com avisos
 limitados por intervalo, sem acessar nomes de processos ou arquivos.
 Não existe leitura oculta de tela, câmera ou envio desses dados. [Guia e permissões](docs/YUNA_APP.md).
+
+## Yuna 0.54 — novas integrações locais e ferramentas de segurança
+
+Na **Central da Yuna → Integrações** há quatro recursos opcionais,
+acionados por botões com confirmação quando a ação modifica o estado:
+
+| Recurso | O que realiza | Dados e custo |
+| --- | --- | --- |
+| **RAG / EmbeddingGemma** | Pesquisa semântica por trechos **dos documentos guardados manualmente na biblioteca**, indexados individualmente | Embeddings enviados **somente ao Ollama local**; cópia de índice em `data/yuna_rag.sqlite`; **sem API paga** |
+| **Gerenciar memória do Ollama** | Lista modelos carregados em RAM/VRAM e permite descarregar um modelo escolhido | `/api/ps` e `/api/generate` somente em `127.0.0.1`; **não desinstala modelos** |
+| **Eventos do Windows** | Mostra data, código, nível e origem de alertas/erros do sistema ou aplicativos nas últimas 24 horas | Leitura local via PowerShell, **sem mensagens privadas** e sem aplicar reparos |
+| **OSV.dev** | Consulta vulnerabilidades conhecidas de um pacote **PyPI/npm** com versão exata | **API pública externa**, sem chave ou cobrança; envia apenas ecossistema, nome e versão escolhidos |
+
+A indexação exige uma etapa separada para baixar `embeddinggemma`
+(~622 MB) do Ollama, após confirmação. Ela **não varre o computador**
+nem indexa automaticamente novas memórias, chats ou arquivos. A busca
+mostra trechos e referências, **não executa instruções contidas neles**.
+Se preferir, o botão **Apagar índice** remove somente a base semântica;
+`data/yuna.db` e os documentos originais permanecem.
+
+O modo econômico da bandeja **não encerra o Ollama automaticamente**.
+Agora é possível liberar o modelo carregado manualmente; isso pode
+afetar uma conversa em andamento, por isso a Central pede confirmação.
+
+O OSV não fornece garantia de ausência de vulnerabilidades e não
+atualiza dependências sozinho. **Nenhuma integração Qwen API paga
+foi adicionada.** Leia o [guia de integrações 0.54](docs/INTEGRACOES_054.md).
 
 ## IA gratuita: Qwen3.5 pelo Ollama local
 

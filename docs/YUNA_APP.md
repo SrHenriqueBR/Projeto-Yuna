@@ -23,6 +23,15 @@ Para executar o código-fonte existe uma única entrada, **Yuna.bat**. Ela cria 
 ambiente `.venv` na pasta após confirmação. Inicializadores antigos remanescentes
 são movidos para `data/inicializadores-antigos`. [Guia completo](INSTALACAO_WINDOWS.md).
 
+## Integrações opcionais (0.54.0)
+
+Na **Central → Integrações**, a Yuna pode pesquisar documentos arquivados
+com embeddings locais (EmbeddingGemma/Ollama), listar e descarregar modelos
+carregados na RAM/VRAM, consultar eventos recentes de System/Application e
+verificar uma dependência pública no OSV.dev. Ações são explícitas e os
+resultados são informativos; não há reparos automáticos, varredura de pastas,
+nem uso de API de IA paga. [Passo a passo](INTEGRACOES_054.md).
+
 ## Bandeja do sistema, economia e acompanhamento (0.53.0)
 
 A Yuna mantém **uma única instância** em execução. No Windows, clique na seta
