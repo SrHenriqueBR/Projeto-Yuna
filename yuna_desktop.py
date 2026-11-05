@@ -329,6 +329,13 @@ class YunaDesktop(QMainWindow):
                           and self.companion.plugs.active)
         if mood.announcement and not charger_notice:
             self.add_message("Yuna", mood.announcement)
+            if (self.companion is not None and self.companion.tray_available
+                    and self.companion.mode == "acompanhamento"
+                    and not self.isVisible() and not self.companion.panel.isVisible()):
+                # Aviso de bateria já filtrado pelo cooldown de BatteryCompanion.
+                self.companion.tray.showMessage(
+                    "Yuna • bateria", mood.announcement,
+                    QSystemTrayIcon.MessageIcon.Information, 4500)
 
     def setup_ui(self):
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -1663,7 +1670,8 @@ class YunaDesktop(QMainWindow):
         super().hideEvent(event)
 
     def showEvent(self, event):
-        if self.hero_timer is not None:
+        if self.hero_timer is not None and (
+                self.companion is None or self.companion.mode == "ativa"):
             self.hero_timer.start()
         if getattr(self, "avatar_movie", None) is not None:
             self.avatar_movie.setPaused(False)
@@ -1672,6 +1680,7 @@ class YunaDesktop(QMainWindow):
     def closeEvent(self, event):
         if self.companion is not None and self.companion.tray_available and not self.companion.closing:
             self.hide()
+            self.companion.on_recolher()
             event.ignore()
             return
         if self.companion is not None:
