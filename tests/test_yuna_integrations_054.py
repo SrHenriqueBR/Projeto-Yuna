@@ -173,7 +173,8 @@ class WindowsEventTests(unittest.TestCase):
         self.assertNotIn("segredo privado", text)
 
     def test_rejects_unknown_logs_and_non_windows(self):
-        self.assertIn("somente no Windows", windows_events.read_recent_events("System"))
+        with patch("windows_events.sys.platform", "linux"):
+            self.assertIn("somente no Windows", windows_events.read_recent_events("System"))
         with patch("windows_events.sys.platform", "win32"):
             with self.assertRaises(ValueError):
                 windows_events.read_recent_events("Security")
