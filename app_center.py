@@ -45,7 +45,12 @@ class YunaCenter(QDialog):
         layout.addWidget(QLabel("Conversa, recursos e configurações em um só lugar."))
         tabs = QTabWidget()
         layout.addWidget(tabs)
-        home, permissions, advanced = [QWidget() for _ in range(3)]
+        permissions, advanced = [QWidget() for _ in range(2)]
+        home = QScrollArea()
+        home.setWidgetResizable(True)
+        home.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        home_content = QWidget()
+        home.setWidget(home_content)
         maintenance = QScrollArea()
         maintenance.setWidgetResizable(True)
         maintenance.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
