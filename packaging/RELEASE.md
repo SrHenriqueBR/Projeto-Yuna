@@ -1,5 +1,16 @@
 Um aplicativo para abrir a Yuna e acessar seus recursos pela Central.
 
+**Correções 0.54.1:** Parar descarta respostas antigas sem salvá-las como novas
+conversas; uma nova análise de documento volta a funcionar logo após a parada.
+Qwen3.5 usa o orçamento de geração para a resposta, com `think: false`.
+Consultas de chat ao Ollama recusam redirecionamentos HTTP. Migrações preservam
+também índices `.sqlite`/`.sqlite3` com transações confirmadas em WAL.
+A indexação informa quando apenas parte do documento foi lida; eventos do Windows
+preservam acentos e distinguem ausência de eventos de falha de acesso.
+A versão do executável é gerada junto com a versão do aplicativo.
+Falhas do Ollama agora mostram a orientação de recuperação no chat desktop.
+Uma operação externa já iniciada ainda pode precisar terminar após Parar.
+
 Baixe **Yuna-Setup.exe**, instale na sua conta do Windows e abra **Yuna.app** pelo atalho.
 O instalador inclui o runtime, interface, documentos, bibliotecas de voz e renderizador 3D.
 Não precisa instalar Python ou Node.js separadamente. Para conversa livre, instale/abra

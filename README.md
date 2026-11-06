@@ -15,8 +15,12 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.54.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
+> **Versão do código:** 0.54.1 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
+
+**Revisão 0.54.1:** correções no botão Parar, análise de documentos após cancelamento,
+respostas do Qwen3.5, migração dos índices SQLite e acentos nos eventos do Windows.
+Veja os [detalhes da revisão e seus limites](docs/REVISAO_0541.md).
 
 ## A proposta da Yuna
 

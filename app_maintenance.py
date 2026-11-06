@@ -50,7 +50,7 @@ def import_legacy_data(source, target):
                 continue
             destination = stage / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
-            if path.suffix.casefold() == ".db":
+            if path.suffix.casefold() in (".db", ".sqlite", ".sqlite3"):
                 # Snapshot SQLite inclui transações confirmadas que ainda estão no WAL.
                 old = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
                 new = sqlite3.connect(destination)

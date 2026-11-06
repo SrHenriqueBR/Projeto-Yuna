@@ -11,6 +11,7 @@ avançadas permanecem opcionais.
 | Guia | Assunto |
 | --- | --- |
 | [Instalação Windows](INSTALACAO_WINDOWS.md) | Instalador, código-fonte, Ollama, atualização, backup |
+| [Revisão 0.54.1](REVISAO_0541.md) | Correções de cancelamento, conversa, documentos e migração |
 | [Integrações 0.54](INTEGRACOES_054.md) | RAG local, liberar RAM/VRAM, eventos Windows e OSV.dev |
 | [Yuna.app no Windows](YUNA_APP.md) | Central, chat, voz, segundo plano, consentimento e limites |
 | [Qwen3.5 local e custos](MODELOS_LOCAIS.md) | Modelos 2B/4B/9B, Ollama gratuito e diferença para API paga |

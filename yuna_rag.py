@@ -124,9 +124,11 @@ def index_document(root, doc_id):
               json.dumps(vec, separators=(",", ":")), EMBED_MODEL)
              for i, (chunk, vec) in enumerate(zip(chunks, vectors))],
         )
+    limitations = ("\n\nLimitações da indexação: " + " ".join(info["warnings"])
+                   if info["warnings"] else "")
     return (f"Indexei {len(chunks)} trechos de '{original_name}' "
             "somente no SQLite local. Para pesquisar, abra Busca semântica na Central. "
-            "O índice pode ser apagado separadamente da biblioteca original.")
+            "O índice pode ser apagado separadamente da biblioteca original." + limitations)
 
 
 def search_documents(root, question, limit=4):

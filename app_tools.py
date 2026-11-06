@@ -42,11 +42,14 @@ def launch_tool(root, tool):
                             creationflags=getattr(subprocess, "CREATE_NEW_CONSOLE", 0))
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Uma resposta do serviço local nunca autoriza consultar outro endereço."""
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
 def local_api(path, payload=None, timeout=5):
     # Endereço fixo de loopback, sem proxy ou redirecionamentos.
-    class NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, *args, **kwargs):
-            return None
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     data = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request("http://127.0.0.1:11434" + path, data=data,
