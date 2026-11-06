@@ -7,6 +7,10 @@ from dataclasses import dataclass
 import errno
 
 
+class LocalModelError(RuntimeError):
+    """Mensagem pública escrita pelo app; nunca inclui o corpo de erro do serviço."""
+
+
 @dataclass(frozen=True)
 class FailureAdvice:
     category: str
@@ -30,6 +34,11 @@ def diagnose_failure(error, *, capability_available=True):
             "unsupported", "Ainda não tenho um recurso implementado para essa ação.",
             "Posso registrar a necessidade de melhoria; será preciso atualizar meu código.",
             False, True)
+    if isinstance(error, LocalModelError):
+        return FailureAdvice(
+            "local_model", str(error),
+            "Confira Central da Yuna → Preparação → Verificar instalação e Ollama.",
+            True, False)
     if isinstance(error, PermissionError) or (
             isinstance(error, OSError) and error.errno in (errno.EACCES, errno.EPERM)):
         return FailureAdvice(

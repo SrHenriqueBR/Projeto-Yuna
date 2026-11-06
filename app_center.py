@@ -85,7 +85,7 @@ class YunaCenter(QDialog):
                     lambda: controller.set_mode("acompanhamento"))
         self.button(box, "Ⅱ Pausar • interromper atividades",
                     lambda: controller.set_mode("pausada"))
-        mode_note = QLabel("Acompanhamento observa somente USB, energia e bateria "
+        mode_note = QLabel("Acompanhamento observa USB, energia, bateria e uso de RAM/disco "
             "deste PC. Não habilita câmera, microfone ou consultas automáticas à IA.")
         mode_note.setWordWrap(True)
         box.addWidget(mode_note)

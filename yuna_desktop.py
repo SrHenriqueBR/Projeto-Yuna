@@ -85,16 +85,16 @@ class DesktopWorker(Thread):
         super().__init__(daemon=True)
         self.signals = signals
         self.queue = Queue()
-        self._cancelled = False
         self._generation = 0
 
+    def _enqueue(self, kind, *args):
+        self.queue.put((kind, *args, self._generation))
+
     def submit(self, message):
-        self._cancelled = False
-        self.queue.put(("chat", message, self._generation))
+        self._enqueue("chat", message)
 
     def cancel_pending(self):
         """Descarta a fila e interrompe operações cooperativas entre etapas."""
-        self._cancelled = True
         self._generation += 1
         with self.queue.mutex:
             records = [task for task in self.queue.queue if task and task[0] == "record"]
@@ -105,13 +105,16 @@ class DesktopWorker(Thread):
         self.queue.put(("record", str(question), str(answer)))
 
     def analyze(self, file_path, question):
-        self.queue.put(("analyze", str(file_path), question))
+        self._enqueue("analyze", str(file_path), question)
 
     def archive(self, file_path, notes=""):
-        self.queue.put(("archive", str(file_path), str(notes)[:3000]))
+        self._enqueue("archive", str(file_path), str(notes)[:3000])
+
+    def schedule_wake(self, request, action, when):
+        self._enqueue("wake", request, action, when)
 
     def refresh(self):
-        self.queue.put(("refresh",))
+        self._enqueue("refresh")
 
     def stop(self):
         self.cancel_pending()
@@ -136,53 +139,64 @@ class DesktopWorker(Thread):
                 if task is None:
                     break
                 kind = task[0]
+                generation = self._generation if kind == "record" else task[-1]
+                if generation != self._generation:
+                    continue
+                def status(message, generation=generation):
+                    if generation == self._generation:
+                        self.signals.status.emit(message)
                 try:
                     if kind == "chat":
                         question = task[1].strip()
                         if not question:
                             continue
-                        self.signals.status.emit("Yuna está pensando...")
-                        generation = task[2]
+                        status("Yuna está pensando...")
                         before = memory.db.execute("SELECT MAX(id) FROM messages").fetchone()[0]
                         answer = handle_message(
-                            memory, question, computer, progress=self.signals.status.emit,
+                            memory, question, computer, progress=status,
                             cancelled=lambda generation=generation: generation != self._generation,
                         )
+                        if generation != self._generation:
+                            continue
                         after = memory.db.execute("SELECT MAX(id) FROM messages").fetchone()[0]
                         if before == after:
                             memory.save_turn(question, answer)
                         if generation == self._generation:
                             self.signals.replied.emit(answer, False)
-                        self.signals.status.emit("Pronta • conversa local")
+                        status("Pronta • conversa local")
                     elif kind == "record":
                         memory.save_turn(task[1], task[2])
                     elif kind == "wake":
                         from wake_schedule import run_wake_task
-                        self.signals.status.emit("Consultando o agendamento do Windows…")
+                        status("Consultando o agendamento do Windows…")
                         answer = run_wake_task(task[2], task[3])
+                        # Uma ação externa já concluída mantém seu registro real.
                         memory.save_turn(task[1], answer)
-                        self.signals.replied.emit(answer, False)
+                        if generation == self._generation:
+                            self.signals.replied.emit(answer, False)
                     elif kind == "analyze":
                         source, question = task[1], task[2]
-                        self.signals.status.emit("Lendo documento e analisando com Ollama...")
+                        status("Lendo documento e analisando com Ollama...")
                         answer = analyze_document(source, ask_model, question)
                         # Nunca registrar texto do documento no histórico SQLite.
-                        if not self._cancelled:
+                        if generation == self._generation:
                             self.signals.replied.emit(answer, True)
-                        self.signals.status.emit("Análise concluída • arquivo não guardado")
+                        status("Análise concluída • arquivo não guardado")
                     elif kind == "archive":
-                        self.signals.status.emit("Guardando cópia com autorização...")
+                        status("Guardando cópia com autorização...")
                         item = LIBRARY.add(task[1], task[2])
-                        self.signals.library.emit(LIBRARY.entries())
-                        self.signals.saved.emit(item["name"])
-                        self.signals.status.emit("Documento guardado na biblioteca local")
+                        if generation == self._generation:
+                            self.signals.library.emit(LIBRARY.entries())
+                            self.signals.saved.emit(item["name"])
+                        status("Documento guardado na biblioteca local")
                     elif kind == "refresh":
                         self.signals.library.emit(LIBRARY.entries())
                 except InterruptedError:
-                    self.signals.status.emit("Operação cancelada entre etapas")
+                    status("Operação cancelada entre etapas")
                 except Exception as exc:
-                    self.signals.error.emit(diagnose_failure(exc).message())
-                    self.signals.status.emit("Operação não concluída")
+                    if generation == self._generation:
+                        self.signals.error.emit(diagnose_failure(exc).message())
+                        status("Operação não concluída")
         finally:
             memory.close()
 

@@ -6,11 +6,9 @@ on:
     branches: [main]
     paths:
       - 'packaging/**'
-      - 'app_*.py'
+      - '**/*.py'
       - 'scripts/**'
       - 'avatar3d/**'
-      - 'self_model.py'
-      - 'yuna_launcher.py'
       - 'requirements-*.txt'
       - '.github/workflows/instalador-windows.yml'
 

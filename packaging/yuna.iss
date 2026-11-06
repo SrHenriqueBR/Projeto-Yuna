@@ -1,5 +1,5 @@
 #ifndef YunaVersion
-  #define YunaVersion "0.51.1"
+  #error Informe /DYunaVersion com a VERSION de self_model.py (o workflow faz isso).
 #endif
 [Setup]
 AppId={{0D5316AD-C9A6-4671-80DF-8BDF578E291A}

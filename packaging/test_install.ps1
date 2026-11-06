@@ -24,6 +24,10 @@ if ($app.ExitCode -ne 0) {
     throw 'O aplicativo instalado nao abriu.'
 }
 $python = Join-Path $target 'runtime\python.exe'
+$installedVersion = & $python -X utf8 -c 'from self_model import VERSION; print(VERSION)'
+if ($LASTEXITCODE -ne 0) { throw 'Nao consegui ler a versao instalada.' }
+$exeVersion = [System.Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $target 'Yuna.exe')).FileVersion
+if ($exeVersion -ne ($installedVersion.Trim() + '.0')) { throw 'O executavel tem uma versao diferente do aplicativo.' }
 & $python -X utf8 -c 'from pathlib import Path; import app_tools; print(app_tools.configure_shortcuts(Path(app_tools.__file__).parent, True))'
 if ($LASTEXITCODE -ne 0) { throw 'Nao consegui criar atalhos do aplicativo instalado.' }
 $shortcutPath = Join-Path ([Environment]::GetFolderPath('Startup')) 'Yuna.app.lnk'

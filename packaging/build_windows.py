@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,12 @@ def safe_extract(archive, destination):
 def main():
     if sys.platform != "win32" or sys.version.split()[0] != PYTHON_VERSION:
         raise RuntimeError("Execute no Windows x64 com Python " + PYTHON_VERSION)
+    version = subprocess.check_output(
+        [sys.executable, "-c", "from self_model import VERSION; print(VERSION)"],
+        cwd=ROOT, text=True).strip()
+    if (not re.fullmatch(r"\d+\.\d+\.\d+", version)
+            or any(int(part) > 65534 for part in version.split("."))):
+        raise ValueError("A versão do aplicativo precisa ter três números válidos.")
     output = ROOT / "build/Yuna"
     output.mkdir(parents=True, exist_ok=False)
     app = output / "app"
@@ -45,7 +52,7 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / name, target)
     shutil.copytree(ROOT / "avatar3d/dist", app / "avatar3d/dist")
-    (app / "installed-app.json").write_text(json.dumps({"runtime": PYTHON_VERSION, "entry": "../Yuna.exe"}), encoding="utf-8")
+    (app / "installed-app.json").write_text(json.dumps({"runtime": PYTHON_VERSION, "entry": "../Yuna.exe", "version": version}), encoding="utf-8")
     runtime = output / "runtime"
     archive = ROOT / "build/python-embed.zip"
     url = f"https://www.python.org/ftp/python/{PYTHON_VERSION}/python-{PYTHON_VERSION}-embed-amd64.zip"
@@ -71,8 +78,14 @@ def main():
     for dll in candidates[-1].glob("*.dll"):
         shutil.copy2(dll, runtime / dll.name)
     csc = Path(os.environ["WINDIR"]) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
+    version_info = ROOT / "build/VersionInfo.cs"
+    version_info.write_text(
+        'using System.Reflection;\n'
+        f'[assembly: AssemblyVersion("{version}.0")]\n'
+        f'[assembly: AssemblyFileVersion("{version}.0")]\n'
+        f'[assembly: AssemblyInformationalVersion("{version}")]\n', encoding="utf-8")
     subprocess.run([str(csc), "/nologo", "/target:winexe", "/platform:x64", "/reference:System.Windows.Forms.dll",
-                    "/out:" + str(output / "Yuna.exe"), str(ROOT / "packaging/Yuna.cs")], check=True)
+                    "/out:" + str(output / "Yuna.exe"), str(ROOT / "packaging/Yuna.cs"), str(version_info)], check=True)
     # Imports reais no runtime distribuído, sem pip instalado na máquina do usuário.
     subprocess.run([str(runtime / "python.exe"), "-X", "utf8", "-c",
                     "import sqlite3, ssl, ctypes, PySide6, docx, openpyxl, pptx, pypdf, reportlab, sounddevice, faster_whisper, edge_tts; print('Runtime pronto')"], check=True)

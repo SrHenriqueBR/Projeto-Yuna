@@ -5,6 +5,8 @@ arquivo, caminho, SID ou evento de segurança. O PowerShell executa um
 script estático, sem interpolação de entrada. Nenhuma correção automática.
 """
 import json
+import os
+from pathlib import Path
 import subprocess
 import sys
 
@@ -12,15 +14,18 @@ ALLOWED_LOGS = {"System", "Application"}
 # Script fechado, independente de argumentos fornecidos por outras partes.
 _SCRIPT = (
     "$ErrorActionPreference='Stop'; "
+    "[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); "
     "$log=$env:YUNA_WINLOG; "
     "if($log -notin @('System','Application')) { throw 'Log inválido' }; "
-    "$items = @(Get-WinEvent -FilterHashtable "
+    "try { $items = @(Get-WinEvent -FilterHashtable "
     "@{LogName=$log; Level=@(1,2,3); StartTime=(Get-Date).AddDays(-1)} "
     "-MaxEvents 15 -ErrorAction Stop | "
     "Select-Object @{Name='Quando';Expression={$_.TimeCreated.ToString('s')}},"
     "@{Name='Origem';Expression={$_.ProviderName}},"
     "@{Name='Codigo';Expression={$_.Id}},"
-    "@{Name='Nivel';Expression={$_.LevelDisplayName}}); "
+    "@{Name='Nivel';Expression={$_.LevelDisplayName}}) } catch { "
+    "if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') { $items = @() } "
+    "else { throw } }; "
     "ConvertTo-Json -InputObject $items -Compress -Depth 3"
 )
 
@@ -30,13 +35,13 @@ def read_recent_events(log="System", *, runner=None):
         return "A consulta de eventos está disponível somente no Windows."
     if log not in ALLOWED_LOGS:
         raise ValueError("Escolha System ou Application.")
-    import os
     env = dict(os.environ)
     env["YUNA_WINLOG"] = log
     # Nunca executar cmd/PowerShell composto com dados livres do usuário.
     run = runner or subprocess.run
+    powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32/WindowsPowerShell/v1.0/powershell.exe"
     try:
-        proc = run(["powershell.exe", "-NoProfile", "-NonInteractive",
+        proc = run([str(powershell), "-NoProfile", "-NonInteractive",
                     "-ExecutionPolicy", "Bypass", "-Command", _SCRIPT],
                    shell=False, capture_output=True, text=True,
                    encoding="utf-8-sig", errors="replace",
@@ -45,8 +50,8 @@ def read_recent_events(log="System", *, runner=None):
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise RuntimeError("Não consegui consultar os eventos do Windows.") from exc
     if proc.returncode:
-        return ("Não consegui ler o log " + log + ". Pode não haver avisos "
-                "recentes ou sua conta pode não ter permissão para consultá-lo.")
+        return ("Não consegui ler o log " + log + ". A consulta falhou ou "
+                "sua conta não tem permissão para consultá-lo.")
     if len(proc.stdout) > 40000:
         raise ValueError("Resposta de eventos acima do limite.")
     try:

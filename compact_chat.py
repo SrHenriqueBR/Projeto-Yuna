@@ -567,7 +567,7 @@ class CompanionController(QObject):
                     return True
             self.window.add_message("Você", text)
             self.window.set_busy(True)
-            self.window.worker.queue.put(("wake", text, action, when))
+            self.window.worker.schedule_wake(text, action, when)
             return True
         intent = power_intent(text)
         if intent == "cancel":
