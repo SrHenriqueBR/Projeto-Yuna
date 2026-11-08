@@ -53,6 +53,8 @@ class ModelDownloadTests(unittest.TestCase):
 
     def test_failed_or_partial_download_keeps_previous_selection(self):
         old = "qwen2.5:3b"
+        from model_config import save_selected_model
+        save_selected_model(self.root, old)
         self.assertEqual(load_selected_model(self.root, {}), old)
         cases = (
             b'{"status":"downloading","total":10,"completed":3}\n',

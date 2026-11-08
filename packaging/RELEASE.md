@@ -1,15 +1,19 @@
 Um aplicativo para abrir a Yuna e acessar seus recursos pela Central.
 
-**Correções 0.54.1:** Parar descarta respostas antigas sem salvá-las como novas
-conversas; uma nova análise de documento volta a funcionar logo após a parada.
-Qwen3.5 usa o orçamento de geração para a resposta, com `think: false`.
-Consultas de chat ao Ollama recusam redirecionamentos HTTP. Migrações preservam
-também índices `.sqlite`/`.sqlite3` com transações confirmadas em WAL.
-A indexação informa quando apenas parte do documento foi lida; eventos do Windows
-preservam acentos e distinguem ausência de eventos de falha de acesso.
-A versão do executável é gerada junto com a versão do aplicativo.
-Falhas do Ollama agora mostram a orientação de recuperação no chat desktop.
-Uma operação externa já iniciada ainda pode precisar terminar após Parar.
+**Yuna 0.55.0 — voz, Qwen3.5:4b e capacidade máxima**
+
+- Microfone por frase (até 20 segundos), frequência nativa do dispositivo, nível de áudio e etapas visíveis.
+- Escolha da entrada USB/headset na Central, cache do Whisper em português e envio automático opcional.
+- Qwen3.5:4b como padrão sem seleção anterior; botão **Ativar Qwen3.5:4b + capacidade máxima** para baixar/selecionar e ativar o perfil.
+- Troca de modelo sem reiniciar: vale na próxima resposta.
+- Perfil máximo: contexto 16.384 tokens, até 4.096 tokens de resposta ou 8.192 para código; raciocínio em pedidos de programação com recuperação limitada para resposta vazia.
+- Pesquisa web no chat com resumos e fontes; perguntas públicas sobre informações atuais também podem pesquisar. Se o buscador falhar ou pedir CAPTCHA, a Yuna informa a limitação e tenta a Wikipédia.
+- Memórias e seleções explícitas anteriores preservadas. Não há um valor de QI atribuído; velocidade e qualidade dependem do modelo, hardware e tarefa.
+
+Abra **Central → Preparação → Ativar Qwen3.5:4b + capacidade máxima**, com o Ollama aberto.
+Depois use **Central → Permissões → Escolher microfone** e clique em **Falar**.
+Aguarde aparecer **Ouvindo**. Para chamadas contínuas, ative **Escutar Olá Yuna** nesta sessão.
+Guia: [voz e capacidade](https://github.com/SrHenriqueBR/Projeto-Yuna/blob/main/docs/VOZ_E_CAPACIDADE.md).
 
 Baixe **Yuna-Setup.exe**, instale na sua conta do Windows e abra **Yuna.app** pelo atalho.
 O instalador inclui o runtime, interface, documentos, bibliotecas de voz e renderizador 3D.
@@ -26,8 +30,7 @@ pode exibir editor desconhecido. `SHA256SUMS.txt` identifica o arquivo desta rel
 de **2B (leve)**, **4B (recomendado)** e **9B (avançado)** na Central da Yuna.
 Sem API Qwen paga, cadastro comercial ou cobrança por mensagens. Os modelos
 Qwen2.5 anteriores continuam disponíveis; não há troca automática, e a
-seleção só é salva após um download confirmado e concluído. Reinicie a Yuna
-para aplicar o novo modelo.
+seleção só é salva após um download confirmado e concluído. A seleção vale na próxima resposta.
 
 **Novidade 0.54.0:** nova aba **Integrações** com busca local de documentos
 arquivados por EmbeddingGemma + Ollama, gerenciamento manual de modelos

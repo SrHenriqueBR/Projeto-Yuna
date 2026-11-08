@@ -7,7 +7,7 @@ import subprocess
 import sys
 import urllib.request
 
-from model_config import INSTALLER_MODELS, load_selected_model, save_selected_model
+from model_config import INSTALLER_MODELS, QWEN_RECOMMENDED_MODEL, load_selected_model, save_selected_model
 
 TOOLS = {
     "terminal": ("Conversa no terminal", "yuna.py", ()),
@@ -99,7 +99,17 @@ def prepare_model(root, model, progress=lambda text: None):
     if not done:
         raise RuntimeError("O download não foi concluído; mantive o modelo anterior.")
     save_selected_model(root, model)
-    return "Modelo pronto: " + model + ". Feche a Yuna pelo menu Sair e abra novamente para usar a escolha."
+    return "Modelo pronto: " + model + ". A próxima resposta já usa a seleção salva."
+
+
+def prepare_maximum(root, progress=lambda text: None):
+    from inference_config import save_profile
+    manual = os.environ.get("YUNA_MODEL", "").strip()
+    if manual and manual != QWEN_RECOMMENDED_MODEL:
+        raise ValueError("YUNA_MODEL fixa " + manual + ". Remova essa variável do Windows e reabra a Yuna para usar Qwen3.5:4b.")
+    result = prepare_model(root, QWEN_RECOMMENDED_MODEL, progress)
+    save_profile(root, "maximo")
+    return result + " Perfil máximo ativado: respostas maiores e raciocínio para gerar código."
 
 
 def configure_shortcuts(root, startup=None):

@@ -49,7 +49,7 @@ class QwenCenterQtTests(unittest.TestCase):
                 self.assertTrue(any("qwen3.5:9b" in b for b in buttons))
                 self.assertTrue(any("Anterior padrão" in b for b in buttons))
                 self.assertTrue(dialog.findChildren(QScrollArea))
-                self.assertTrue("qwen2.5:3b" in dialog.current_model_label.text())
+                self.assertTrue("qwen3.5:4b" in dialog.current_model_label.text())
                 with patch("app_center.QMessageBox.question",
                            return_value=0):
                     dialog.download_model("qwen3.5:4b")

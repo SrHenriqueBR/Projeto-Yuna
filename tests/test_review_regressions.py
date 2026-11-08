@@ -36,7 +36,7 @@ class ConversationRegressionTests(unittest.TestCase):
                 self.assertNotIn("private server message", advice)
 
     def test_other_local_models_keep_their_thinking_defaults(self):
-        with patch("yuna.MODEL", "qwen2.5:3b"), patch(
+        with patch("yuna.current_model", return_value="qwen2.5:3b"), patch(
                 "yuna.urllib.request.build_opener") as build:
             build.return_value.open.return_value = io.BytesIO(b'{"message":{"content":"Oi"}}')
             yuna.ask_model([])
@@ -63,11 +63,12 @@ class ConversationRegressionTests(unittest.TestCase):
     def test_qwen35_uses_answer_budget_without_hidden_thinking(self):
         for model in ("qwen3.5:2b", "qwen3.5:4b", "qwen3.5:9b"):
             for purpose in ("conversation", "code"):
-                with self.subTest(model=model, purpose=purpose), patch("yuna.MODEL", model), patch(
+                with self.subTest(model=model, purpose=purpose), patch("yuna.current_model", return_value=model), patch(
                         "yuna.urllib.request.build_opener") as build:
                     build.return_value.open.return_value = io.BytesIO(
                         b'{"message":{"content":"Resposta pronta"}}')
-                    self.assertEqual(yuna.ask_model([], purpose=purpose), "Resposta pronta")
+                    with patch("yuna.load_profile", return_value="equilibrado"):
+                        self.assertEqual(yuna.ask_model([], purpose=purpose), "Resposta pronta")
                     payload = json.loads(build.return_value.open.call_args.args[0].data)
                     self.assertIs(payload.get("think"), False)
 

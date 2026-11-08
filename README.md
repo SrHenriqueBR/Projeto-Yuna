@@ -15,8 +15,10 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.54.1 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` (escolha manual). O modelo legado `qwen2.5:3b` continua ativo até você trocar.
+> **Versão do código:** 0.55.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` por padrão; escolhas anteriores salvas são preservadas. Ative **Qwen3.5:4b + capacidade máxima** na Central para atualizar uma instalação antiga.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
+
+**Voz e capacidade 0.55.0:** captura por frase, seleção de microfone, nível de áudio, envio da fala, Qwen3.5:4b, perfil máximo e pesquisa web com fontes. [Como ativar e testar](docs/VOZ_E_CAPACIDADE.md).
 
 **Revisão 0.54.1:** correções no botão Parar, análise de documentos após cancelamento,
 respostas do Qwen3.5, migração dos índices SQLite e acentos nos eventos do Windows.
@@ -136,7 +138,7 @@ foi adicionada.** Leia o [guia de integrações 0.54](docs/INTEGRACOES_054.md).
 
 Os tamanhos são do catálogo do Ollama; a **memória necessária durante a execução pode ser maior**, sobretudo com contexto longo, visão, voz e outras funções abertas. A GPU de 8 GB pode não acomodar `9b` e contexto grande completamente na VRAM; nesse caso o desempenho pode cair.
 
-**Trocar com segurança:** abra **••• → Central da Yuna → Preparação**, clique no modelo, confirme o download e reinicie a Yuna. O modelo anterior continua selecionado se a transferência falhar. **Não há alteração automática, cobrança após várias conversas ou acesso secreto a APIs pagas.** Suas memórias SQLite não são apagadas.
+**Trocar com segurança:** abra **••• → Central da Yuna → Preparação**, clique no modelo, confirme o download. A próxima resposta já usa a seleção, sem reiniciar. O modelo anterior continua selecionado se a transferência falhar. **Preferências salvas são mantidas. Não há cobrança por conversas nem APIs pagas nessa integração.** Suas memórias SQLite não são apagadas.
 
 **API Qwen na nuvem é outra coisa:** é cobrada por tokens consumidos e pode iniciar faturamento após acabar a cota gratuita, se o serviço estiver habilitado para pagamento. **A Yuna 0.53.0 não integra essa API.** Consulte [o guia de modelos locais](docs/MODELOS_LOCAIS.md).
 

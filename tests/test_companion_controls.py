@@ -19,20 +19,12 @@ GAME = r"C:\Games\Example\Game.exe"
 class CompanionControlsTests(unittest.TestCase):
     def test_cancelled_dictation_closes_capture_before_loading_model(self):
         import speech_input
-        numpy, sound, whisper = ModuleType("numpy"), ModuleType("sounddevice"), ModuleType("faster_whisper")
-        numpy.concatenate = Mock()
-        stream = Mock()
-        stream.__enter__ = Mock(return_value=stream)
-        stream.__exit__ = Mock(return_value=False)
-        stream.read.return_value = (Mock(), False)
-        sound.InputStream = Mock(return_value=stream)
-        whisper.WhisperModel = Mock()
-        with patch.dict("sys.modules", {"numpy": numpy, "sounddevice": sound, "faster_whisper": whisper}):
+        with patch("audio_capture.capture_phrase", side_effect=InterruptedError("Cancelado")) as capture, patch(
+                "speech_input.transcribe_audio") as transcribe:
             with self.assertRaises(InterruptedError):
-                speech_input.listen_once(cancelled=Mock(side_effect=[False, False, True]))
-        stream.__exit__.assert_called_once()
-        stream.read.assert_called_once_with(1600)
-        whisper.WhisperModel.assert_not_called()
+                speech_input.listen_once()
+        capture.assert_called_once()
+        transcribe.assert_not_called()
 
     def test_destructive_requests_are_exact_and_negations_never_shutdown(self):
         for text in ("Yuna desliga o computador", "Yuna, desligue o computador.", "/desligar"):

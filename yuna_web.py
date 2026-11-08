@@ -65,6 +65,7 @@ class Conversation:
         self.lock = threading.Lock()
 
     def status(self):
+        self.model = load_selected_model(self.root)
         if 'cloud' in self.model.lower():
             return {'ready': False, 'model': self.model,
                     'detail': 'Escolha um modelo local no instalador da Yuna.'}

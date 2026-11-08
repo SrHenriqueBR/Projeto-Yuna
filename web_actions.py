@@ -34,6 +34,8 @@ def public_search_query(query):
     if not isinstance(query, str) or not 1 <= len(query.strip()) <= 160:
         raise ValueError("Use uma pesquisa com 1 a 160 caracteres.")
     value = query.strip()
+    if re.search(r"\d{3}[. -]?\d{3}[. -]?\d{3}[- ]?\d{2}|\b\d{10,19}\b|\bsk-[\w-]{12,}", value):
+        raise ValueError("Essa pesquisa pode conter dados privados. Use apenas um assunto público.")
     if re.search(r"(?i)\b(?:senha|password|cpf|token|chave\s+api|pix|endereco\s+pessoal|"
                  r"cartao\s+de\s+credito)\b|[\w.+-]+@[\w.-]+\.[a-z]{2,}|"
                  r"(?:[a-z]:\\|\\\\)|[\r\n\x00]", value):

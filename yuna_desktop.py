@@ -18,7 +18,7 @@ from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
 from PySide6.QtWidgets import (
     QApplication, QComboBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QInputDialog,
     QListWidget, QListWidgetItem, QMainWindow, QMessageBox, QPlainTextEdit,
-    QPushButton, QScrollArea, QSplitter, QSystemTrayIcon, QVBoxLayout, QWidget
+    QPushButton, QProgressBar, QScrollArea, QSplitter, QSystemTrayIcon, QVBoxLayout, QWidget
 )
 
 from computer import Computer
@@ -46,7 +46,7 @@ from remote_camera_invite import (
 from camera_viewer import CameraViewer
 from embedded_video import EmbeddedVideoDialog
 from home_safety_dialog import HomeSafetyDialog
-from yuna import Memory, ROOT, MODEL, ask_model, handle_message, startup_greeting
+from yuna import Memory, ROOT, current_model, ask_model, handle_message, startup_greeting
 
 
 ASSETS = ROOT / "assets"
@@ -77,6 +77,8 @@ class DesktopSignals(QObject):
     audio_error = Signal(str, int)
     mic_ready = Signal(str, int)
     mic_error = Signal(str, int)
+    mic_status = Signal(str, int)
+    mic_level = Signal(int, int)
 
 
 class DesktopWorker(Thread):
@@ -272,6 +274,8 @@ class YunaDesktop(QMainWindow):
         self._changing_voice = False
         self._edge_consent = False
         self.microphone_busy = False
+        self._mic_consent = False
+        self.auto_send_speech = True
         self._mic_generation = 0
         self._mic_cancel = Event()
         self._battery_companion = BatteryCompanion()
@@ -411,7 +415,7 @@ class YunaDesktop(QMainWindow):
                         break
         sidebar.addWidget(avatar)
 
-        self.sidebar_caption = QLabel(f"✦ ONLINE LOCAL  ·  {MODEL}")
+        self.sidebar_caption = QLabel(f"✦ MODELO LOCAL  ·  {current_model()}")
         self.sidebar_caption.setObjectName("subtle")
         self.sidebar_caption.setWordWrap(True)
         sidebar.addWidget(self.sidebar_caption)
@@ -524,6 +528,12 @@ class YunaDesktop(QMainWindow):
             "Ditado por microfone local, se faster-whisper e sounddevice estiverem instalados."
         )
         top.addWidget(self.microphone_button)
+        self.mic_meter = QProgressBar()
+        self.mic_meter.setRange(0, 100)
+        self.mic_meter.setFixedWidth(64)
+        self.mic_meter.setTextVisible(False)
+        self.mic_meter.setToolTip("Nível do microfone • fale após Ouvindo")
+        top.addWidget(self.mic_meter)
         content.addWidget(header)
 
         self.messages_scroll = QScrollArea()
@@ -706,6 +716,8 @@ class YunaDesktop(QMainWindow):
         self.signals.audio_error.connect(self.voice_error)
         self.signals.mic_ready.connect(self.microphone_ready)
         self.signals.mic_error.connect(self.microphone_error)
+        self.signals.mic_status.connect(self.microphone_status)
+        self.signals.mic_level.connect(self.microphone_level)
 
         self.avatar_button.clicked.connect(self.toggle_avatar)
         self.avatar3d_button.clicked.connect(self.toggle_avatar3d_bridge)
@@ -792,8 +804,11 @@ class YunaDesktop(QMainWindow):
             self.files_list.addItem(view)
 
     def set_busy(self, value):
+        self.sidebar_caption.setText(f"✦ MODELO LOCAL  ·  {current_model()}")
         if self.companion is not None:
             self.companion.panel.send.setEnabled(not value)
+        if value and self.companion is not None:
+            self.companion.wake_paused.set()
         self.send_button.setEnabled(not value)
         self.composer.setEnabled(not value)
         self.open_attachment.setEnabled(not value)
@@ -1432,6 +1447,8 @@ class YunaDesktop(QMainWindow):
     def say(self, text, private=False):
         if self.voice_index == 0 or (self.companion is not None and self.companion.closing):
             return
+        if self.microphone_busy:
+            return
         if self.voice_busy:
             self._speech_queue.append((text, private))
             return
@@ -1444,6 +1461,8 @@ class YunaDesktop(QMainWindow):
         if not speech_text(text):
             return
         self.voice_busy = True
+        if self.companion is not None:
+            self.companion.wake_paused.set()
         self._stop_requested = False
         self._speech_generation += 1
         synthesis_generation = self._speech_generation
@@ -1595,6 +1614,9 @@ class YunaDesktop(QMainWindow):
     def request_microphone(self):
         if self.microphone_busy:
             return
+        if not self.composer.isEnabled():
+            self.status.setText("Use Parar antes de iniciar outra mensagem de voz.")
+            return
         if self.companion is not None and self.companion.wake_action.isChecked():
             self.companion.wake_action.setChecked(False)
         try:
@@ -1611,30 +1633,39 @@ class YunaDesktop(QMainWindow):
         except (ImportError, ValueError) as exc:
             self.status.setText("Microfone indisponível: " + str(exc))
             return
-        confirm = QMessageBox.question(
-            self, "Iniciar ditado local?",
-            "A Yuna gravará 8 segundos do microfone após você confirmar "
-            "e transcreverá localmente pelo Whisper. O áudio não será "
-            "salvo em arquivo ou enviado para a internet.\n\n"
-            "No primeiro uso, os pesos do modelo podem ser baixados "
-            "da internet. Continuar?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
-        )
-        if confirm != QMessageBox.StandardButton.Yes:
-            return
+        if not self._mic_consent:
+            confirm = QMessageBox.question(
+                self, "Falar com a Yuna",
+                "Após aparecer Ouvindo, fale uma frase de até 20 segundos. "
+                "Uma pausa encerra a captura. O envio automático é controlado pela opção "
+                "Enviar fala automaticamente na Central (desmarque para revisar antes). "
+                "O áudio é transcrito no computador e não fica gravado. "
+                "No primeiro uso pode baixar o Whisper base. Autorizar nesta sessão?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if confirm != QMessageBox.StandardButton.Yes:
+                return
+            self._mic_consent = True
+        # Não captar a própria resposta nem iniciar uma segunda reprodução durante a fala.
+        self._speech_generation += 1
+        self._speech_queue.clear()
+        self.player.stop()
+        self.voice_busy = False
+        self._stop_avatar_speech()
         self.microphone_busy = True
         self._mic_generation += 1
         generation = self._mic_generation
         token = Event()
         self._mic_cancel = token
         self.microphone_button.setEnabled(False)
-        self.status.setText("🎙  Ouvindo por 8 segundos...")
+        self.status.setText("Preparando microfone… espere aparecer Ouvindo")
 
         def recording():
             try:
                 from speech_input import listen_once
-                result = listen_once(cancelled=token.is_set)
+                result = listen_once(cancelled=token.is_set, root=ROOT,
+                    on_status=lambda text: self.signals.mic_status.emit(text, generation),
+                    on_level=lambda level: self.signals.mic_level.emit(level, generation))
                 if not token.is_set():
                     self.signals.mic_ready.emit(result, generation)
             except Exception as exc:
@@ -1645,20 +1676,20 @@ class YunaDesktop(QMainWindow):
     def stop_microphone(self):
         self._mic_cancel.set()
         self._mic_generation += 1
-        if self.microphone_busy:
-            try:
-                import sounddevice as sd
-                sd.stop()
-            except (ImportError, OSError, RuntimeError):
-                pass
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
+        self.mic_meter.setValue(0)
+        if self.companion is not None:
+            self.companion.panel.mic_meter.setValue(0)
 
     def microphone_ready(self, result, generation=None):
         if generation is not None and generation != self._mic_generation:
             return
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
+        self.mic_meter.setValue(0)
+        if self.companion is not None:
+            self.companion.panel.mic_meter.setValue(0)
         if self.companion is not None and self.companion.panel.isVisible():
             composer = self.companion.panel.input
         else:
@@ -1666,17 +1697,41 @@ class YunaDesktop(QMainWindow):
         earlier = composer.toPlainText().strip()
         composer.setPlainText((earlier + "\n" if earlier else "") + result)
         composer.setFocus()
-        self.status.setText("Ditado transcrito localmente • revise antes de enviar")
+        hidden_draft = composer is not self.composer and bool(self.composer.toPlainText().strip())
+        if self.auto_send_speech and not earlier and not hidden_draft and self.composer.isEnabled():
+            if composer is self.composer:
+                self.send_message()
+            else:
+                self.companion.submit(result)
+        else:
+            self.status.setText("Fala transcrita • revise e envie quando quiser")
+
+    def microphone_status(self, text, generation):
+        if generation != self._mic_generation or not self.microphone_busy:
+            return
+        self.status.setText(text)
+        if self.companion is not None:
+            self.companion.panel.state.setText(text)
+
+    def microphone_level(self, level, generation):
+        if generation != self._mic_generation:
+            return
+        self.mic_meter.setValue(level)
+        if self.companion is not None:
+            self.companion.panel.mic_meter.setValue(level)
 
     def microphone_error(self, error, generation=None):
         if generation is not None and generation != self._mic_generation:
             return
         self.microphone_busy = False
         self.microphone_button.setEnabled(True)
+        self.mic_meter.setValue(0)
+        if self.companion is not None:
+            self.companion.panel.mic_meter.setValue(0)
         self.status.setText("Falha no microfone: " + str(error)[:180])
         if self.companion is not None:
             self.companion.show_compact()
-            self.companion.panel.state.setText("Microfone indisponível • continue por texto.")
+            self.companion.panel.state.setText(str(error)[:240])
 
     def hideEvent(self, event):
         if self.hero_timer is not None:

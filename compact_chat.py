@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap, QAction
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QMenu,
-    QMessageBox, QPlainTextEdit, QPushButton, QSystemTrayIcon, QTextBrowser,
+    QMessageBox, QPlainTextEdit, QPushButton, QProgressBar, QSystemTrayIcon, QTextBrowser,
     QVBoxLayout, QWidget, QFileDialog)
 
 from companion_commands import BANKING_NOTICE, banking_action, game_intent, power_intent
@@ -165,7 +165,7 @@ class CompactChat(QWidget):
         self.input.setFixedHeight(58)
         row.addWidget(self.input, 1)
         self.mic = QPushButton("🎙")
-        self.mic.setToolTip("Ditar uma mensagem (local)")
+        self.mic.setToolTip("Falar com a Yuna • reconhecimento local")
         self.mic.clicked.connect(controller.window.request_microphone)
         row.addWidget(self.mic)
         self.send = QPushButton("↑")
@@ -179,7 +179,13 @@ class CompactChat(QWidget):
         bottom = QHBoxLayout()
         self.listening = QLabel("Microfone contínuo desligado")
         self.listening.setObjectName("status")
+        self.listening.setWordWrap(True)
         bottom.addWidget(self.listening, 1)
+        self.mic_meter = QProgressBar()
+        self.mic_meter.setRange(0, 100)
+        self.mic_meter.setFixedWidth(70)
+        self.mic_meter.setTextVisible(False)
+        bottom.addWidget(self.mic_meter)
         stop = QPushButton("■ Parar")
         stop.clicked.connect(controller.window.emergency_stop)
         bottom.addWidget(stop)
@@ -193,7 +199,7 @@ class CompactChat(QWidget):
 
     def add_message(self, author, text):
         color = "#acbfff" if author in ("Você", "Kaizen") else "#c6adff"
-        safe = html.escape(str(text)[:16000]).replace("\n", "<br>")
+        safe = html.escape(str(text)[:64000]).replace("\n", "<br>")
         self.messages.append(f'<p style="margin-top:12px;color:{color}"><b>{html.escape(author)}</b></p>'
                              f'<p style="color:#eeeeF6;margin-bottom:12px">{safe}</p>')
         bar = self.messages.verticalScrollBar()
@@ -224,6 +230,8 @@ class CompanionController(QObject):
     wake_heard = Signal(int, str)
     wake_failed = Signal(int, str)
     wake_ready = Signal(int)
+    wake_status = Signal(int, str)
+    wake_level = Signal(int, int)
     game_done = Signal(int, str)
 
     def __init__(self, window):
@@ -235,6 +243,7 @@ class CompanionController(QObject):
         self.wake = None
         self.wake_generation = 0
         self._wake_live = False
+        self._wake_phase = "Preparando escuta local…"
         self.wake_paused = Event()
         self.game_stop = Event()
         self.game_generation = 0
@@ -307,6 +316,8 @@ class CompanionController(QObject):
         self.wake_heard.connect(self._heard)
         self.wake_failed.connect(self._wake_error)
         self.wake_ready.connect(self._wake_ready)
+        self.wake_status.connect(self._wake_status)
+        self.wake_level.connect(self._wake_level)
         self.game_done.connect(self._game_done)
         self.timer = QTimer(self)
         self.timer.setInterval(200)
@@ -608,6 +619,8 @@ class CompanionController(QObject):
     def tick(self):
         paused = self.window.voice_busy or self.window.microphone_busy or not self.window.composer.isEnabled()
         self.wake_paused.set() if paused else self.wake_paused.clear()
+        if self.wake_action.isChecked():
+            self.panel.listening.setText("Escuta pausada enquanto respondo…" if paused else self._wake_phase)
         remaining = self.shutdown.remaining()
         if remaining is not None:
             self.panel.power_notice.setText(f"Desligamento em {remaining}s  ·  Cancelar")
@@ -633,6 +646,7 @@ class CompanionController(QObject):
             self.wake.stop()
         self._wake_live = False
         self.panel.listening.setText("Microfone contínuo desligado")
+        self.panel.mic_meter.setValue(0)
         self._update_tray_indicator()
         if not enabled:
             return
@@ -654,7 +668,9 @@ class CompanionController(QObject):
         self.wake = WakeListener(
             lambda text: self.wake_heard.emit(generation, text),
             lambda error: self.wake_failed.emit(generation, error),
-            lambda: self.wake_ready.emit(generation), self.wake_paused)
+            lambda: self.wake_ready.emit(generation), self.wake_paused,
+            on_status=lambda text: self.wake_status.emit(generation, text),
+            on_level=lambda level: self.wake_level.emit(generation, level))
         self.wake.start()
 
     def _wake_ready(self, generation):
@@ -662,6 +678,17 @@ class CompanionController(QObject):
             self._wake_live = True
             self.panel.listening.setText('● Microfone ativo • diga “Olá Yuna”')
             self._update_tray_indicator()
+
+    def _wake_status(self, generation, text):
+        if generation == self.wake_generation and self.wake_action.isChecked():
+            self._wake_phase = text + (' • comece com “Yuna”' if text.startswith("Ouvindo") else "")
+            self._wake_live = text.startswith("Ouvindo")
+            self._update_tray_indicator()
+            self.panel.listening.setText(self._wake_phase)
+
+    def _wake_level(self, generation, level):
+        if generation == self.wake_generation:
+            self.panel.mic_meter.setValue(level)
 
     def _heard(self, generation, text):
         if generation == self.wake_generation and not self.closing:

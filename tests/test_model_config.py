@@ -16,10 +16,10 @@ class ModelSelectionTests(unittest.TestCase):
         self.assertEqual(model_config.recommend_model(0), "qwen3.5:4b")
         self.assertEqual(model_config.recommend_model("invalido"), "qwen3.5:4b")
 
-    def test_default_legacy_compatibility_and_manual_override(self):
+    def test_default_qwen35_compatibility_and_manual_override(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            self.assertEqual(model_config.load_selected_model(root, {}), "qwen2.5:3b")
+            self.assertEqual(model_config.load_selected_model(root, {}), "qwen3.5:4b")
             model_config.save_selected_model(root, "qwen2.5:1.5b")
             self.assertEqual(model_config.load_selected_model(root, {}), "qwen2.5:1.5b")
             self.assertEqual(model_config.load_selected_model(
@@ -37,7 +37,7 @@ class ModelSelectionTests(unittest.TestCase):
                 with self.subTest(value=invalid):
                     path.write_text(invalid, encoding="utf-8")
                     self.assertEqual(model_config.load_selected_model(root, {}),
-                                     "qwen2.5:3b")
+                                     "qwen3.5:4b")
             path.write_text("qwen2.5:1.5b\n", encoding="utf-8-sig")
             self.assertEqual(model_config.load_selected_model(root, {}),
                              "qwen2.5:1.5b")
@@ -76,7 +76,7 @@ class ModelSelectionTests(unittest.TestCase):
             path.parent.mkdir()
             path.write_bytes(b"\xff\xfe\xfe")
             self.assertEqual(model_config.load_selected_model(root, {}),
-                             "qwen2.5:3b")
+                             "qwen3.5:4b")
             self.assertEqual(path.read_bytes(), b"\xff\xfe\xfe")
 
 
