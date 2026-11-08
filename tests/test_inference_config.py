@@ -18,7 +18,7 @@ class PerformanceTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_default_and_persistent_revert(self):
-        self.assertEqual(config.load_profile(self.root), "equilibrado")
+        self.assertEqual(config.load_profile(self.root), "maximo")
         config.save_profile(self.root, "rapido")
         self.assertEqual(config.load_profile(self.root), "rapido")
         self.assertEqual(config.options_for(self.root)["num_predict"], 384)
@@ -32,7 +32,7 @@ class PerformanceTests(unittest.TestCase):
         path.parent.mkdir()
         for value in ('{"num_predict":999999}', '"unlimited"', 'not JSON'):
             path.write_text(value)
-            self.assertEqual(config.load_profile(self.root), "equilibrado")
+            self.assertEqual(config.load_profile(self.root), "maximo")
 
     def test_fast_profile_changes_actual_request_but_keeps_json_and_code_budget(self):
         config.save_profile(self.root, "rapido")

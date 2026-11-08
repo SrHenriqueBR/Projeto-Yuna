@@ -9,7 +9,7 @@ import re
 
 from affect import SENSITIVE as SENSITIVE_PREFERENCES, EMAIL, DIGITS
 
-VERSION = "0.54.1"
+VERSION = "0.55.0"
 THINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -85,6 +85,9 @@ def about(memory, model):
             "sincronizar o movimento da boca com reprodução real da voz, usando amplitude do WAV offline",
             "orientar instalação Windows e seleção local de modelo com diagnóstico sem modificar memórias",
             "abrir Google e YouTube, pesquisar vídeos e consultar Wikipédia quando solicitado",
+            "pesquisar resumos públicos da web no chat desktop e informar fontes e falhas",
+            "reconhecer fala local por frase com seleção de microfone e nível de áudio",
+            "usar Qwen3.5:4b e perfil máximo para conversa e geração de código",
             "saudar pelo relógio local e observar uma captura de tela mediante consentimento",
             "lembrar preferências e perguntas respondidas",
             "planejar e autoavaliar a conversa quando em execução",

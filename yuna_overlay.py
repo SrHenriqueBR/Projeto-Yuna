@@ -29,7 +29,7 @@ from document_writer import (
     FileRequest, create_file, generate_contents, parse_file_request,
     looks_like_file_request, validate_title
 )
-from yuna import Memory, MODEL, ROOT, ask_model, declared_name, handle_message, startup_greeting
+from yuna import Memory, current_model, ROOT, ask_model, declared_name, handle_message, startup_greeting
 from office_agent import file_intent
 from natural_interaction import classify_public_request
 from natural_memory import parse_memory_intent
@@ -167,7 +167,7 @@ class DialogueThread(Thread):
                 try:
                     # Usa a lógica do terminal, no mesmo banco e mesma thread.
                     if message == "/sobre":
-                        answer = about_text(memory, MODEL)
+                        answer = about_text(memory, current_model())
                     elif message == "/estado":
                         answer = memory.affect.status_text()
                     elif message.startswith("/pensar "):

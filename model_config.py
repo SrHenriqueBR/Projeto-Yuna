@@ -1,16 +1,11 @@
-"""Seleção segura de modelos Ollama locais, sem contas, tokens ou APIs pagas.
-
-O padrão legado é preservado para que atualizações não troquem, sem pedir,
-o modelo de instalações anteriores que ainda não baixaram Qwen3.5.
-A Central oferece os modelos novos, mas somente altera a escolha ao fim
-de um download confirmado pelo usuário.
-"""
+"""Seleção persistente de modelos locais; Qwen3.5:4b é o novo padrão."""
 from pathlib import Path
 import os
 from tempfile import NamedTemporaryFile
 
-# Compatibilidade: o fallback de instalações existentes não muda sozinho.
-DEFAULT_MODEL = "qwen2.5:3b"
+# Seleções anteriores explícitas continuam disponíveis.
+LEGACY_MODEL = "qwen2.5:3b"
+DEFAULT_MODEL = "qwen3.5:4b"
 LIGHT_MODEL = "qwen2.5:1.5b"
 
 # Modelos Qwen3.5 de inferência LOCAL, disponíveis no Ollama.
@@ -21,7 +16,7 @@ QWEN_ADVANCED_MODEL = "qwen3.5:9b"
 # Lista explícita: não incluir tags ":cloud" ou modelos de APIs pagas.
 INSTALLER_MODELS = (
     QWEN_LIGHT_MODEL, QWEN_RECOMMENDED_MODEL, QWEN_ADVANCED_MODEL,
-    LIGHT_MODEL, DEFAULT_MODEL,
+    LIGHT_MODEL, LEGACY_MODEL,
 )
 MODEL_OPTIONS = (
     (QWEN_LIGHT_MODEL, "Leve 2B · 8 GB", "≈2,7–3,1 GB de download; uso leve"),
@@ -30,7 +25,7 @@ MODEL_OPTIONS = (
 )
 LEGACY_OPTIONS = (
     (LIGHT_MODEL, "Anterior leve 1.5B"),
-    (DEFAULT_MODEL, "Anterior padrão 3B"),
+    (LEGACY_MODEL, "Anterior padrão 3B"),
 )
 CONFIG_NAME = "modelo_yuna.txt"
 
@@ -55,7 +50,7 @@ def model_path(root):
 
 
 def load_selected_model(root, environ=None):
-    """YUNA_MODEL manual > seleção persistida válida > padrão legado.
+    """YUNA_MODEL manual > seleção persistida válida > Qwen3.5:4b.
 
     O modelo manual ainda é permitido para usuários avançados, mas
     não pode escolher uma tag remota/"cloud" involuntariamente.

@@ -8,9 +8,10 @@ from PySide6.QtWidgets import (QCheckBox, QDialog, QHBoxLayout, QLabel,
     QMessageBox, QPushButton, QScrollArea, QInputDialog, QTabWidget, QTextBrowser, QVBoxLayout, QWidget)
 
 from app_tools import (TOOLS, RELEASE_URL, configure_shortcuts, installation_status,
-                       launch_tool, prepare_model)
+                       launch_tool, prepare_model, prepare_maximum)
 from self_model import VERSION
 from model_config import MODEL_OPTIONS, LEGACY_OPTIONS, load_selected_model
+from inference_config import load_profile, save_profile
 from yuna_rag import (available_documents, index_document, search_documents,
                       clear_index, install_embedding_model)
 from ollama_memory import loaded_models, loaded_model_status, unload_model
@@ -50,7 +51,11 @@ class YunaCenter(QDialog):
         layout.addWidget(QLabel("Conversa, recursos e configurações em um só lugar."))
         tabs = QTabWidget()
         layout.addWidget(tabs)
-        permissions, advanced = [QWidget() for _ in range(2)]
+        advanced = QWidget()
+        permissions = QScrollArea()
+        permissions.setWidgetResizable(True)
+        permissions_content = QWidget()
+        permissions.setWidget(permissions_content)
         home = QScrollArea()
         home.setWidgetResizable(True)
         home.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -90,11 +95,17 @@ class YunaCenter(QDialog):
         mode_note.setWordWrap(True)
         box.addWidget(mode_note)
         box.addStretch()
-        box = QVBoxLayout(permissions)
+        box = QVBoxLayout(permissions_content)
         text = QLabel("Você controla os recursos. Microfone e câmera pedem autorização nesta sessão.")
         text.setWordWrap(True)
         box.addWidget(text)
         self.wake = self.action_checkbox(box, "Escutar “Olá Yuna”", controller.wake_action)
+        self.button(box, "Escolher microfone…", self.choose_microphone)
+        self.button(box, "Testar microfone / falar uma mensagem", lambda: controller.window.request_microphone())
+        self.auto_send = QCheckBox("Enviar fala automaticamente ao terminar")
+        self.auto_send.setChecked(getattr(controller.window, "auto_send_speech", True))
+        self.auto_send.toggled.connect(lambda checked: setattr(controller.window, "auto_send_speech", checked))
+        box.addWidget(self.auto_send)
         self.usb = self.action_checkbox(box, "Perceber USB e energia", controller.plug_action)
         self.plug_voice = self.action_checkbox(box, "Falar avisos de conexões", controller.plug_voice)
         self.button(box, "Abrir câmera e escolher a fonte…", controller.window.open_camera_viewer)
@@ -109,10 +120,11 @@ class YunaCenter(QDialog):
         model_note = QLabel(
             "✦ Qwen3.5 GRATUITO • modelos instalados no seu computador via Ollama. "
             "Sem conta de nuvem, chave de API ou cobrança por conversas. "
-            "A seleção só muda quando o download termina; reinicie a Yuna."
+            "A seleção muda ao terminar o download e vale na próxima resposta."
         )
         model_note.setWordWrap(True)
         box.addWidget(model_note)
+        self.button(box, "✦ Ativar Qwen3.5:4b + capacidade máxima", self.maximum_capacity)
         for model, label, description in MODEL_OPTIONS:
             self.button(
                 box, "⬇  Qwen3.5 " + label + "  (" + model + ")",
@@ -129,10 +141,15 @@ class YunaCenter(QDialog):
         box.addLayout(row)
         self.current_model_label = QLabel(
             "Modelo selecionado: " + load_selected_model(self.root)
-            + " (a troca precisa de reinicialização)"
+            + " • perfil " + load_profile(self.root)
         )
         self.current_model_label.setWordWrap(True)
         box.addWidget(self.current_model_label)
+        row = QHBoxLayout()
+        for profile in ("maximo", "equilibrado", "rapido"):
+            self.button(row, "Perfil " + profile,
+                        lambda checked=False, name=profile: self.set_profile(name))
+        box.addLayout(row)
         self.button(box, "Instalar ou abrir o site do Ollama", lambda: QDesktopServices.openUrl(QUrl("https://ollama.com/download/windows")))
         self.button(box, "Criar ou reparar atalhos Yuna", lambda: self.job(lambda: configure_shortcuts(self.root)))
         row = QHBoxLayout()
@@ -239,6 +256,41 @@ class YunaCenter(QDialog):
     def set_startup(self, enabled):
         self.job(lambda: configure_shortcuts(self.root, enabled))
 
+    def choose_microphone(self):
+        try:
+            from audio_capture import input_devices, save_input
+            devices = input_devices()
+            choices = ["Padrão do Windows (acompanha trocas)"] + [
+                d["name"] + " • " + d["hostapi"] for d in devices]
+            chosen, accepted = QInputDialog.getItem(self, "Microfone da Yuna", "Entrada de áudio:", choices, 0, False)
+            if not accepted:
+                return
+            if self.controller.wake_action.isChecked():
+                self.controller.wake_action.setChecked(False)
+            self.controller.window.stop_microphone()
+            index = choices.index(chosen)
+            save_input(self.root, None if index == 0 else devices[index - 1])
+            self.output.setPlainText("Microfone salvo: " + chosen + ". Clique em Falar ou reative Escutar Olá Yuna.")
+        except Exception as exc:
+            self.output.setPlainText("Não consegui listar os microfones: " + str(exc)[:240])
+
+    def set_profile(self, name):
+        if self.running:
+            return
+        save_profile(self.root, name)
+        self.job_done(True, "Perfil " + name + " ativo na próxima resposta. Máximo usa mais RAM e pode responder mais devagar.")
+
+    def maximum_capacity(self):
+        if self.running:
+            return
+        answer = QMessageBox.question(self, "Qwen3.5:4b • capacidade máxima",
+            "Preparar o Qwen3.5:4b local (aproximadamente 3,3–4 GB de download) e ativar o perfil máximo? "
+            "Ele permite respostas maiores e raciocínio para código, usando mais RAM/VRAM e tempo. "
+            "O Ollama deve estar aberto. A escolha anterior é mantida se o download falhar.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+        if answer == QMessageBox.StandardButton.Yes:
+            self.job(lambda: prepare_maximum(self.root, self.progress.emit))
+
     def download_model(self, model):
         if self.running:
             return
@@ -246,7 +298,7 @@ class YunaCenter(QDialog):
             "Baixar/verificar " + model + " somente no Ollama local? "
             "O download pode consumir vários GB de internet e espaço. "
             "Não será utilizada API comercial nem cobrança por tokens. "
-            "O Ollama precisa estar aberto. A escolha será usada ao reiniciar a Yuna.",
+            "O Ollama precisa estar aberto. A escolha vale na próxima resposta.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
         if answer == QMessageBox.StandardButton.Yes:
             self.job(lambda: prepare_model(self.root, model, self.progress.emit))
@@ -273,7 +325,7 @@ class YunaCenter(QDialog):
         if success:
             self.current_model_label.setText(
                 "Modelo selecionado: " + load_selected_model(self.root)
-                + " (reinicie a Yuna para aplicar)"
+                + " • perfil " + load_profile(self.root)
             )
 
     def rag_prepare(self):

@@ -70,7 +70,7 @@ class PortugueseQualityTests(unittest.TestCase):
 
     def test_model_command_is_local(self):
         with patch("yuna.ask_model", side_effect=AssertionError("No model call")):
-            self.assertIn(yuna.MODEL, yuna.handle_message(self.memory, "/modelo"))
+            self.assertIn(yuna.current_model(), yuna.handle_message(self.memory, "/modelo"))
 
     def test_quality_revision_keeps_usable_response(self):
         outputs = iter([

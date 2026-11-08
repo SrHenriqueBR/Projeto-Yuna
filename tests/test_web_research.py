@@ -51,13 +51,15 @@ class PublicResearchTests(unittest.TestCase):
             self.assertIsNone(web.handle_web_command("Não pesquise na web gatos"))
         open_url.assert_not_called()
 
-    def test_chat_router_respects_web_destination_instead_of_searching_wikipedia(self):
-        with patch("web_actions.open_allowed_url", return_value="Solicitei abertura") as browser, \
-                patch("yuna.wikipedia_lookup", side_effect=AssertionError("Wrong destination")), \
-                patch("yuna.ask_model", side_effect=AssertionError("No model")):
-            result = yuna.handle_message(None, "Yuna, pesquise na web sobre Python")
-        browser.assert_called_once()
-        self.assertIn("não li", result)
+    def test_chat_router_reads_web_summaries_and_returns_sources_without_browser(self):
+        result = {"entries": [{"title": "Python", "snippet": "Documentação oficial.", "url": "https://docs.python.org/3/"}]}
+        with patch("web_actions.open_allowed_url") as browser, patch("yuna.research_web", return_value=result) as search, patch(
+                "yuna.ask_model", return_value="Encontrei documentação de Python."):
+            answer = yuna.handle_message(None, "Yuna, pesquise na web sobre Python")
+        browser.assert_not_called()
+        self.assertEqual(search.call_args.args[0], "python")
+        self.assertIn("Fontes consultadas", answer)
+        self.assertIn("https://docs.python.org/3/", answer)
 
     def test_malformed_or_oversized_responses_do_not_enter_cache(self):
         for data in (b'[]', b'{"pages":[null,{"title":42}]}', b'a' * 256001):

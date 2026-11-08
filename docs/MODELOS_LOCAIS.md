@@ -40,18 +40,19 @@ automaticamente ativados por escolher um modelo novo.
 
 1. Instale/abra [Ollama para Windows](https://ollama.com/download/windows).
 2. Abra **Yuna.app → ••• → Central da Yuna → Preparação**.
-3. Clique em **Qwen3.5 Recomendado 4B** (ou Leve 2B / Avançado 9B).
+3. Clique em **Ativar Qwen3.5:4b + capacidade máxima**. As opções Leve 2B / Avançado 9B continuam disponíveis.
 4. Confirme que aceita baixar vários gigabytes. A Central usa a API
    **Ollama em loopback**, não uma API Qwen comercial.
 5. Aguarde a mensagem de **download concluído**. Em caso de erro,
    o modelo atual e suas memórias permanecem intactos.
-6. **Feche a Yuna pelo menu Sair e abra novamente.**
+6. **A próxima resposta já usa o modelo**, sem reiniciar.
 7. Digite `/modelo` para conferir qual modelo foi carregado.
 
 A seleção é gravada em `data/modelo_yuna.txt`. Seu
 `data/yuna.db`, o histórico e a aparência da Yuna **não são
-reescritos durante a troca**. Quem já usa Qwen2.5 mantém o modelo
-anterior até optar por baixar o novo.
+reescritos durante a troca**. Escolhas Qwen2.5 gravadas continuam válidas até a troca. Sem seleção salva, o novo padrão é Qwen3.5:4b; ele precisa estar baixado no Ollama.
+
+Veja [voz e capacidade](VOZ_E_CAPACIDADE.md) para os perfis, limites e testes de microfone.
 
 ### Uso pelo terminal (opcional)
 
