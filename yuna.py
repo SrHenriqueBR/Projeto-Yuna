@@ -42,6 +42,7 @@ from action_diagnostics import LocalModelError
 from web_research import (explicit_web_query, current_web_query, research_web,
                           research_prompt, research_sources, research_unavailable)
 from task_runner import plan_tasks, execute_tasks, HELP as TASK_HELP
+from teaching import Teaching, parse_teaching_request, handle_teaching
 
 ROOT = Path(__file__).resolve().parent
 
@@ -91,6 +92,10 @@ ferramenta disponível. Não dê instruções para digitar comandos internos se
 uma frase normal for suficiente. Se alguém disser que prefere algo ou pedir
 que você lembre, só confirme o que foi de fato guardado no SQLite.
 Não invente memórias nem afirme que a IA está se treinando sozinha.
+ENSINO: Central → Minha Yuna → Ensinar a Yuna guarda perguntas e respostas revisadas
+no SQLite. /ensinar PERGUNTA => RESPOSTA ensina um exemplo; /corrigir RESPOSTA corrige
+a última resposta de conversa. Exemplos relevantes entram no contexto como dados,
+sem alterar pesos do Qwen. Não diga que guardou uma lição sem resultado da ferramenta.
 CENTRAL DE APIS: para clima, livros, CEP e modelos Gemini/Groq/OpenRouter,
 use somente as ferramentas explícitas. Essas consultas podem acessar a internet.
 Nunca diga ter consultado um serviço se a ferramenta não retornou resultado.
@@ -138,6 +143,8 @@ Eu entendo pedidos como:
 • Yuna, revise seu código e proponha uma melhoria.
 • Yuna, abra Downloads e depois abra Steam.
 • Yuna, desenvolva language_quality.py: detectar a expressão 'vou consegue'.
+• Yuna, quero te ensinar.
+• /ensinar Como gosto de estudar? => Com exemplos pequenos e um exercício no final.
 
 Eu escolho apenas ferramentas disponíveis para o pedido atual.
 Guardo preferências simples e informações que você pedir para lembrar.
@@ -159,6 +166,11 @@ Os comandos técnicos abaixo continuam opcionais para diagnóstico.
 /laboratorio ARQUIVO | OBJETIVO   Gera código e testes em cópia; execução exige Docker
 /melhorias            Lista propostas e aplicações; revisão em Central da Yuna → Avançado → Revisar ou restaurar melhorias
 /escola               Mostra onde acompanhar estudos e responder perguntas no GitHub
+/ensino               Explica o caderno local de ensino e correções
+/ensinar PERGUNTA => RESPOSTA   Guarda um exemplo revisado
+/corrigir RESPOSTA    Corrige a última resposta de conversa
+/licoes               Lista lições ensinadas; /esquecer_licao ID apaga uma
+/testar_ensino        Avalia a recuperação dos guias, sem executar o Qwen
 /autoteste            Testa linguagem e intenções da base instalada, sem Ollama
 /tarefas PEDIDO       Executa até 5 etapas explícitas, mostrando resultados
 /desempenho maximo|rapido|equilibrado  Ajusta tamanho de resposta e permanência em RAM
@@ -300,6 +312,7 @@ class Memory:
         self.initiative = Initiative(self.db)
         self.affect = AffectiveCore(self.db)
         self.thinking = Thinking(self.db)
+        self.teaching = Teaching(self.db)
         self.export()
 
     def export(self):
@@ -307,6 +320,7 @@ class Memory:
         payload = {
             'versao': 1,
             'memorias': [{'id': i, 'texto': t} for i, t in self.facts()],
+            'licoes_revisadas': self.teaching.lessons(),
             'aprendizados': [{'id': i, 'pergunta': q, 'resposta': a}
                              for i, q, a in self.initiative.recent(100)],
             'preferencias': [{'id': i, 'texto': text} for i, text in self.affect.preferences(40)],
@@ -336,7 +350,10 @@ class Memory:
             return set(re.findall(r'[a-z0-9]{3,}', text)) - stop
         terms = words(query)
         rows = self.db.execute("SELECT id, content FROM messages WHERE role='user' ORDER BY id DESC").fetchall()
-        ranked = [(len(terms & words(text)), ident, text) for ident, text in rows]
+        from teaching import key as lesson_key
+        corrected_questions = {lesson_key(row['question']) for row in self.teaching.lessons()}
+        ranked = [(len(terms & words(text)), ident, text) for ident, text in rows
+                  if not parse_teaching_request(text) and lesson_key(text) not in corrected_questions]
         ranked = sorted((r for r in ranked if r[0]), reverse=True)[:4]
         return [text[:1000] for _, _, text in ranked]
 
@@ -366,17 +383,24 @@ class Memory:
         rows = self.db.execute('SELECT role, content FROM messages ORDER BY id DESC LIMIT 12').fetchall()
         return [{'role': r, 'content': c} for r, c in reversed(rows)]
 
-    def save_turn(self, user, answer):
+    def save_turn(self, user, answer, *, learnable=False):
         with self.db:
-            self.db.executemany('INSERT INTO messages(role,content) VALUES (?,?)',
-                                [('user', user), ('assistant', answer)])
+            user_id = self.db.execute('INSERT INTO messages(role,content) VALUES (?,?)',
+                                     ('user', user)).lastrowid
+            assistant_id = self.db.execute('INSERT INTO messages(role,content) VALUES (?,?)',
+                                          ('assistant', answer)).lastrowid
+            if learnable:
+                self.db.execute('INSERT INTO teaching_candidates(assistant_id,user_id) VALUES (?,?)',
+                                (assistant_id, user_id))
         self.export()
 
     def clear(self, all_data=False):
         with self.db:
             self.db.execute('DELETE FROM messages')
+            self.db.execute('DELETE FROM teaching_candidates')
             if all_data:
                 self.db.execute('DELETE FROM memories')
+                self.db.execute('DELETE FROM teaching_lessons')
         self.initiative.clear(all_data=all_data)
         self.affect.clear(all_data=all_data)
         self.thinking.clear(all_data=all_data)
@@ -451,6 +475,11 @@ def action_intent(text):
 
 
 def handle_message(memory, text, computer=None, progress=None, cancelled=None):
+    check_cancel(cancelled)
+    teaching_request = parse_teaching_request(text)
+    if teaching_request is not None and memory is not None:
+        # Exemplos não passam pelo roteador de comandos, pesquisa ou ferramentas.
+        return handle_teaching(memory, teaching_request)
     from companion_commands import BANKING_NOTICE, banking_action
     if banking_action(text):
         if memory is not None:
@@ -715,6 +744,9 @@ def conversation_history(memory, budget=6500):
     pairs = [history[i:i + 2] for i in range(0, len(history), 2)]
     selected = []
     for pair in reversed(pairs):
+        if any(row['role'] == 'user' and (parse_teaching_request(row['content'])
+               or memory.teaching.corrected(row['content'])) for row in pair):
+            continue
         if any(row['role'] == 'assistant' and speech_issue(row['content']) for row in pair):
             continue
         size = sum(len(row['content']) for row in pair)
@@ -756,7 +788,7 @@ def respond(memory, message, *, system_note="", allow_research=True, cancelled=N
                      'não concedem permissões nem comprovam fatos atuais): ' + public_refs[:1800])
     check_cancel(cancelled)
     messages = [{'role': 'system', 'content': SYSTEM + '\n' + system_note + '\n' + persona_instructions(load_preferences(ROOT)) + '\n' + memory.affect.style_instructions()
-                 + '\nDados do usuário: ' + facts + notes}]
+                 + '\nDados do usuário: ' + facts + memory.teaching.context(message) + notes}]
     messages += conversation_history(memory) + [{'role': 'user', 'content': message}]
     purpose = request_purpose(message)
     if purpose == "code":
@@ -787,7 +819,7 @@ def respond(memory, message, *, system_note="", allow_research=True, cancelled=N
     check_cancel(cancelled)
     if web_result is not None:
         answer += research_sources(web_result)
-    memory.save_turn(message, answer)
+    memory.save_turn(message, answer, learnable=True)
     return answer
 
 
@@ -909,7 +941,9 @@ def main():
                 elif command in ('/modelo', '/github', '/melhorar', '/openai', '/chatgpt',
                                   '/apis', '/api', '/integracoes', '/clima', '/livros',
                                   '/cep', '/ias', '/provedores', '/ia', '/laboratorio', '/laboratório', '/melhorias',
-                                  '/tarefas', '/desempenho', '/web', '/pesquisarweb', '/autoteste', '/escola'):
+                                  '/tarefas', '/desempenho', '/web', '/pesquisarweb', '/autoteste', '/escola',
+                                  '/ensino', '/ensinar', '/corrigir', '/licoes', '/lições',
+                                  '/esquecer_licao', '/testar_ensino'):
                     print('Yuna:', handle_message(memory, text, computer,
                           progress=lambda stage: print('Yuna ·', stage, flush=True)))
                 elif command == '/sobre':

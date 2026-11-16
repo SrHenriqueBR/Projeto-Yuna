@@ -77,6 +77,7 @@ class YunaCenter(QDialog):
         box = QVBoxLayout(home_content)
         self.button(box, "Conversar no chat compacto", controller.show_compact)
         self.button(box, "Abrir janela completa e documentos", controller.show_full)
+        self.button(box, "Ensinar a Yuna • exemplos e correções", self.open_teaching)
         self.button(box, "Mostrar ou esconder a personagem 2D", controller.window.toggle_avatar)
         self.button(box, "Abrir avatar 3D", lambda: self.open_tool("3d"))
         self.button(box, "Conversar no navegador deste computador", lambda: self.open_tool("web"))
@@ -210,6 +211,11 @@ class YunaCenter(QDialog):
         self.sync.setInterval(500)
         self.sync.timeout.connect(self.sync_permissions)
         self.sync.start()
+
+    def open_teaching(self):
+        from teaching_dialog import TeachingDialog
+        dialog = TeachingDialog(self.root, self)
+        dialog.exec()
 
     def button(self, layout, text, callback):
         button = QPushButton(text)

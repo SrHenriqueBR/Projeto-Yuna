@@ -1,0 +1,146 @@
+[
+  {
+    "query": "Onde consigo escolher outro microfone?",
+    "expected": "microfone"
+  },
+  {
+    "query": "Yuna não escuta a minha voz, o que verifico?",
+    "expected": "microfone"
+  },
+  {
+    "query": "Minha fala fica cortada, por quê?",
+    "expected": "fala"
+  },
+  {
+    "query": "Quero falar frase longa sem cortar áudio",
+    "expected": "fala"
+  },
+  {
+    "query": "Como ativar o Qwen3.5 4b?",
+    "expected": "modelo"
+  },
+  {
+    "query": "Preciso atualizar modelo local no Ollama",
+    "expected": "modelo"
+  },
+  {
+    "query": "Preciso guardar preferências depois de fechar",
+    "expected": "memoria"
+  },
+  {
+    "query": "Onde ficam memórias das nossas conversas?",
+    "expected": "memoria"
+  },
+  {
+    "query": "Quero corrigir aquela resposta errada",
+    "expected": "ensino"
+  },
+  {
+    "query": "Explique o funcionamento do caderno de ensino",
+    "expected": "ensino"
+  },
+  {
+    "query": "Preciso de função Python para somar dois números",
+    "expected": "python_funcao"
+  },
+  {
+    "query": "Mostre função de soma Python com teste",
+    "expected": "python_funcao"
+  },
+  {
+    "query": "Ajude a investigar erro no código Python",
+    "expected": "python_erro"
+  },
+  {
+    "query": "Meu script em Python falha e exibe traceback",
+    "expected": "python_erro"
+  },
+  {
+    "query": "Quero anexar PDF para análise local",
+    "expected": "documento"
+  },
+  {
+    "query": "Preciso analisar meu arquivo Word",
+    "expected": "documento"
+  },
+  {
+    "query": "Como pesquisar pela web trazendo fontes?",
+    "expected": "pesquisa"
+  },
+  {
+    "query": "Preciso de pesquisa na internet e referências",
+    "expected": "pesquisa"
+  },
+  {
+    "query": "Preciso abrir programa instalado no computador",
+    "expected": "aplicativos"
+  },
+  {
+    "query": "Quero encontrar o Steam pelo menu Iniciar",
+    "expected": "aplicativos"
+  },
+  {
+    "query": "Preciso interromper essa resposta em andamento",
+    "expected": "parar"
+  },
+  {
+    "query": "Qual botão cancela sua fala?",
+    "expected": "parar"
+  },
+  {
+    "query": "Mais tamanho de contexto é memória permanente?",
+    "expected": "contexto"
+  },
+  {
+    "query": "Aumentar contexto também treina modelo?",
+    "expected": "contexto"
+  },
+  {
+    "query": "Qual receita de bolo de cenoura?",
+    "expected": null
+  },
+  {
+    "query": "Quem escreveu Dom Casmurro?",
+    "expected": null
+  },
+  {
+    "query": "Meu gato derrubou o vaso",
+    "expected": null
+  },
+  {
+    "query": "Quanto é sete vezes oito?",
+    "expected": null
+  },
+  {
+    "query": "Qual a capital da França?",
+    "expected": null
+  },
+  {
+    "query": "Como pintar uma parede?",
+    "expected": null
+  },
+  {
+    "query": "Hoje quero passear no parque",
+    "expected": null
+  },
+  {
+    "query": "Qual o melhor filme de aventura?",
+    "expected": null
+  },
+  {
+    "query": "Como criar uma função JavaScript para ordenar nomes?",
+    "expected": null
+  },
+  {
+    "query": "Quero uma palavra de carinho",
+    "expected": null
+  },
+  {
+    "query": "Obrigado pela ajuda",
+    "expected": null
+  },
+  {
+    "query": "Como cuidar de uma samambaia?",
+    "expected": null
+  }
+]

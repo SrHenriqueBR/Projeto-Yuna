@@ -554,6 +554,9 @@ class CompanionController(QObject):
             self.window.say(answer)
 
     def handle(self, text):
+        from teaching import parse_teaching_request
+        if parse_teaching_request(text) is not None:
+            return False
         if plug_intent(text):
             self.window.add_message("Você", text)
             answer = self.connection_status()

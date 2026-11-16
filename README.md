@@ -15,8 +15,10 @@
   · <a href="https://raw.githack.com/SrHenriqueBR/Projeto-Yuna/main/docs/yuna-3d-viva.html">Prévia 3D na web</a>
 </p>
 
-> **Versão do código:** 0.55.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` por padrão; escolhas anteriores salvas são preservadas. Ative **Qwen3.5:4b + capacidade máxima** na Central para atualizar uma instalação antiga.
+> **Versão do código:** 0.56.0 · **Plataforma principal:** Windows 10/11 x64 · **Qwen recomendado:** Ollama local + `qwen3.5:4b` por padrão; escolhas anteriores salvas são preservadas. Ative **Qwen3.5:4b + capacidade máxima** na Central para atualizar uma instalação antiga.
 > O instalador é distribuído sem assinatura digital comercial. Verifique a origem e o SHA-256 antes de executar.
+
+**Ensino local 0.56.0:** caderno de exemplos e correções, recuperação por assunto, 12 guias do projeto e teste de recuperação. Abra **Central → Minha Yuna → Ensinar a Yuna**. As lições ficam no PC e não alteram os pesos do Qwen. [Como ensinar e testar](docs/ENSINAR_YUNA.md).
 
 **Voz e capacidade 0.55.0:** captura por frase, seleção de microfone, nível de áudio, envio da fala, Qwen3.5:4b, perfil máximo e pesquisa web com fontes. [Como ativar e testar](docs/VOZ_E_CAPACIDADE.md).
 
