@@ -1,5 +1,6 @@
 """Contratos de ensino: persistência, relevância, correção, isolamento e exportação."""
 import json
+from contextlib import closing
 from pathlib import Path
 import sqlite3
 import tempfile
@@ -205,7 +206,7 @@ class TeachingTests(unittest.TestCase):
 
     def test_old_database_gains_tables_without_losing_data(self):
         path = self.root / "legacy.db"
-        with sqlite3.connect(path) as db:
+        with closing(sqlite3.connect(path)) as db:
             db.executescript("CREATE TABLE messages(id INTEGER PRIMARY KEY, role TEXT, content TEXT);"
                              "INSERT INTO messages VALUES(1,'user','Meu histórico antigo');")
         memory = yuna.Memory(path)
