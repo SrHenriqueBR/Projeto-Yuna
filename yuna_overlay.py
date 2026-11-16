@@ -33,6 +33,7 @@ from yuna import Memory, current_model, ROOT, ask_model, declared_name, handle_m
 from office_agent import file_intent
 from natural_interaction import classify_public_request
 from natural_memory import parse_memory_intent
+from teaching import parse_teaching_request
 from self_model import VERSION
 from own_initiative import pending_own_activity, propose_own_activity
 from proactive import (
@@ -191,6 +192,7 @@ class DialogueThread(Thread):
                         self.output.speech.emit("Confira o resultado e os detalhes na janela da Yuna.")
                     elif (classify_public_request(message) is not None
                           or parse_memory_intent(message) is not None
+                          or parse_teaching_request(message) is not None
                           or message.strip().casefold().startswith(("/github", "/melhorar", "/openai",
                                                               "/apis", "/api ", "/integracoes",
                                                               "/clima", "/livros", "/cep",

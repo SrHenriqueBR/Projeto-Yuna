@@ -100,8 +100,12 @@ class Conversation:
         try:
             from yuna import Memory, respond
             from natural_memory import parse_memory_intent, memory_response
+            from teaching import parse_teaching_request, handle_teaching
             memory = Memory(self.path)
             try:
+                teaching_request = parse_teaching_request(message)
+                if teaching_request is not None:
+                    return handle_teaching(memory, teaching_request)
                 memory.affect.observe(message)
                 intent = parse_memory_intent(message)
                 answer = memory_response(memory, intent) if intent else None

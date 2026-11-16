@@ -21,6 +21,9 @@ def looks_like_command(text):
     from computer import command_text
     from natural_interaction import classify_public_request
     from natural_memory import parse_memory_intent
+    from teaching import parse_teaching_request
+    if parse_teaching_request(text) is not None:
+        return True
     # A resposta sobre clima/livros ou uma lembrança não é resposta
     # a perguntas antigas da Yuna, nem deve gerar nova pergunta aleatória.
     memo = parse_memory_intent(text)

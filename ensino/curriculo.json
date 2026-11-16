@@ -1,0 +1,110 @@
+[
+  {
+    "id": "microfone",
+    "question": "Como escolher o microfone da Yuna?",
+    "variants": [
+      "Como trocar o dispositivo de entrada de áudio?",
+      "A Yuna não escuta minha voz no microfone"
+    ],
+    "answer": "Na Central da Yuna → Permissões, abra Escolher microfone e selecione a entrada correta. Use Testar microfone e observe o nível de áudio enquanto fala. Se o nível não subir, confira a permissão de microfone do Windows e se a entrada está desativada ou desconectada."
+  },
+  {
+    "id": "fala",
+    "question": "Por que minha fala está sendo cortada?",
+    "variants": [
+      "Como falar uma frase longa sem cortar o áudio?",
+      "Minha frase termina antes de acabar de falar"
+    ],
+    "answer": "A captura espera uma pausa de aproximadamente 1,2 segundo e aceita até 20 segundos por frase. Faça uma pergunta por vez, evite pausas longas no meio e confira o texto reconhecido. No modo Falar, um rascunho já escrito é preservado para revisão antes de enviar."
+  },
+  {
+    "id": "modelo",
+    "question": "Como ativar Qwen3.5:4b na Yuna?",
+    "variants": [
+      "Quero atualizar o modelo local do Ollama",
+      "Qual modelo está selecionado na Yuna"
+    ],
+    "answer": "Na Central → Preparação, use Ativar Qwen3.5:4b + capacidade máxima. A seleção muda quando o download termina com sucesso. /modelo mostra a configuração usada. Instalações antigas mantêm a escolha anterior até você alterar; uma variável YUNA_MODEL manual também pode definir a escolha."
+  },
+  {
+    "id": "memoria",
+    "question": "Como guardar minhas preferências depois de fechar a Yuna?",
+    "variants": [
+      "Como lembrar informações quando reinicio o programa?",
+      "Onde ficam as memórias das conversas"
+    ],
+    "answer": "Peça, por exemplo, 'Lembre que prefiro explicações curtas'. As memórias ficam no banco local data/yuna.db e continuam após reiniciar. 'O que você lembra de mim?' lista memórias explícitas. O histórico e as memórias são dados locais; não mudam os pesos do modelo."
+  },
+  {
+    "id": "ensino",
+    "question": "Como corrigir uma resposta errada da Yuna?",
+    "variants": [
+      "Quero ensinar uma pergunta e resposta",
+      "Como funciona o caderno de ensino"
+    ],
+    "answer": "Abra Central → Minha Yuna → Ensinar a Yuna, escreva uma pergunta e a resposta revisada e salve a lição. Depois de uma resposta de conversa, também pode usar /corrigir seguido da resposta certa. A Yuna consulta exemplos relacionados em conversas futuras. O ensino não concede permissões nem altera os pesos do Qwen."
+  },
+  {
+    "id": "python_funcao",
+    "question": "Como criar uma função Python que soma dois números?",
+    "variants": [
+      "Exemplo em Python de função para somar números",
+      "Função soma em Python com teste"
+    ],
+    "answer": "Exemplo simples em Python:\n```python\ndef somar(a, b):\n    return a + b\n\nassert somar(2, 3) == 5\nassert somar(-2, 2) == 0\n```\nOs asserts são verificações que você pode executar. A resposta, por si só, não comprova que o código foi executado."
+  },
+  {
+    "id": "python_erro",
+    "question": "Como investigar um erro no código Python?",
+    "variants": [
+      "Meu script Python falha com traceback",
+      "Como depurar um programa Python"
+    ],
+    "answer": "Leia primeiro a última linha do traceback, que indica o tipo e a mensagem do erro, e depois a linha do seu arquivo mencionada no rastreamento. Mostre o trecho mínimo, a entrada usada e o resultado esperado, retirando credenciais. Uma correção deve explicar a causa e incluir uma verificação que reproduza o problema."
+  },
+  {
+    "id": "documento",
+    "question": "Como analisar um documento na Yuna?",
+    "variants": [
+      "Como anexar um PDF para análise",
+      "Quero analisar um arquivo Word"
+    ],
+    "answer": "Na janela completa, anexe o documento e escreva o que deseja encontrar. A análise usa o modelo local. Analisar não guarda automaticamente uma cópia na biblioteca; use Guardar na biblioteca para isso. Documentos grandes podem ser lidos parcialmente, e a resposta deve avisar esse limite."
+  },
+  {
+    "id": "pesquisa",
+    "question": "Como pesquisar na web com fontes?",
+    "variants": [
+      "Quero uma pesquisa na internet com referências",
+      "Como consultar notícias atuais com a Yuna"
+    ],
+    "answer": "No aplicativo, peça 'Pesquise na web sobre ...'. A pesquisa retorna títulos, resumos e links públicos; ela não lê necessariamente a íntegra de cada página. Confira a fonte e a data para informações atuais. Se a consulta falhar, a Yuna deve avisar, sem inventar resultados. O chat no navegador local não oferece essa ferramenta."
+  },
+  {
+    "id": "aplicativos",
+    "question": "Como abrir um programa instalado no computador?",
+    "variants": [
+      "A Yuna não encontra o aplicativo instalado",
+      "Como encontrar Steam no menu Iniciar"
+    ],
+    "answer": "Peça 'Yuna, abra Steam', usando o nome do aplicativo. Se não encontrar, /apps atualizar renova o catálogo e /apps NOME ajuda a localizar atalhos no menu Iniciar. A Yuna só deve confirmar a solicitação que o Windows aceitou; isso não prova que a janela apareceu."
+  },
+  {
+    "id": "parar",
+    "question": "Como parar a Yuna enquanto responde?",
+    "variants": [
+      "Como interromper uma resposta em andamento",
+      "Qual botão cancela a fala da Yuna"
+    ],
+    "answer": "Use o botão Parar ou Ctrl+Shift+X no desktop. Ele interrompe a voz e descarta tarefas pendentes. Uma requisição ao Ollama que já começou pode continuar até retornar, mas sua resposta será ignorada. Isso não desfaz ações externas já concluídas."
+  },
+  {
+    "id": "contexto",
+    "question": "O tamanho do contexto é a mesma coisa que memória permanente?",
+    "variants": [
+      "Aumentar o contexto treina o modelo?",
+      "Qual a diferença entre histórico e contexto"
+    ],
+    "answer": "Contexto é o texto disponível ao modelo em uma resposta. Memórias e lições são dados que a Yuna guarda localmente e pode recuperar para esse contexto. Aumentar o contexto não treina os pesos; também pode aumentar o uso de RAM ou VRAM. Use exemplos relevantes e completos, não apenas um contexto maior."
+  }
+]

@@ -47,6 +47,7 @@ from camera_viewer import CameraViewer
 from embedded_video import EmbeddedVideoDialog
 from home_safety_dialog import HomeSafetyDialog
 from yuna import Memory, ROOT, current_model, ask_model, handle_message, startup_greeting
+from teaching import parse_teaching_request
 
 
 ASSETS = ROOT / "assets"
@@ -69,6 +70,7 @@ class Composer(QPlainTextEdit):
 class DesktopSignals(QObject):
     loaded = Signal(object)
     replied = Signal(str, bool)
+    taught = Signal(str)
     status = Signal(str)
     error = Signal(str)
     library = Signal(object)
@@ -161,10 +163,14 @@ class DesktopWorker(Thread):
                         if generation != self._generation:
                             continue
                         after = memory.db.execute("SELECT MAX(id) FROM messages").fetchone()[0]
-                        if before == after:
+                        teaching_request = parse_teaching_request(question)
+                        if before == after and teaching_request is None:
                             memory.save_turn(question, answer)
                         if generation == self._generation:
-                            self.signals.replied.emit(answer, False)
+                            if teaching_request is not None:
+                                self.signals.taught.emit(answer)
+                            else:
+                                self.signals.replied.emit(answer, False)
                         status("Pronta • conversa local")
                     elif kind == "record":
                         memory.save_turn(task[1], task[2])
@@ -708,6 +714,7 @@ class YunaDesktop(QMainWindow):
     def attach_events(self):
         self.signals.loaded.connect(self.load_history)
         self.signals.replied.connect(self.show_answer)
+        self.signals.taught.connect(self.show_teaching_answer)
         self.signals.status.connect(self.status.setText)
         self.signals.error.connect(self.show_error)
         self.signals.library.connect(self.update_library)
@@ -817,6 +824,12 @@ class YunaDesktop(QMainWindow):
         )
         if not value:
             self.composer.setFocus()
+
+    def show_teaching_answer(self, answer):
+        self.add_message("Yuna", answer)
+        self.last_avatar_request = None
+        self.set_busy(False)
+        self.say("O caderno de ensino respondeu. Confira o resultado na janela.")
 
     def show_answer(self, answer, is_document):
         self.add_message("Yuna", answer, accent=is_document)
@@ -1190,6 +1203,14 @@ class YunaDesktop(QMainWindow):
 
     def send_message(self):
         content = self.composer.toPlainText().strip()
+        # Um comando escrito DENTRO de uma lição é apenas exemplo para o caderno.
+        if not self.pending_path and parse_teaching_request(content) is not None:
+            self.composer.clear()
+            self.last_avatar_request = None
+            self.set_busy(True)
+            self.add_message("Você", content)
+            self.worker.submit(content)
+            return
         if is_stop_request(content):
             self.composer.clear()
             self.emergency_stop()

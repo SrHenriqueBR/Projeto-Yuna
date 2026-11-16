@@ -1,19 +1,16 @@
 Um aplicativo para abrir a Yuna e acessar seus recursos pela Central.
 
-**Yuna 0.55.0 — voz, Qwen3.5:4b e capacidade máxima**
+**Yuna 0.56.0 — caderno de ensino local**
 
-- Microfone por frase (até 20 segundos), frequência nativa do dispositivo, nível de áudio e etapas visíveis.
-- Escolha da entrada USB/headset na Central, cache do Whisper em português e envio automático opcional.
-- Qwen3.5:4b como padrão sem seleção anterior; botão **Ativar Qwen3.5:4b + capacidade máxima** para baixar/selecionar e ativar o perfil.
-- Troca de modelo sem reiniciar: vale na próxima resposta.
-- Perfil máximo: contexto 16.384 tokens, até 4.096 tokens de resposta ou 8.192 para código; raciocínio em pedidos de programação com recuperação limitada para resposta vazia.
-- Pesquisa web no chat com resumos e fontes; perguntas públicas sobre informações atuais também podem pesquisar. Se o buscador falhar ou pedir CAPTCHA, a Yuna informa a limitação e tenta a Wikipédia.
-- Memórias e seleções explícitas anteriores preservadas. Não há um valor de QI atribuído; velocidade e qualidade dependem do modelo, hardware e tarefa.
+- Tela **Central → Minha Yuna → Ensinar a Yuna** para salvar, editar e apagar exemplos revisados.
+- **/ensinar PERGUNTA => RESPOSTA** e **/corrigir RESPOSTA CORRETA** no chat, com persistência no SQLite.
+- Recuperação de exemplos relevantes; uma correção substitui a lição anterior e remove a resposta antiga do contexto, preservando o histórico.
+- 12 guias práticos do projeto e avaliação local com 36 casos de recuperação, sem executar o modelo.
+- Exportação JSONL somente das lições selecionadas, sem copiar automaticamente conversas, documentos ou memórias.
+- Ensino não executa comandos, não envia dados à escola pública e não altera pesos do Qwen.
+- Mantém voz por frase, seleção de microfone, Qwen3.5:4b, perfil máximo e pesquisa com fontes da versão 0.55.
 
-Abra **Central → Preparação → Ativar Qwen3.5:4b + capacidade máxima**, com o Ollama aberto.
-Depois use **Central → Permissões → Escolher microfone** e clique em **Falar**.
-Aguarde aparecer **Ouvindo**. Para chamadas contínuas, ative **Escutar Olá Yuna** nesta sessão.
-Guia: [voz e capacidade](https://github.com/SrHenriqueBR/Projeto-Yuna/blob/main/docs/VOZ_E_CAPACIDADE.md).
+Guia: [como ensinar e testar](https://github.com/SrHenriqueBR/Projeto-Yuna/blob/main/docs/ENSINAR_YUNA.md).
 
 Baixe **Yuna-Setup.exe**, instale na sua conta do Windows e abra **Yuna.app** pelo atalho.
 O instalador inclui o runtime, interface, documentos, bibliotecas de voz e renderizador 3D.
