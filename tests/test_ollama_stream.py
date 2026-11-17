@@ -1,6 +1,7 @@
 """Contrato NDJSON, cancelamento de leitura bloqueada e persistência só após conclusão."""
 import io
 import http.client
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
@@ -11,7 +12,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from action_diagnostics import LocalModelError
-from ollama_stream import chat_stream
+from ollama_stream import chat_stream, _ResponseSocket
 import yuna
 
 
@@ -26,6 +27,24 @@ def content(text, done=False, **extra):
 
 
 class StreamTests(unittest.TestCase):
+    @contextmanager
+    def local_server(self, handler):
+        try:
+            server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        except PermissionError:
+            self.skipTest("Socket local indisponível neste executor")
+        serving = Thread(target=lambda: server.serve_forever(poll_interval=.02), daemon=True)
+        serving.start()
+        original = http.client.HTTPConnection
+        try:
+            with patch("ollama_stream.http.client.HTTPConnection",
+                       side_effect=lambda host, port, timeout: original(host, server.server_port, timeout=timeout)):
+                yield
+        finally:
+            server.shutdown()
+            server.server_close()
+            serving.join(2)
+
     def call(self, response, **kwargs):
         connection = Mock()
         connection.getresponse.return_value = response
@@ -151,36 +170,87 @@ class StreamTests(unittest.TestCase):
                 self.wfile.flush()
                 started.set()
                 release.wait(5)
-        try:
-            server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-        except PermissionError:
-            self.skipTest("Socket local indisponível neste executor")
-        serving = Thread(target=lambda: server.serve_forever(poll_interval=.02), daemon=True)
-        serving.start()
-        original = http.client.HTTPConnection
         failures = []
         def run():
             try:
                 chat_stream({"model": "teste-local", "messages": []}, cancelled=stop.is_set)
             except BaseException as exc:
                 failures.append(exc)
-        try:
-            with patch("ollama_stream.http.client.HTTPConnection",
-                       side_effect=lambda host, port, timeout: original(host, server.server_port, timeout=timeout)):
+        with self.local_server(Handler), patch("ollama_stream.socket.socket.shutdown", return_value=None):
+            try:
+                # Reproduz shutdown que não acorda recv, observado no Windows.
                 worker = Thread(target=run)
                 worker.start()
                 self.assertTrue(started.wait(5))
                 stop.set()
                 worker.join(2)
                 self.assertFalse(worker.is_alive(), "A leitura HTTP permaneceu bloqueada")
-            self.assertEqual(len(failures), 1)
-            self.assertIsInstance(failures[0], InterruptedError)
-        finally:
-            stop.set()
-            release.set()
-            server.shutdown()
-            server.server_close()
-            serving.join(2)
+                self.assertEqual(len(failures), 1)
+                self.assertIsInstance(failures[0], InterruptedError)
+            finally:
+                stop.set()
+                release.set()
+                worker.join(2)
+
+    def test_deadline_also_interrupts_silent_http_headers(self):
+        release = Event()
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                pass
+            def do_POST(self):
+                self.rfile.read(int(self.headers["Content-Length"]))
+                release.wait(3)
+        with self.local_server(Handler), patch("ollama_stream.socket.socket.shutdown", return_value=None):
+            start = monotonic()
+            try:
+                with self.assertRaises(TimeoutError):
+                    chat_stream({"model": "teste-local"}, timeout=.25)
+                self.assertLess(monotonic() - start, 1.5)
+            finally:
+                release.set()
+
+    def test_polling_preserves_partial_line_across_read_timeouts(self):
+        transport = Mock()
+        duplicate = transport.dup.return_value
+        chunks = iter([b'{"text": "Ol', TimeoutError(), b'\xc3', TimeoutError(), b'\xa1"}\n'])
+        def receive(buffer):
+            value = next(chunks)
+            if isinstance(value, Exception):
+                raise value
+            buffer[:len(value)] = value
+            return len(value)
+        duplicate.recv_into.side_effect = receive
+        with _ResponseSocket(transport, lambda: None).makefile("rb") as reader:
+            self.assertEqual(json.loads(reader.readline()), {"text": "Olá"})
+        duplicate.close.assert_called_once()
+
+    def test_real_chunked_utf8_response_survives_idle_intervals(self):
+        release = Event()
+        class Handler(BaseHTTPRequestHandler):
+            protocol_version = "HTTP/1.1"
+            def log_message(self, *args):
+                pass
+            def do_POST(self):
+                self.rfile.read(int(self.headers["Content-Length"]))
+                self.send_response(200)
+                self.send_header("Content-Type", "application/x-ndjson")
+                self.send_header("Transfer-Encoding", "chunked")
+                self.end_headers()
+                row = json.dumps(content("Olá, Kaizen!", True), ensure_ascii=False).encode("utf-8") + b"\n"
+                split = row.index(b'\xc3') + 1
+                for number, part in enumerate((row[:split], row[split:])):
+                    self.wfile.write(f"{len(part):x}\r\n".encode() + part + b"\r\n")
+                    self.wfile.flush()
+                    if number == 0:
+                        release.wait(.2)
+                self.wfile.write(b"0\r\n\r\n")
+                self.wfile.flush()
+        with self.local_server(Handler):
+            try:
+                result = chat_stream({"model": "teste-local"})
+                self.assertEqual(result["message"]["content"], "Olá, Kaizen!")
+            finally:
+                release.set()
 
 
 class StreamIntegrationTests(unittest.TestCase):

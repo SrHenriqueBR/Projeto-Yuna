@@ -19,8 +19,9 @@ resposta final entra no histórico e pode ser falada normalmente.
 - Respostas incompletas por queda da conexão não são gravadas como conversa
   concluída nem se tornam candidatas automáticas a correção no caderno.
 
-A conexão inicial tem prazo de 5 segundos; a leitura em andamento pode
-ser acordada pelo cancelamento. O app fecha a sua conexão, mas não mata
+A conexão inicial e o envio do pedido têm prazo de até 5 segundos; durante
+a leitura, o cancelamento é verificado mesmo se o modelo ficar em silêncio.
+O app fecha a sua conexão, mas não mata
 o processo Ollama e não garante liberação imediata da RAM/VRAM. Ações já
 concluídas no Windows não são desfeitas. Consultas web, downloads e outras
 operações externas mantêm seus próprios prazos e pontos de cancelamento.

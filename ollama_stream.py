@@ -4,6 +4,7 @@ Protocolo: https://docs.ollama.com/api/chat — NDJSON e evento final done=true.
 Só message.content é exposto; thinking e tool_calls nunca são apresentados/executados.
 """
 import http.client
+import io
 import json
 import socket
 from threading import Event, Thread
@@ -14,6 +15,52 @@ from action_diagnostics import LocalModelError
 MAX_LINE = 128 * 1024
 MAX_WIRE = 8 * 1024 * 1024
 MAX_TEXT = 96000
+
+
+class _PollingReader(io.RawIOBase):
+    """Espera curta no socket sem invalidar o buffer HTTP a cada timeout.
+
+    shutdown de outra thread nem sempre acorda recv no Windows. A leitura
+    verifica cancelamento mesmo quando o servidor fica completamente parado.
+    A cópia mantém o socket vivo quando HTTPConnection recebe Connection: close.
+    """
+    def __init__(self, transport, check):
+        super().__init__()
+        self._transport = transport.dup()
+        self._transport.settimeout(.1)
+        self._check = check
+
+    def readable(self):
+        return True
+
+    def readinto(self, buffer):
+        self._checkClosed()
+        while True:
+            self._check()
+            try:
+                return self._transport.recv_into(buffer)
+            except socket.timeout:
+                # O timeout é tratado antes de chegar ao BufferedReader;
+                # fragmentos já recebidos permanecem íntegros no buffer.
+                continue
+
+    def close(self):
+        try:
+            if hasattr(self, "_transport"):
+                self._transport.close()
+        finally:
+            super().close()
+
+
+class _ResponseSocket:
+    def __init__(self, transport, check):
+        self._transport = transport
+        self._check = check
+
+    def makefile(self, mode):
+        if mode != "rb":
+            raise ValueError("A resposta HTTP exige leitura binária.")
+        return io.BufferedReader(_PollingReader(self._transport, self._check))
 
 
 def chat_stream(payload, *, on_text=None, on_phase=None, cancelled=None, timeout=300):
@@ -38,7 +85,8 @@ def chat_stream(payload, *, on_text=None, on_phase=None, cancelled=None, timeout
             raise TimeoutError("Tempo total da resposta excedido.")
 
     def watch():
-        # shutdown acorda uma leitura HTTP bloqueada; close sozinho pode esperar o servidor.
+        # Encerra também escritas pendentes. A leitura tem seu próprio polling
+        # porque shutdown de outra thread não é suficiente em todo Windows.
         while not finished.wait(.08):
             if cancelled():
                 interrupted.set()
@@ -56,7 +104,9 @@ def chat_stream(payload, *, on_text=None, on_phase=None, cancelled=None, timeout
         on_phase("Conectando ao Ollama…")
         connection.connect()
         transport = connection.sock
-        transport.settimeout(timeout)
+        transport.settimeout(min(timeout, 5))
+        connection.response_class = lambda sock, *args, **kwargs: http.client.HTTPResponse(
+            _ResponseSocket(sock, check), *args, **kwargs)
         check()
         watcher = Thread(target=watch, daemon=True, name="Yuna-cancelar-resposta")
         watcher.start()
