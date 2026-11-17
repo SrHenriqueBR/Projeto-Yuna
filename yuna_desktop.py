@@ -48,6 +48,7 @@ from embedded_video import EmbeddedVideoDialog
 from home_safety_dialog import HomeSafetyDialog
 from yuna import Memory, ROOT, current_model, ask_model, handle_message, startup_greeting
 from teaching import parse_teaching_request
+from chat_widgets import MessageCard, LiveAnswer
 
 
 ASSETS = ROOT / "assets"
@@ -69,8 +70,11 @@ class Composer(QPlainTextEdit):
 
 class DesktopSignals(QObject):
     loaded = Signal(object)
-    replied = Signal(str, bool)
-    taught = Signal(str)
+    replied = Signal(str, bool, int)
+    taught = Signal(str, int)
+    partial = Signal(str, int)
+    task_status = Signal(str, int)
+    task_error = Signal(str, int)
     status = Signal(str)
     error = Signal(str)
     library = Signal(object)
@@ -148,7 +152,10 @@ class DesktopWorker(Thread):
                     continue
                 def status(message, generation=generation):
                     if generation == self._generation:
-                        self.signals.status.emit(message)
+                        self.signals.task_status.emit(message, generation)
+                def partial(text, generation=generation):
+                    if generation == self._generation:
+                        self.signals.partial.emit(text, generation)
                 try:
                     if kind == "chat":
                         question = task[1].strip()
@@ -159,6 +166,7 @@ class DesktopWorker(Thread):
                         answer = handle_message(
                             memory, question, computer, progress=status,
                             cancelled=lambda generation=generation: generation != self._generation,
+                            on_text=partial,
                         )
                         if generation != self._generation:
                             continue
@@ -168,9 +176,9 @@ class DesktopWorker(Thread):
                             memory.save_turn(question, answer)
                         if generation == self._generation:
                             if teaching_request is not None:
-                                self.signals.taught.emit(answer)
+                                self.signals.taught.emit(answer, generation)
                             else:
-                                self.signals.replied.emit(answer, False)
+                                self.signals.replied.emit(answer, False, generation)
                         status("Pronta • conversa local")
                     elif kind == "record":
                         memory.save_turn(task[1], task[2])
@@ -181,14 +189,17 @@ class DesktopWorker(Thread):
                         # Uma ação externa já concluída mantém seu registro real.
                         memory.save_turn(task[1], answer)
                         if generation == self._generation:
-                            self.signals.replied.emit(answer, False)
+                            self.signals.replied.emit(answer, False, generation)
                     elif kind == "analyze":
                         source, question = task[1], task[2]
                         status("Lendo documento e analisando com Ollama...")
-                        answer = analyze_document(source, ask_model, question)
+                        def ask_document(messages, **kwargs):
+                            return ask_model(messages, cancelled=lambda: generation != self._generation,
+                                             on_phase=status, **kwargs)
+                        answer = analyze_document(source, ask_document, question)
                         # Nunca registrar texto do documento no histórico SQLite.
                         if generation == self._generation:
-                            self.signals.replied.emit(answer, True)
+                            self.signals.replied.emit(answer, True, generation)
                         status("Análise concluída • arquivo não guardado")
                     elif kind == "archive":
                         status("Guardando cópia com autorização...")
@@ -203,7 +214,7 @@ class DesktopWorker(Thread):
                     status("Operação cancelada entre etapas")
                 except Exception as exc:
                     if generation == self._generation:
-                        self.signals.error.emit(diagnose_failure(exc).message())
+                        self.signals.task_error.emit(diagnose_failure(exc).message(), generation)
                         status("Operação não concluída")
         finally:
             memory.close()
@@ -270,6 +281,7 @@ class YunaDesktop(QMainWindow):
         self.from_library = False
         self.last_analysis_path = None
         self.last_analysis = ""
+        self._previous_question = None
         # Fala offline por padrão; nunca ativa serviços online sem consentimento.
         self.voice_index = 1
         self.persona = load_preferences(ROOT)
@@ -460,7 +472,7 @@ class YunaDesktop(QMainWindow):
             "Não ativa webcams remotamente e usa serviço externo."
         )
         sidebar.addWidget(self.remote_camera_button)
-        self.inline_video_button = QPushButton("▣  Videochamada dentro da Yuna")
+        self.inline_video_button = QPushButton("▣  Abrir videochamada")
         self.inline_video_button.setObjectName("ghost")
         self.inline_video_button.setToolTip(
             "Abre vídeo Jitsi externo numa janela integrada com permissão por pessoa."
@@ -543,14 +555,19 @@ class YunaDesktop(QMainWindow):
         content.addWidget(header)
 
         self.messages_scroll = QScrollArea()
+        self.messages_scroll.setStyleSheet("QScrollArea {background:#0b0c1b;border:0;}")
         self.messages_scroll.setWidgetResizable(True)
         self.messages_container = QWidget()
+        self.messages_container.setObjectName("chatMessages")
+        self.messages_container.setStyleSheet("#chatMessages {background:#0b0c1b;}")
         self.message_column = QVBoxLayout(self.messages_container)
         self.message_column.setContentsMargins(25, 20, 25, 18)
         self.message_column.setSpacing(12)
         self.message_column.addStretch()
         self.messages_scroll.setWidget(self.messages_container)
         content.addWidget(self.messages_scroll, 1)
+        self.reply_preview = LiveAnswer()
+        content.addWidget(self.reply_preview)
 
         footer = QFrame()
         footer.setStyleSheet("background:#191624;border-top:1px solid #302b44")
@@ -659,7 +676,15 @@ class YunaDesktop(QMainWindow):
         disclaimer.setWordWrap(True)
         disclaimer.setStyleSheet("font-size:10px;color:#a59bbb")
         visual.addWidget(disclaimer)
-        splitter.addWidget(side)
+        side_scroll = QScrollArea()
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setMinimumWidth(240)
+        side_scroll.setMaximumWidth(355)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        side_scroll.setStyleSheet("QScrollArea {background:#121024;border:0;}")
+        side.setMinimumHeight(sidebar.minimumSize().height())
+        side_scroll.setWidget(side)
+        splitter.addWidget(side_scroll)
         splitter.addWidget(hero)
         splitter.addWidget(center)
         splitter.setStretchFactor(0, 0)
@@ -715,6 +740,9 @@ class YunaDesktop(QMainWindow):
         self.signals.loaded.connect(self.load_history)
         self.signals.replied.connect(self.show_answer)
         self.signals.taught.connect(self.show_teaching_answer)
+        self.signals.partial.connect(self.show_partial)
+        self.signals.task_status.connect(self.show_task_status)
+        self.signals.task_error.connect(self.show_task_error)
         self.signals.status.connect(self.status.setText)
         self.signals.error.connect(self.show_error)
         self.signals.library.connect(self.update_library)
@@ -746,38 +774,20 @@ class YunaDesktop(QMainWindow):
         self.setAcceptDrops(True)
 
     def add_message(self, author, content, *, accent=False):
+        bar = self.messages_scroll.verticalScrollBar()
+        follow = bar.value() >= bar.maximum() - 12 or author in ("Você", "Kaizen")
         if self.companion is not None:
             self.companion.panel.add_message(author, content)
-        body = QFrame()
         is_user = author in ("Kaizen", "Você")
-        body.setMaximumWidth(760)
-        border = "#7259b2" if is_user else "#36304f"
-        background = "#41305d" if is_user else "#242132"
-        body.setStyleSheet(
-            f"QFrame {{background:{background};border:1px solid {border};"
-            "border-radius:14px;}"
-        )
-        layout = QVBoxLayout(body)
-        layout.setContentsMargins(16, 12, 16, 13)
-        layout.setSpacing(5)
-        role = QLabel(author)
-        role.setStyleSheet(
-            "color:#d9c5ff;background:transparent;border:0;"
-            "font-size:11px;font-weight:700"
-        )
-        text = QLabel(str(content))
-        text.setTextFormat(Qt.TextFormat.PlainText)
-        text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        text.setWordWrap(True)
-        text.setMinimumWidth(120)
-        text.setStyleSheet(
-            "color:#f3f0fa;background:transparent;border:0;"
-            "font-size:13px;line-height:140%"
-        )
-        if accent:
-            role.setText("Yuna • documento")
-        layout.addWidget(role)
-        layout.addWidget(text)
+        question = self._previous_question
+        if is_user:
+            self._previous_question = str(content)
+        else:
+            self._previous_question = None
+        teach = None
+        if not is_user and not accent and question and not parse_teaching_request(question):
+            teach = lambda checked=False, q=question, a=str(content): self.teach_answer(q, a)
+        body = MessageCard(author, content, accent=accent, teach=teach)
         line = QHBoxLayout()
         line.addWidget(body)
         if is_user:
@@ -785,12 +795,13 @@ class YunaDesktop(QMainWindow):
         else:
             line.addStretch()
         self.message_column.insertLayout(self.message_column.count() - 1, line)
-        QTimer.singleShot(
-            0,
-            lambda: self.messages_scroll.verticalScrollBar().setValue(
-                self.messages_scroll.verticalScrollBar().maximum()
+        if follow:
+            QTimer.singleShot(
+                0,
+                lambda: self.messages_scroll.verticalScrollBar().setValue(
+                    self.messages_scroll.verticalScrollBar().maximum()
+                )
             )
-        )
 
     def load_history(self, history):
         if history:
@@ -825,13 +836,55 @@ class YunaDesktop(QMainWindow):
         if not value:
             self.composer.setFocus()
 
-    def show_teaching_answer(self, answer):
+    def teach_answer(self, question, answer):
+        from teaching_dialog import TeachingDialog
+        dialog = TeachingDialog(ROOT, self)
+        if len(question) <= 600:
+            dialog.question.setText(question)
+        dialog.answer.setPlainText(answer)
+        dialog.status.setText("Corrija este rascunho e salve a lição. " +
+            ("A pergunta é longa; escreva uma versão menor." if len(question) > 600 else
+             "Nada foi ensinado ainda."))
+        dialog.exec()
+
+    def clear_preview(self):
+        self.reply_preview.clear()
+        if self.companion is not None:
+            self.companion.panel.reply_preview.clear()
+
+    def show_partial(self, text, generation):
+        if generation != self.worker._generation:
+            return
+        self.reply_preview.update_text(text)
+        if self.companion is not None:
+            self.companion.panel.show_partial(text)
+
+    def show_task_status(self, text, generation):
+        if generation != self.worker._generation:
+            return
+        self.status.setText(text)
+        if self.companion is not None:
+            self.companion.panel.state.setText(text)
+
+    def show_task_error(self, text, generation):
+        if generation != self.worker._generation:
+            return
+        self.clear_preview()
+        self.show_error(text)
+
+    def show_teaching_answer(self, answer, generation=None):
+        if generation is not None and generation != self.worker._generation:
+            return
+        self.clear_preview()
         self.add_message("Yuna", answer)
         self.last_avatar_request = None
         self.set_busy(False)
         self.say("O caderno de ensino respondeu. Confira o resultado na janela.")
 
-    def show_answer(self, answer, is_document):
+    def show_answer(self, answer, is_document, generation=None):
+        if generation is not None and generation != self.worker._generation:
+            return
+        self.clear_preview()
         self.add_message("Yuna", answer, accent=is_document)
         if not is_document and (self.avatar_window is not None or self.avatar_bridge is not None or self.unreal_bridge is not None):
             if self.avatar_window is not None:
@@ -1275,6 +1328,7 @@ class YunaDesktop(QMainWindow):
     def emergency_stop(self):
         """Interrompe áudio e ignora resposta em andamento, sem matar a thread."""
         self.worker.cancel_pending()
+        self.clear_preview()
         self._stop_requested = True
         self._speech_generation += 1
         self._speech_queue.clear()
@@ -1294,6 +1348,7 @@ class YunaDesktop(QMainWindow):
         self.set_busy(False)
         self.status.setText("Parada solicitada • operações externas em curso podem continuar")
         self.add_message("Yuna", "Parei a voz e descartei as tarefas pendentes. "
+                         "Também solicitei o encerramento da resposta local em andamento. "
                          "Sequências e testes do laboratório serão interrompidos. "
                          "Uma operação já iniciada pode precisar terminar; "
                          "não vou afirmar que ela foi cancelada sem confirmação.")

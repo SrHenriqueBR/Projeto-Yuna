@@ -7,6 +7,12 @@ em conhecimento. O recurso é local e funciona com o modelo já selecionado.
 
 ## Ensinar pela janela
 
+Na versão 0.57, você também pode clicar em **Corrigir e ensinar** abaixo de
+uma resposta na janela completa. A pergunta e a resposta viram um rascunho
+para revisão; nada é ensinado antes de clicar em **Salvar lição revisada**.
+Se a pergunta for longa demais, o caderno pede uma versão menor. Ações e
+resultados de ferramentas continuam sendo apenas exemplos escritos, sem execução.
+
 1. Abra **••• → Central da Yuna → Minha Yuna → Ensinar a Yuna**.
 2. Na aba **Ensinar**, escreva uma pergunta ou situação e a resposta correta.
    **Usar a última resposta de conversa** preenche um rascunho; revise antes de salvar.
