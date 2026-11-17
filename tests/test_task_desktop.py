@@ -15,7 +15,7 @@ class DesktopTaskStopTests(unittest.TestCase):
         worker.submit("pedido antigo")
         callbacks = []
 
-        def handle(memory, message, computer, *, progress, cancelled):
+        def handle(memory, message, computer, *, progress, cancelled, on_text):
             callbacks.append(cancelled)
             if message == "pedido antigo":
                 worker.cancel_pending()
@@ -32,7 +32,7 @@ class DesktopTaskStopTests(unittest.TestCase):
             memory.return_value.db.execute.return_value.fetchall.return_value = []
             library.entries.return_value = []
             worker.run()
-        signals.replied.emit.assert_called_once_with("resposta nova", False)
+        signals.replied.emit.assert_called_once_with("resposta nova", False, 1)
         memory.return_value.close.assert_called_once()
 
 

@@ -42,7 +42,7 @@
       "Quero ensinar uma pergunta e resposta",
       "Como funciona o caderno de ensino"
     ],
-    "answer": "Abra Central → Minha Yuna → Ensinar a Yuna, escreva uma pergunta e a resposta revisada e salve a lição. Depois de uma resposta de conversa, também pode usar /corrigir seguido da resposta certa. A Yuna consulta exemplos relacionados em conversas futuras. O ensino não concede permissões nem altera os pesos do Qwen."
+    "answer": "Na janela completa, clique em Corrigir e ensinar abaixo da resposta, revise o rascunho e salve a lição. Também pode abrir Central → Minha Yuna → Ensinar a Yuna ou usar /corrigir depois de uma resposta de conversa. A Yuna consulta exemplos relacionados em conversas futuras. Clicar em corrigir não salva antes da revisão; o ensino não concede permissões nem altera pesos do Qwen."
   },
   {
     "id": "python_funcao",
@@ -96,7 +96,7 @@
       "Como interromper uma resposta em andamento",
       "Qual botão cancela a fala da Yuna"
     ],
-    "answer": "Use o botão Parar ou Ctrl+Shift+X no desktop. Ele interrompe a voz e descarta tarefas pendentes. Uma requisição ao Ollama que já começou pode continuar até retornar, mas sua resposta será ignorada. Isso não desfaz ações externas já concluídas."
+    "answer": "Na Yuna.app, use Parar ou Ctrl+Shift+X. O botão interrompe a voz, descarta tarefas pendentes e solicita o encerramento da conexão da resposta local em andamento. A prévia cancelada desaparece. Isso não encerra o processo Ollama, não garante liberação imediata de RAM e não desfaz ações já concluídas no Windows."
   },
   {
     "id": "contexto",

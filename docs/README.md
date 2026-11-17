@@ -11,6 +11,7 @@ avançadas permanecem opcionais.
 | Guia | Assunto |
 | --- | --- |
 | [Instalação Windows](INSTALACAO_WINDOWS.md) | Instalador, código-fonte, Ollama, atualização, backup |
+| [Chat ao vivo 0.57](CHAT_AO_VIVO.md) | Resposta incremental, cancelamento, copiar código e corrigir pela conversa |
 | [Ensinar a Yuna 0.56](ENSINAR_YUNA.md) | Lições revisadas, correções, recuperação, testes e exportação local |
 | [Voz e capacidade 0.55.0](VOZ_E_CAPACIDADE.md) | Microfone, Qwen3.5:4b, perfil máximo, código e pesquisa web |
 | [Revisão 0.54.1](REVISAO_0541.md) | Correções de cancelamento, conversa, documentos e migração |

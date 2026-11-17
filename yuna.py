@@ -474,8 +474,16 @@ def action_intent(text):
         r'preciso que liste)\b', value))
 
 
-def handle_message(memory, text, computer=None, progress=None, cancelled=None):
+def handle_message(memory, text, computer=None, progress=None, cancelled=None, on_text=None):
     check_cancel(cancelled)
+    def ask_current(messages, **kwargs):
+        # Ferramentas recebem a resposta completa; o cancelamento também interrompe sua inferência.
+        check_cancel(cancelled)
+        if cancelled is not None:
+            kwargs.update(cancelled=cancelled, on_phase=progress)
+        result = ask_model(messages, **kwargs)
+        check_cancel(cancelled)
+        return result
     teaching_request = parse_teaching_request(text)
     if teaching_request is not None and memory is not None:
         # Exemplos não passam pelo roteador de comandos, pesquisa ou ferramentas.
@@ -503,7 +511,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
     if performance is not None:
         return performance
     development = handle_development(
-        text, ROOT, lambda messages, schema=None: ask_model(messages, schema=schema, purpose="code"),
+        text, ROOT, lambda messages, schema=None: ask_current(messages, schema=schema, purpose="code"),
         progress=progress, cancelled=cancelled,
     )
     if development is not None:
@@ -540,7 +548,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
     # Assim "pesquise ... e depois crie Word" não vira uma busca da frase inteira.
     plan = plan_request(text)
     if plan is not None:
-        answer = execute_plan(plan, ask_model, progress=progress)
+        answer = execute_plan(plan, ask_current, progress=progress)
         if memory is not None:
             memory.save_turn(text, answer)
         return answer
@@ -559,7 +567,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         result = research_web(web_query, cancelled=cancelled or (lambda: False))
         if result["entries"]:
             try:
-                answer = ask_model([
+                answer = ask_current([
                     {"role": "system", "content": SYSTEM + "\n" + research_prompt(result)},
                     {"role": "user", "content": text},
                 ])
@@ -597,7 +605,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         r"codigo(?: no github)?(?: e (?:proponha|sugira) uma melhoria)?",
         natural
     ):
-        proposal = improvement_proposal("own_initiative.py", ask_model, ROOT / "data")
+        proposal = improvement_proposal("own_initiative.py", ask_current, ROOT / "data")
         return ("Revisei um arquivo público do projeto e preparei uma sugestão "
                 "para você avaliar. Nada foi alterado no código nem no GitHub.\n"
                 + "Proposta: " + str(proposal))
@@ -618,7 +626,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         if path not in SOURCE_ALLOWLIST:
             return ("Escolha um arquivo permitido, como own_initiative.py, "
                     "proactive.py ou agent_brain.py. Use /github para ver opções.")
-        proposal = improvement_proposal(path, ask_model, ROOT / "data")
+        proposal = improvement_proposal(path, ask_current, ROOT / "data")
         return ("Preparei uma proposta, sem alterar nenhum código e sem publicar "
                 "nada no GitHub.\nArquivo: " + str(proposal)
                 + "\nRevise o texto antes de solicitar alterações.")
@@ -651,7 +659,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         if is_authorization(text):
             activity = pending_own_activity(memory.initiative)
             if activity == "diario":
-                entry = generate_entry(ask_model)
+                entry = generate_entry(ask_current)
                 store = DiaryStore(memory.folder)
                 store.start_entry()
                 store.write_piece(entry)
@@ -695,7 +703,7 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         request = parse_office_request(text)
         if request is None:
             raise ValueError("Diga qual arquivo quer criar.")
-        target = create_requested(request, ask_model)
+        target = create_requested(request, ask_current)
         answer = f"Criei o arquivo {target.name} e salvei em: {target}"
         memory.save_turn(text, answer)
         return answer
@@ -727,10 +735,10 @@ def handle_message(memory, text, computer=None, progress=None, cancelled=None):
         request = text.removeprefix('/fazer ').strip()
         if not request:
             return 'Exemplo: /fazer veja quanto espaço livre tem no disco'
-        result = interpret(request, ask_model, computer)
+        result = interpret(request, ask_current, computer)
         if result is not None:
             return result
-    return respond(memory, text, cancelled=cancelled)
+    return respond(memory, text, cancelled=cancelled, on_text=on_text, progress=progress)
 
 
 def speech_issue(text):
@@ -757,7 +765,7 @@ def conversation_history(memory, budget=6500):
     return selected
 
 
-def respond(memory, message, *, system_note="", allow_research=True, cancelled=None):
+def respond(memory, message, *, system_note="", allow_research=True, cancelled=None, on_text=None, progress=None):
     check_cancel(cancelled)
     facts = json.dumps({
         'memorias_confirmadas_do_usuario': [text for _, text in memory.facts()],
@@ -791,17 +799,21 @@ def respond(memory, message, *, system_note="", allow_research=True, cancelled=N
                  + '\nDados do usuário: ' + facts + memory.teaching.context(message) + notes}]
     messages += conversation_history(memory) + [{'role': 'user', 'content': message}]
     purpose = request_purpose(message)
+    stream_options = ({"on_text": on_text, "cancelled": cancelled, "on_phase": progress}
+                      if on_text is not None or cancelled is not None else {})
     if purpose == "code":
         messages[0]["content"] += (
             "\nPROGRAMAÇÃO: entregue código completo dentro do escopo pedido, com linguagem e "
             "dependências claras, exemplo de uso e verificações relevantes. Não resuma o código "
             "para obedecer ao estilo curto. Não afirme ter executado ou testado sem ferramenta. "
             "O código da resposta não será executado automaticamente.")
-        answer = ask_model(messages, purpose="code")
+        answer = ask_model(messages, purpose="code", **stream_options)
     else:
-        answer = ask_model(messages)
+        answer = ask_model(messages, **stream_options)
     check_cancel(cancelled)
     if purpose != "code" and speech_issue(answer):
+        if progress is not None:
+            progress("Revisando o português da resposta…")
         # Uma única revisão. Não altera ferramentas, JSON, documentos ou citações.
         revision = [
             {'role': 'system', 'content': SYSTEM + '\n' + system_note + '\n' + persona_instructions(load_preferences(ROOT)) + '\nRevise SOMENTE a resposta abaixo. '
@@ -811,7 +823,7 @@ def respond(memory, message, *, system_note="", allow_research=True, cancelled=N
                 {'pedido_original': message, 'rascunho_para_revisar': answer}, ensure_ascii=False)},
         ]
         try:
-            corrected = ask_model(revision)
+            corrected = ask_model(revision, **({"cancelled": cancelled} if cancelled is not None else {}))
         except RuntimeError:
             corrected = ''
         answer = corrected if corrected.strip() and not speech_issue(corrected) else (
@@ -851,7 +863,7 @@ def reflect(memory):
     return result
 
 
-def ask_model(messages, schema=None, *, purpose="conversation"):
+def ask_model(messages, schema=None, *, purpose="conversation", on_text=None, cancelled=None, on_phase=None):
     model = current_model()
     if 'cloud' in model.lower():
         raise LocalModelError('Use um modelo local em YUNA_MODEL; esta versão não aceita modelos cloud.')
@@ -868,6 +880,25 @@ def ask_model(messages, schema=None, *, purpose="conversation"):
         if purpose == "conversation":
             # Respostas estruturadas de ferramentas precisam terminar seu JSON.
             payload['options']['num_predict'] = max(768, payload['options']['num_predict'])
+    if on_text is not None or cancelled is not None:
+        from ollama_stream import chat_stream
+        result = chat_stream(payload, on_text=on_text if schema is None else None,
+                             on_phase=on_phase, cancelled=cancelled,
+                             timeout=600 if purpose == "code" else 300)
+        answer = result['message']['content']
+        if payload.get('think') and not answer.strip():
+            payload['think'] = False
+            result = chat_stream(payload, on_text=on_text if schema is None else None,
+                                 on_phase=on_phase, cancelled=cancelled, timeout=600)
+            answer = result['message']['content']
+        if not answer.strip():
+            raise LocalModelError('Ollama retornou uma resposta vazia. Tente novamente.')
+        if result.get('done_reason') == 'length':
+            if schema is not None:
+                raise LocalModelError('A saída estruturada excedeu o limite. Divida a tarefa em partes menores.')
+            answer += '\n\n[Resposta atingiu o limite de tamanho. Peça a continuação; código pode estar incompleto.]'
+        check_cancel(cancelled)
+        return answer
     body = json.dumps(payload).encode('utf-8')
     request = urllib.request.Request('http://127.0.0.1:11434/api/chat', data=body,
                                      headers={'Content-Type': 'application/json'})

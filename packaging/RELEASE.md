@@ -1,16 +1,16 @@
 Um aplicativo para abrir a Yuna e acessar seus recursos pela Central.
 
-**Yuna 0.56.0 — caderno de ensino local**
+**Yuna 0.57.0 — conversa ao vivo e código mais fácil de usar**
 
-- Tela **Central → Minha Yuna → Ensinar a Yuna** para salvar, editar e apagar exemplos revisados.
-- **/ensinar PERGUNTA => RESPOSTA** e **/corrigir RESPOSTA CORRETA** no chat, com persistência no SQLite.
-- Recuperação de exemplos relevantes; uma correção substitui a lição anterior e remove a resposta antiga do contexto, preservando o histórico.
-- 12 guias práticos do projeto e avaliação local com 36 casos de recuperação, sem executar o modelo.
-- Exportação JSONL somente das lições selecionadas, sem copiar automaticamente conversas, documentos ou memórias.
-- Ensino não executa comandos, não envia dados à escola pública e não altera pesos do Qwen.
-- Mantém voz por frase, seleção de microfone, Qwen3.5:4b, perfil máximo e pesquisa com fontes da versão 0.55.
+- Prévia da resposta enquanto o Ollama escreve, na janela completa e no chat compacto.
+- Parar encerra a espera pela inferência local e descarta eventos antigos da interface; rascunhos interrompidos não viram histórico ou lição.
+- Listas, tabelas, negrito e código formatado, sem HTML ativo ou carregamento de recursos externos.
+- Botões Copiar resposta e Copiar código, com seleção do bloco e preservação da indentação.
+- Corrigir e ensinar abre uma lição como rascunho direto pela resposta; salvar continua sendo uma ação explícita.
+- Fundo escuro no histórico, barra lateral rolável e leitura de mensagens antigas sem salto automático para o fim.
+- Memórias, caderno de ensino, modelo selecionado e permissões preservados. Nenhuma API paga adicionada e nenhum treinamento de pesos executado.
 
-Guia: [como ensinar e testar](https://github.com/SrHenriqueBR/Projeto-Yuna/blob/main/docs/ENSINAR_YUNA.md).
+Guia: [chat ao vivo, cópia e cancelamento](https://github.com/SrHenriqueBR/Projeto-Yuna/blob/main/docs/CHAT_AO_VIVO.md).
 
 Baixe **Yuna-Setup.exe**, instale na sua conta do Windows e abra **Yuna.app** pelo atalho.
 O instalador inclui o runtime, interface, documentos, bibliotecas de voz e renderizador 3D.

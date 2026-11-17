@@ -13,7 +13,7 @@ from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap, QAction
 from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QMenu,
-    QMessageBox, QPlainTextEdit, QPushButton, QProgressBar, QSystemTrayIcon, QTextBrowser,
+    QMessageBox, QPlainTextEdit, QPushButton, QProgressBar, QSystemTrayIcon,
     QVBoxLayout, QWidget, QFileDialog)
 
 from companion_commands import BANKING_NOTICE, banking_action, game_intent, power_intent
@@ -22,6 +22,7 @@ from plug_monitor import PlugMonitor
 from plug_sense import describe_plugs, plug_intent
 from tray_modes import MODES, mode_policy, should_observe, mode_tooltip
 from health_watch import HealthGuidance, read_health, summary as health_summary
+from chat_widgets import SafeBrowser, LiveAnswer, markdown_html
 
 
 def app_icon(mode="ativa", microphone=False):
@@ -134,6 +135,12 @@ class CompactChat(QWidget):
         brand = QLabel("✦  Yuna.app")
         brand.setObjectName("brand")
         top.addWidget(brand, 1)
+        self.last_answer = ""
+        self.copy_answer = QPushButton("Copiar")
+        self.copy_answer.setToolTip("Copiar a última resposta completa")
+        self.copy_answer.setEnabled(False)
+        self.copy_answer.clicked.connect(lambda: QApplication.clipboard().setText(self.last_answer))
+        top.addWidget(self.copy_answer)
         self.more = QPushButton("•••")
         self.more.setToolTip("Voz, jogos, câmera e segundo plano")
         top.addWidget(self.more)
@@ -146,11 +153,17 @@ class CompactChat(QWidget):
         self.state.setObjectName("status")
         self.state.setWordWrap(True)
         layout.addWidget(self.state)
-        self.messages = QTextBrowser()
+        self.messages = SafeBrowser()
         self.messages.setOpenLinks(False)
         self.messages.setOpenExternalLinks(False)
         self.messages.document().setMaximumBlockCount(300)
+        self._follow_timer = QTimer(self)
+        self._follow_timer.setSingleShot(True)
+        self._follow_timer.timeout.connect(lambda: self.messages.verticalScrollBar().setValue(
+            self.messages.verticalScrollBar().maximum()))
         layout.addWidget(self.messages, 1)
+        self.reply_preview = LiveAnswer(max_height=90)
+        layout.addWidget(self.reply_preview)
         self.power_notice = QPushButton()
         self.power_notice.setStyleSheet("background:#663341;color:white;padding:10px;border-radius:9px")
         self.power_notice.clicked.connect(controller.cancel_shutdown)
@@ -198,12 +211,28 @@ class CompactChat(QWidget):
             self.submitted.emit(text)
 
     def add_message(self, author, text):
+        bar = self.messages.verticalScrollBar()
+        position = bar.value()
+        follow = position >= bar.maximum() - 8 or author in ("Você", "Kaizen")
         color = "#acbfff" if author in ("Você", "Kaizen") else "#c6adff"
-        safe = html.escape(str(text)[:64000]).replace("\n", "<br>")
+        is_user = author in ("Você", "Kaizen")
+        if not is_user:
+            self.last_answer = str(text)
+            self.copy_answer.setEnabled(True)
+        safe = html.escape(str(text)).replace("\n", "<br>") if is_user else markdown_html(text)
         self.messages.append(f'<p style="margin-top:12px;color:{color}"><b>{html.escape(author)}</b></p>'
                              f'<p style="color:#eeeeF6;margin-bottom:12px">{safe}</p>')
         bar = self.messages.verticalScrollBar()
-        bar.setValue(bar.maximum())
+        bar.setValue(bar.maximum() if follow else position)
+        if follow:
+            self._follow_timer.start(0)
+
+    def show_partial(self, text):
+        bar = self.messages.verticalScrollBar()
+        follow = bar.value() >= bar.maximum() - 8
+        self.reply_preview.update_text(text)
+        if follow:
+            self._follow_timer.start(0)
 
     def show_panel(self):
         if not self._placed:

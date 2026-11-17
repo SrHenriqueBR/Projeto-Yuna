@@ -109,7 +109,7 @@ class WorkerRegressionTests(unittest.TestCase):
         worker.analyze("documento.txt", "Resuma")
         worker.queue.put(None)
         self.run_worker(worker, analyze_document=lambda *a: "Análise nova")
-        signals.replied.emit.assert_called_once_with("Análise nova", True)
+        signals.replied.emit.assert_called_once_with("Análise nova", True, 1)
 
     def test_cancelled_document_does_not_reappear_when_new_chat_is_sent(self):
         from yuna_desktop import DesktopWorker
@@ -123,9 +123,9 @@ class WorkerRegressionTests(unittest.TestCase):
             return "Análise antiga"
         self.run_worker(worker, analyze_document=analyze,
                         handle_message=lambda *a, **kw: "Resposta nova")
-        signals.replied.emit.assert_called_once_with("Resposta nova", False)
+        signals.replied.emit.assert_called_once_with("Resposta nova", False, 1)
         self.assertNotIn("Análise concluída • arquivo não guardado",
-                         [c.args[0] for c in signals.status.emit.call_args_list])
+                         [c.args[0] for c in signals.task_status.emit.call_args_list])
 
     def test_cancelled_fallback_reply_is_not_saved_and_stale_errors_are_ignored(self):
         from yuna_desktop import DesktopWorker
@@ -145,8 +145,8 @@ class WorkerRegressionTests(unittest.TestCase):
                     return "Resposta nova"
                 memory = self.run_worker(worker, handle_message=handle)
                 memory.save_turn.assert_called_once_with("novo", "Resposta nova")
-                signals.error.emit.assert_not_called()
-                signals.replied.emit.assert_called_once_with("Resposta nova", False)
+                signals.task_error.emit.assert_not_called()
+                signals.replied.emit.assert_called_once_with("Resposta nova", False, 1)
 
 
 class MigrationRegressionTests(unittest.TestCase):
